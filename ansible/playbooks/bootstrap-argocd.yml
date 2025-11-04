@@ -1,0 +1,188 @@
+---
+# Bootstrap ArgoCD on the OCI Kubernetes cluster
+# This is the ONLY imperative step - everything else is GitOps
+
+- name: Bootstrap ArgoCD
+  hosts: kube_control_plane
+  become: true
+  gather_facts: true
+  vars:
+    argocd_namespace: argocd
+    argocd_version: stable # or pin to specific version like v2.9.3
+    repo_url: https://github.com/Black-And-White-Club/all-infrastructure.git
+
+  tasks:
+    - name: Check if kubectl is available
+      command: kubectl version --client
+      register: kubectl_check
+      changed_when: false
+      failed_when: kubectl_check.rc != 0
+
+    - name: Create ArgoCD namespace
+      command: kubectl create namespace {{ argocd_namespace }} --dry-run=client -o yaml
+      register: namespace_yaml
+      changed_when: false
+
+    - name: Apply ArgoCD namespace
+      command: kubectl apply -f -
+      args:
+        stdin: "{{ namespace_yaml.stdout }}"
+      changed_when: true
+
+    - name: Download ArgoCD manifest
+      get_url:
+        url: "https://raw.githubusercontent.com/argoproj/argo-cd/{{ argocd_version }}/manifests/install.yaml"
+        dest: "/tmp/argocd-install.yaml"
+        mode: "0644"
+
+    - name: Install ArgoCD
+      command: kubectl apply -n {{ argocd_namespace }} -f /tmp/argocd-install.yaml
+      register: argocd_install
+      changed_when: "'created' in argocd_install.stdout or 'configured' in argocd_install.stdout"
+
+    - name: Wait for ArgoCD server to be ready
+      command: kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n {{ argocd_namespace }}
+      register: wait_result
+      changed_when: false
+      retries: 3
+      delay: 10
+      until: wait_result.rc == 0
+
+    - name: Wait for ArgoCD application controller to be ready
+      command: kubectl wait --for=condition=available --timeout=300s deployment/argocd-application-controller -n {{ argocd_namespace }}
+      register: wait_controller
+      changed_when: false
+      retries: 3
+      delay: 10
+      until: wait_controller.rc == 0
+
+    - name: Get ArgoCD initial admin password
+      command: kubectl -n {{ argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}"
+      register: argocd_password_b64
+      changed_when: false
+
+    - name: Decode ArgoCD password
+      command: echo "{{ argocd_password_b64.stdout }}" | base64 -d
+      register: argocd_password
+      changed_when: false
+
+    - name: Display ArgoCD access information
+      debug:
+        msg:
+          - "ArgoCD installed successfully!"
+          - "Access ArgoCD UI: kubectl port-forward svc/argocd-server -n argocd 8080:443"
+          - "Username: admin"
+          - "Password: {{ argocd_password.stdout }}"
+          - ""
+          - "Next steps:"
+          - "1. Apply the root ApplicationSet to bootstrap GitOps"
+          - "2. Install Sealed Secrets via ArgoCD Application"
+          - "3. Generate and commit sealed OCIR pull secret"
+
+    - name: Create root ApplicationSet for platform resources
+      copy:
+        content: |
+          apiVersion: argoproj.io/v1alpha1
+          kind: ApplicationSet
+          metadata:
+            name: platform-cluster-resources
+            namespace: argocd
+          spec:
+            goTemplate: true
+            generators:
+              - git:
+                  repoURL: "{{ repo_url }}"
+                  revision: main
+                  files:
+                    - path: "cluster-resources/*.yaml"
+            template:
+              metadata:
+                name: 'cluster-{{ "{{" }} trimSuffix ".yaml" .path.filename {{ "}}" }}'
+                labels:
+                  app: '{{ "{{" }} trimSuffix ".yaml" .path.filename {{ "}}" }}'
+                  type: cluster-resource
+              spec:
+                project: default
+                source:
+                  repoURL: "{{ repo_url }}"
+                  targetRevision: main
+                  path: cluster-resources
+                  directory:
+                    include: "{{ "{{" }} .path.filename {{ "}}" }}"
+                destination:
+                  server: https://kubernetes.default.svc
+                  namespace: default
+                syncPolicy:
+                  automated:
+                    prune: true
+                    selfHeal: true
+                  syncOptions:
+                    - CreateNamespace=true
+        dest: /tmp/root-appset.yaml
+        mode: "0644"
+
+    - name: Apply root ApplicationSet
+      command: kubectl apply -f /tmp/root-appset.yaml
+      register: appset_result
+      changed_when: "'created' in appset_result.stdout or 'configured' in appset_result.stdout"
+
+    - name: Create Sealed Secrets Application manifest
+      copy:
+        content: |
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: sealed-secrets
+            namespace: argocd
+          spec:
+            project: default
+            source:
+              repoURL: https://bitnami-labs.github.io/sealed-secrets
+              chart: sealed-secrets
+              targetRevision: 2.14.1
+              helm:
+                releaseName: sealed-secrets
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: kube-system
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+        dest: /tmp/sealed-secrets-app.yaml
+        mode: "0644"
+
+    - name: Apply Sealed Secrets Application
+      command: kubectl apply -f /tmp/sealed-secrets-app.yaml
+      register: sealed_app_result
+      changed_when: "'created' in sealed_app_result.stdout or 'configured' in sealed_app_result.stdout"
+
+    - name: Wait for Sealed Secrets controller to be ready
+      command: kubectl wait --for=condition=available --timeout=300s deployment/sealed-secrets -n kube-system
+      register: wait_sealed
+      changed_when: false
+      retries: 5
+      delay: 15
+      until: wait_sealed.rc == 0
+      ignore_errors: true
+
+    - name: Display next steps
+      debug:
+        msg:
+          - "Bootstrap complete!"
+          - ""
+          - "Sealed Secrets controller should be deploying..."
+          - "Check status: kubectl get pods -n kube-system -l app.kubernetes.io/name=sealed-secrets"
+          - ""
+          - "Next: Generate OCIR pull secret and seal it:"
+          - "kubectl create secret docker-registry ocir-pull-secret \\"
+          - "  --docker-server=${OCI_REGION}.ocir.io \\"
+          - "  --docker-username='${OCI_TENANCY_NAMESPACE}/oracleidentitycloudservice/${OCI_USERNAME}' \\"
+          - "  --docker-password='${OCI_AUTH_TOKEN}' \\"
+          - "  --docker-email='${OCI_USERNAME}' \\"
+          - "  --namespace resume \\"
+          - "  --dry-run=client -o yaml | \\"
+          - "  kubeseal --controller-name sealed-secrets --controller-namespace kube-system \\"
+          - "  -o yaml > sealed-secrets/ocir-pull-secret-sealed.yaml"

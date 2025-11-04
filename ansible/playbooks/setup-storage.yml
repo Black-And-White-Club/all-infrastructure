@@ -1,0 +1,57 @@
+---
+# Setup local storage for development (copied from frolf-bot-infrastructure)
+
+- name: Setup Local Storage
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Create local-path StorageClass
+      k8s:
+        definition:
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+          metadata:
+            name: local-path
+            annotations:
+              storageclass.kubernetes.io/is-default-class: "true"
+          provisioner: rancher.io/local-path
+          volumeBindingMode: WaitForFirstConsumer
+          reclaimPolicy: Delete
+
+    - name: Create PostgreSQL PVC
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: postgres-storage
+            namespace: frolf-bot
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 5Gi
+            storageClassName: local-path
+
+    - name: Create Loki PVC
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: loki-storage
+            namespace: monitoring
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
+            storageClassName: local-path
+
+    - name: Display storage setup completion
+      debug:
+        msg: "✅ Local storage configured successfully"

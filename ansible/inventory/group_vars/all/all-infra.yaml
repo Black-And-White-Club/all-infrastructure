@@ -1,0 +1,23 @@
+---
+# Kubernetes version
+kube_version: 1.34.1
+
+# Network plugin
+kube_network_plugin: cilium
+cilium_version: 1.18.2
+
+# Enable Helm
+helm_enabled: true
+
+# Disable stuff you don't need
+dashboard_enabled: false
+metrics_server_enabled: true
+
+container_manager: containerd
+
+# Download settings
+download_run_once: true
+download_localhost: false
+
+# Enable ping check for access_ip since using private IPs within VCN
+ping_access_ip: true
