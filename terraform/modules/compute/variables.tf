@@ -65,3 +65,9 @@ variable "assign_reserved_ips" {
   type        = list(bool)
   default     = [false, true]
 }
+
+variable "allowed_k8s_api_cidrs" {
+  description = "List of CIDR blocks allowed to access Kubernetes API server (port 6443)"
+  type        = list(string)
+  default     = []
+}

@@ -1,0 +1,32 @@
+# Grafana values - TODO: Copy from frolf-bot-infrastructure/charts/grafana/values.yaml
+# This is a minimal placeholder
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+persistence:
+  enabled: true
+  storageClassName: oci-bv
+  size: 5Gi
+
+adminPassword: changeme # TODO: Use sealed secret
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        url: http://loki-gateway.observability.svc.cluster.local
+        isDefault: true
+      - name: Tempo
+        type: tempo
+        url: http://tempo.observability.svc.cluster.local:3100
+      - name: Mimir
+        type: prometheus
+        url: http://mimir-nginx.observability.svc.cluster.local/prometheus

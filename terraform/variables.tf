@@ -72,3 +72,9 @@ variable "admin_group_ocid" {
   description = "OCID of the Administrators group"
   type        = string
 }
+
+variable "allowed_k8s_api_cidrs" {
+  description = "List of CIDR blocks allowed to access Kubernetes API server (port 6443). Keep this in terraform.tfvars (gitignored)."
+  type        = list(string)
+  default     = []
+}

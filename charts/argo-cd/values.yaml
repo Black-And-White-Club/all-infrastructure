@@ -1,0 +1,84 @@
+# ArgoCD Helm values for resource-constrained cluster
+# Conservative resource limits to leave headroom for application workloads
+
+global:
+  # Use ClusterIP for services (no LoadBalancer costs)
+  # Access via kubectl port-forward or ingress
+  service:
+    type: ClusterIP
+
+# ArgoCD Server - UI and API
+server:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+  # Reduce replicas for small cluster
+  replicas: 1
+
+# Application Controller - reconciles apps
+controller:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+  # Single replica for small cluster
+  replicas: 1
+
+# Repo Server - handles git operations
+repoServer:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+  replicas: 1
+
+# Redis - caching layer
+redis:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+
+# ApplicationSet Controller - manages ApplicationSets
+applicationSet:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+
+  replicas: 1
+
+# Notifications Controller (optional, disable if not needed)
+notifications:
+  enabled: false
+
+# Dex (SSO, disable if using admin user only)
+dex:
+  enabled: false
+
+# Disable HA mode (not needed for small clusters)
+redis-ha:
+  enabled: false
+# Resource totals (approximate):
+# Limits:   ~1.1 CPU, ~1.28 GB RAM
+# Requests: ~0.25 CPU, ~0.64 GB RAM
+# Leaves headroom for apps on 2-node cluster

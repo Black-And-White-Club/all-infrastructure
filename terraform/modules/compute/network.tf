@@ -62,13 +62,26 @@ resource "oci_core_security_list" "default" {
     }
   }
 
-  # Kubernetes API server
+  # Kubernetes API server - internal
   ingress_security_rules {
     protocol = "6"
     source   = var.vcn_cidr
     tcp_options {
       min = 6443
       max = 6443
+    }
+  }
+
+  # Kubernetes API server - external access
+  dynamic "ingress_security_rules" {
+    for_each = var.allowed_k8s_api_cidrs
+    content {
+      protocol = "6"
+      source   = ingress_security_rules.value
+      tcp_options {
+        min = 6443
+        max = 6443
+      }
     }
   }
 

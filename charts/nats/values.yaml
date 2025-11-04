@@ -1,0 +1,24 @@
+# Minimal NATS values
+# Shared NATS server for event-driven communication
+nats:
+  jetstream:
+    enabled: true
+    memStorage:
+      enabled: true
+      size: 1Gi
+    fileStorage:
+      enabled: true
+      size: 5Gi
+      storageClassName: oci-bv
+
+cluster:
+  enabled: false
+  replicas: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

@@ -86,11 +86,12 @@ module "identity_users" {
 module "compute" {
   source = "./modules/compute"
 
-  compartment_ocid    = var.compartment_ocid
-  availability_domain = var.availability_domain
-  image_id            = var.image_id
-  ssh_public_key      = var.ssh_public_key
-  vm_count            = 2
+  compartment_ocid      = var.compartment_ocid
+  availability_domain   = var.availability_domain
+  image_id              = var.image_id
+  ssh_public_key        = var.ssh_public_key
+  vm_count              = 2
+  allowed_k8s_api_cidrs = var.allowed_k8s_api_cidrs
 
   depends_on = [
     oci_identity_policy.terraform_policy,

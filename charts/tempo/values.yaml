@@ -1,0 +1,16 @@
+# Tempo values - minimal config
+# TODO: Copy detailed config from frolf-bot-infrastructure
+
+tempo:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+persistence:
+  enabled: true
+  storageClassName: oci-bv
+  size: 10Gi
