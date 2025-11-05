@@ -1,0 +1,49 @@
+---
+# Platform Shared Services
+# Postgres Operator + NATS (shared infrastructure)
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform-shared-services
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - list:
+        elements:
+          - name: postgres-operator
+            chart: cloudnative-pg
+            chartVersion: "0.22.1"
+            repoURL: https://cloudnative-pg.github.io/charts
+          - name: nats
+            chart: nats
+            chartVersion: "1.2.11"
+            repoURL: https://nats-io.github.io/k8s/helm/charts
+  template:
+    metadata:
+      name: "shared-{{ .name }}"
+      namespace: argocd
+      annotations:
+        argocd.argoproj.io/sync-wave: "15"
+    spec:
+      project: default
+      sources:
+        - repoURL: "{{ .repoURL }}"
+          chart: "{{ .chart }}"
+          targetRevision: "{{ .chartVersion }}"
+          helm:
+            valueFiles:
+              - $values/charts/{{ .name }}/values.yaml
+        - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+          targetRevision: main
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: shared-services
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

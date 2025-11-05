@@ -1,0 +1,83 @@
+# Grafana values - Shared visualization for resume and frolf-bot
+# Resume uses Prometheus (simple metrics)
+# Frolf-bot uses Mimir (metrics), Loki (logs), Tempo (traces)
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+persistence:
+  enabled: true
+  storageClassName: oci-block-storage
+  size: 5Gi
+
+# Admin password - MUST be set via sealed secret before production deployment
+# DO NOT set directly here for production. Use a secure mechanism (sealed secret or values override).
+# Generate random password: kubectl create secret generic grafana-admin-password \
+#   --from-literal=admin-password=$(openssl rand -base64 32) --dry-run=client -o yaml | \
+#   kubeseal --controller-name sealed-secrets --controller-namespace kube-system -o yaml
+# For development only, leave empty to use Grafana's auto-generated password
+adminPassword: ""
+
+# Datasource configuration for both apps
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      # Resume datasources
+      - name: Resume Prometheus
+        type: prometheus
+        url: http://prometheus.resume.svc.cluster.local:9090
+        access: proxy
+        isDefault: false
+        editable: true
+        jsonData:
+          timeInterval: 30s
+
+      # Frolf-bot datasources
+      - name: Frolf Mimir
+        type: prometheus
+        url: http://mimir-nginx.frolf-bot.svc.cluster.local/prometheus
+        access: proxy
+        isDefault: true # Default to frolf metrics
+        editable: true
+        jsonData:
+          timeInterval: 15s
+
+      - name: Frolf Loki
+        type: loki
+        url: http://loki-gateway.frolf-bot.svc.cluster.local
+        access: proxy
+        editable: true
+
+      - name: Frolf Tempo
+        type: tempo
+        url: http://tempo.frolf-bot.svc.cluster.local:3100
+        access: proxy
+        editable: true
+
+# Default dashboard folders
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: "resume"
+        orgId: 1
+        folder: "Resume"
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/resume
+      - name: "frolf-bot"
+        orgId: 1
+        folder: "Frolf Bot"
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/frolf-bot

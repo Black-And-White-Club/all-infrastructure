@@ -1,0 +1,12 @@
+# Minimal Sealed Secrets values
+# Uses default configuration - controller in kube-system namespace
+controllerName: sealed-secrets
+namespace: kube-system
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi

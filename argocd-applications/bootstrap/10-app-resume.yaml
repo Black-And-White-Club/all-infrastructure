@@ -1,0 +1,25 @@
+---
+# Resume Application
+# Deploys resume-frontend, resume-backend from resume-infrastructure repo
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-resume
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Black-And-White-Club/resume-infrastructure
+    targetRevision: main
+    path: resume-app-manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: resume
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
