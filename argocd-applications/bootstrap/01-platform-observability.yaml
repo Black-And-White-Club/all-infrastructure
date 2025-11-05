@@ -1,62 +1,35 @@
 ---
-# Platform Observability Stack
-# Shared monitoring: Grafana, Loki, Tempo, Mimir, Alloy
-# All apps (resume, frolf-bot) send telemetry here
+# Platform Observability - Shared Grafana Only
+# Each app manages its own metrics/logs/traces backend:
+# - Resume: Prometheus (in resume namespace)
+# - Frolf-bot: Mimir, Loki, Tempo, Alloy (in frolf-bot namespace)
+# - Grafana: Shared visualization (datasources point to both apps)
 apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
+kind: Application
 metadata:
-  name: platform-observability
+  name: observability-grafana
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 spec:
-  goTemplate: true
-  generators:
-    - list:
-        elements:
-          - name: grafana
-            chart: grafana
-            chartVersion: "8.7.3"
-            repoURL: https://grafana.github.io/helm-charts
-          - name: loki
-            chart: loki
-            chartVersion: "6.23.0"
-            repoURL: https://grafana.github.io/helm-charts
-          - name: tempo
-            chart: tempo
-            chartVersion: "1.15.0"
-            repoURL: https://grafana.github.io/helm-charts
-          - name: mimir
-            chart: mimir-distributed
-            chartVersion: "5.6.0"
-            repoURL: https://grafana.github.io/helm-charts
-          - name: alloy
-            chart: alloy
-            chartVersion: "0.12.0"
-            repoURL: https://grafana.github.io/helm-charts
-  template:
-    metadata:
-      name: "observability-{{ .name }}"
-      namespace: argocd
-      annotations:
-        argocd.argoproj.io/sync-wave: "10"
-    spec:
-      project: default
-      sources:
-        - repoURL: "{{ .repoURL }}"
-          chart: "{{ .chart }}"
-          targetRevision: "{{ .chartVersion }}"
-          helm:
-            valueFiles:
-              - $values/charts/{{ .name }}/values.yaml
-        - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
-          targetRevision: main
-          ref: values
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: observability
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-          - ServerSideApply=true
+  project: default
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: grafana
+      targetRevision: "8.7.3"
+      helm:
+        valueFiles:
+          - $values/charts/grafana/values.yaml
+    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

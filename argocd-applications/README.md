@@ -16,7 +16,7 @@ The Lich King (ApplicationSet)
 │   └── Cluster Resources (namespaces, storage classes, PVs)
 │
 ├── Wave 1: Observability
-│   ├── Grafana, Loki, Tempo, Mimir, Alloy
+│   └── Grafana (shared visualization for resume + frolf-bot)
 │
 ├── Wave 2: Shared Services
 │   ├── Postgres Operator (CloudNativePG)
@@ -24,7 +24,9 @@ The Lich King (ApplicationSet)
 │
 └── Wave 10: Applications
     ├── Resume (→ resume-infrastructure repo)
+    │   └── Includes: Prometheus in resume namespace
     └── Frolf Bot (→ frolf-bot-infrastructure repo)
+        └── Includes: Mimir/Loki/Tempo/Alloy in frolf-bot namespace
 ```
 
 ## Bootstrap Process

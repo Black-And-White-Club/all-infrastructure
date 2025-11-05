@@ -17,12 +17,9 @@ The Lich King (Root Application)
 │   │   └── Cluster Resources (namespaces, storage)
 │   │
 │   ├── 01-platform-observability.yaml (Wave 10)
-│   │   └── ApplicationSet → observability namespace
-│   │       ├── Grafana
-│   │       ├── Loki
-│   │       ├── Tempo
-│   │       ├── Mimir
-│   │       └── Alloy
+│   │   └── Grafana (observability namespace)
+│   │       ├── Datasource: Resume Prometheus
+│   │       └── Datasource: Frolf Mimir/Loki/Tempo
 │   │
 │   ├── 02-platform-shared-services.yaml (Wave 15)
 │   │   └── ApplicationSet → shared-services namespace
@@ -31,10 +28,14 @@ The Lich King (Root Application)
 │   │
 │   ├── 10-app-resume.yaml (Wave 20)
 │   │   └── Application → resume namespace
+│   │       ├── Frontend
+│   │       ├── Backend
+│   │       └── Prometheus
 │   │
 │   └── 11-app-frolf-bot.yaml (Wave 20-21)
 │       ├── Backend → frolf-bot namespace
 │       ├── Discord → frolf-bot namespace
+│       ├── Mimir/Loki/Tempo/Alloy → frolf-bot namespace
 │       └── Guilds ApplicationSet → per-guild namespaces
 ```
 
@@ -73,20 +74,30 @@ generators:
 
 ### ✅ 3. Proper Namespace Isolation
 
-| Namespace         | Contents                           | Shared?                      |
-| ----------------- | ---------------------------------- | ---------------------------- |
-| `kube-system`     | Sealed Secrets                     | ✅ Cluster-wide              |
-| `cert-manager`    | Cert-Manager                       | ✅ Cluster-wide              |
-| `observability`   | Grafana, Loki, Tempo, Mimir, Alloy | ✅ Shared by all apps        |
-| `shared-services` | Postgres Operator, NATS            | ✅ Operators (not instances) |
-| `resume`          | Resume app + postgres instance     | ❌ Resume only               |
-| `frolf-bot`       | Frolf app + postgres instance      | ❌ Frolf only                |
-| `guild-*`         | Per-guild deployments              | ❌ Guild-specific            |
+| Namespace         | Contents                                                    | Shared?                       |
+| ----------------- | ----------------------------------------------------------- | ----------------------------- |
+| `kube-system`     | Sealed Secrets                                              | ✅ Cluster-wide               |
+| `cert-manager`    | Cert-Manager                                                | ✅ Cluster-wide               |
+| `observability`   | **Grafana only** (shared visualization)                     | ✅ Shared visualization layer |
+| `shared-services` | Postgres Operator, NATS                                     | ✅ Operators (not instances)  |
+| `resume`          | Resume app + **Prometheus** (simple metrics)                | ❌ Resume only                |
+| `frolf-bot`       | Frolf app + **Mimir/Loki/Tempo/Alloy** (full observability) | ❌ Frolf only                 |
+| `guild-*`         | Per-guild deployments                                       | ❌ Guild-specific             |
 
-**Telemetry flow**:
+**Observability Architecture**:
 
-- Resume app → Alloy → Loki/Tempo/Mimir (in observability namespace)
-- Frolf app → Alloy → Loki/Tempo/Mimir (same shared stack)
+- **Shared Grafana** in `observability` namespace (one UI for all apps)
+- **Resume** uses simple Prometheus in `resume` namespace
+- **Frolf-bot** uses full stack (Mimir, Loki, Tempo, Alloy) in `frolf-bot` namespace
+- Grafana datasources point to both backends
+
+**Why this design**:
+
+- ✅ Resume stays simple (just Prometheus for metrics)
+- ✅ Frolf-bot has advanced observability (logs, traces, distributed metrics)
+- ✅ Shared Grafana for unified dashboards
+- ✅ No forced complexity on simpler apps
+- ✅ Independent scaling per app's needs
 
 ### ✅ 4. Root Application (not ApplicationSet)
 
