@@ -17,8 +17,8 @@ spec:
       targetRevision: 65.8.1 # Renovate will create PRs to update this
       helm:
         valueFiles:
-          - $values/prometheus/values.yaml
-    # Source 2: Resume app manifests + Prometheus values
+          - $values/charts/prometheus/values.yaml
+    # Source 2: All-infrastructure repo (for centralized Helm values)
     - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
       targetRevision: main
       ref: values
