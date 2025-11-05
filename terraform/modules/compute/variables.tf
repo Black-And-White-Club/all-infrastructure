@@ -71,3 +71,9 @@ variable "allowed_k8s_api_cidrs" {
   type        = list(string)
   default     = []
 }
+
+variable "allowed_ssh_cidrs" {
+  description = "List of CIDR blocks allowed SSH access (port 22). Empty list = deny all external SSH."
+  type        = list(string)
+  default     = []
+}

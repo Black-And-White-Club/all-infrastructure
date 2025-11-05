@@ -14,3 +14,14 @@ variable "aiu_service_account_id" {
   type        = string
   default     = "frolf-bot-aiu"
 }
+
+variable "user_email_domain" {
+  description = "Email domain for service account users (e.g., gmail.com, example.com)"
+  type        = string
+  default     = "gmail.com"
+}
+
+variable "email_prefix" {
+  description = "Email prefix/username for service account users (before the + and domain)"
+  type        = string
+}

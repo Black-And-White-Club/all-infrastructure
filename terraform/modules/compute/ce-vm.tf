@@ -32,13 +32,17 @@ data "oci_core_private_ips" "private_ips" {
   }
 }
 
+# Reserved public IPs - only create for VMs where assign_reserved_ips[index] is true
 resource "oci_core_public_ip" "reserved_ip" {
-  count = var.vm_count
+  for_each = {
+    for idx, should_assign in var.assign_reserved_ips :
+    idx => idx if should_assign
+  }
 
   compartment_id = var.compartment_ocid
   lifetime       = "RESERVED"
-  private_ip_id  = data.oci_core_private_ips.private_ips[count.index].private_ips[0].id
-  display_name   = "${var.vm_names[count.index]}-public-ip"
+  private_ip_id  = data.oci_core_private_ips.private_ips[each.value].private_ips[0].id
+  display_name   = "${var.vm_names[each.value]}-public-ip"
 }
 
 resource "oci_core_volume_attachment" "attachments" {

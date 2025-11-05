@@ -35,12 +35,16 @@ resource "oci_core_security_list" "default" {
   display_name   = "default-security-list"
   vcn_id         = oci_core_vcn.vcn.id
 
-  ingress_security_rules {
-    protocol = "6" # TCP
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = 22
-      max = 22
+  # SSH access - restricted to specified CIDRs for security
+  dynamic "ingress_security_rules" {
+    for_each = var.allowed_ssh_cidrs
+    content {
+      protocol = "6" # TCP
+      source   = ingress_security_rules.value
+      tcp_options {
+        min = 22
+        max = 22
+      }
     }
   }
 
@@ -112,15 +116,8 @@ resource "oci_core_security_list" "default" {
     description = "Allow all traffic within VCN"
   }
 
-  # NodePort range
-  ingress_security_rules {
-    protocol = "6"
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = 30000
-      max = 32767
-    }
-  }
+  # NodePort range removed for security - only expose specific ports via load balancer
+  # If specific NodePorts must be exposed, add individual rules for those ports only
 
   egress_security_rules {
     protocol    = "all"

@@ -7,7 +7,7 @@ spec:
   goTemplate: true
   generators:
     - git:
-        repoURL: "https://github.com/YOUR_ORG/all-infrastructure.git"
+        repoURL: "https://github.com/Black-And-White-Club/all-infrastructure.git"
         revision: main
         files:
           - path: "cluster-resources/*.yaml"

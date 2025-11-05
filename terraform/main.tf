@@ -98,6 +98,8 @@ module "identity_users" {
   tenancy_ocid           = var.tenancy_ocid
   service_account_id     = "test-service-account"
   aiu_service_account_id = "test-aiu-account"
+  email_prefix           = var.user_email_prefix
+  user_email_domain      = var.user_email_domain
 }
 
 module "compute" {
@@ -109,6 +111,7 @@ module "compute" {
   ssh_public_key        = var.ssh_public_key
   vm_count              = 2
   allowed_k8s_api_cidrs = var.allowed_k8s_api_cidrs
+  allowed_ssh_cidrs     = var.allowed_ssh_cidrs
 
   depends_on = [
     oci_identity_policy.terraform_policy,

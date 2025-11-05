@@ -78,3 +78,20 @@ variable "allowed_k8s_api_cidrs" {
   type        = list(string)
   default     = []
 }
+
+variable "allowed_ssh_cidrs" {
+  description = "List of CIDR blocks allowed SSH access (port 22). Keep this in terraform.tfvars (gitignored). Empty list = deny all external SSH."
+  type        = list(string)
+  default     = []
+}
+
+variable "user_email_prefix" {
+  description = "Email prefix/username for service account users (before the + and domain). Keep in terraform.tfvars (gitignored)."
+  type        = string
+}
+
+variable "user_email_domain" {
+  description = "Email domain for service account users (e.g., gmail.com, example.com)"
+  type        = string
+  default     = "gmail.com"
+}

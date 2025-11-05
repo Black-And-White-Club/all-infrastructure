@@ -63,6 +63,11 @@ resource "oci_identity_policy" "policy" {
 // For GitHub Actions authentication, use auth tokens (as currently implemented) or
 // set up SAML2 federation via Oracle IDCS as an intermediary.
 // See: https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/federatingIDCS.htm
+//
+// The following resource is intentionally commented out because it would fail at creation time.
+// SAML2 providers require a SAML metadata XML URL, not an OIDC issuer URL.
+// To enable GitHub Actions authentication, set up SAML2 federation via Oracle IDCS.
+/*
 resource "oci_identity_identity_provider" "oidc" {
   count          = var.create_provider ? 1 : 0
   compartment_id = local.policy_compartment
@@ -76,6 +81,7 @@ resource "oci_identity_identity_provider" "oidc" {
   metadata_url = var.provider_issuer
   metadata     = ""
 }
+*/
 
 // Helpful outputs to wire into other modules / documentation
 output "group_id" {
