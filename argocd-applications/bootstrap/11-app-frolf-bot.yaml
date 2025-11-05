@@ -1,0 +1,71 @@
+---
+# Frolf Bot Backend
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-frolf-bot-backend
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Black-And-White-Club/frolf-bot-infrastructure
+    targetRevision: main
+    path: frolf-bot-app-manifests/backend
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frolf-bot
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+# Frolf Bot Discord Bot
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-frolf-bot-discord
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Black-And-White-Club/frolf-bot-infrastructure
+    targetRevision: main
+    path: frolf-bot-app-manifests/discord
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frolf-bot
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+# Frolf Bot Multi-Tenant Guilds
+# This deploys the guild ApplicationSet (formerly "the-lich-king" in frolf-bot repo)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-frolf-bot-guilds
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "21"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Black-And-White-Club/frolf-bot-infrastructure
+    targetRevision: main
+    path: the-lich-king # Points to guild ApplicationSet
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

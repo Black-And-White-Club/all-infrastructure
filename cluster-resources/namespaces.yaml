@@ -1,0 +1,38 @@
+---
+# Observability - Shared monitoring stack for all applications
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+  labels:
+    name: observability
+    managed-by: argocd
+---
+# Shared Services - Postgres operator, NATS, other shared infrastructure
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shared-services
+  labels:
+    name: shared-services
+    managed-by: argocd
+---
+# Resume - Resume application namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: resume
+  labels:
+    name: resume
+    app: resume
+    managed-by: argocd
+---
+# Frolf Bot - Frolf bot application namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: frolf-bot
+  labels:
+    name: frolf-bot
+    app: frolf-bot
+    managed-by: argocd

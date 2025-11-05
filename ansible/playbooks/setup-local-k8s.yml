@@ -1,0 +1,88 @@
+---
+# Ansible playbook for setting up local development environment (copied from frolf-bot-infrastructure)
+
+- name: Setup Frolf Bot Local Development Environment
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    namespaces:
+      - frolf-bot
+      - monitoring
+      - argocd
+    helm_repos:
+      - name: bitnami
+        url: https://charts.bitnami.com/bitnami
+      - name: nats
+        url: https://nats-io.github.io/k8s/helm/charts
+      - name: prometheus-community
+        url: https://prometheus-community.github.io/helm-charts
+      - name: grafana
+        url: https://grafana.github.io/helm-charts
+      - name: argo
+        url: https://argoproj.github.io/argo-helm
+
+  tasks:
+    - name: Check if kubectl is installed
+      command: kubectl version --client
+      register: kubectl_check
+      failed_when: false
+      changed_when: false
+
+    - name: Fail if kubectl is not installed
+      fail:
+        msg: "kubectl is not installed. Please install it first."
+      when: kubectl_check.rc != 0
+
+    - name: Check if Kubernetes cluster is accessible
+      k8s_info:
+        api_version: v1
+        kind: Namespace
+        name: default
+      register: cluster_check
+      failed_when: false
+
+    - name: Fail if Kubernetes cluster is not accessible
+      fail:
+        msg: |
+          No Kubernetes cluster found. Please start one of:
+          - Docker Desktop Kubernetes
+          - minikube start
+          - kind create cluster
+          - k3d cluster create frolf-dev
+      when: cluster_check.failed
+
+    - name: Create namespaces
+      k8s:
+        name: "{{ item }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+      loop: "{{ namespaces }}"
+
+    - name: Add Helm repositories
+      kubernetes.core.helm_repository:
+        name: "{{ item.name }}"
+        repo_url: "{{ item.url }}"
+      loop: "{{ helm_repos }}"
+      register: helm_repo_result
+      failed_when:
+        - helm_repo_result.failed is defined
+        - helm_repo_result.failed
+        - "'already have a repository named' not in (helm_repo_result.msg | default(''))"
+      ignore_errors: false
+
+    - name: Update Helm repositories
+      command: helm repo update
+      changed_when: false
+
+    - name: Display setup completion
+      debug:
+        msg: |
+          ✅ Local development environment ready!
+
+          Next steps:
+          - Run: ansible-playbook ansible/playbooks/setup-storage.yml
+          - Run: ansible-playbook ansible/playbooks/setup-monitoring.yml
+          - Run: ansible-playbook ansible/playbooks/setup-argocd.yml
+          - Run: ansible-playbook ansible/playbooks/deploy-frolf-bot.yml
