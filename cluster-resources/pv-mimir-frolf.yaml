@@ -18,4 +18,4 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - resume-project-node
+                - worker-1 # OCI worker node (local storage for Mimir)

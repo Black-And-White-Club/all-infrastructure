@@ -22,12 +22,18 @@ resource "oci_load_balancer_backend" "backends" {
 
   load_balancer_id = oci_load_balancer_load_balancer.lb.id
   backendset_name  = oci_load_balancer_backend_set.backend_set.name
-  ip_address       = each.value
-  port             = var.backend_http_port
-  backup           = false
-  drain            = false
-  offline          = false
-  weight           = 1
+  # TODO: This expects IP addresses, not OCIDs. Need to add data source:
+  # data "oci_core_instance" "backend" {
+  #   for_each = toset(var.backend_instance_ocids)
+  #   instance_id = each.value
+  # }
+  # Then use: data.oci_core_instance.backend[each.key].private_ip
+  ip_address = each.value # FIXME: Currently receives OCID, not IP
+  port       = var.backend_http_port
+  backup     = false
+  drain      = false
+  offline    = false
+  weight     = 1
 }
 
 resource "oci_load_balancer_listener" "http_listener" {
@@ -45,7 +51,7 @@ resource "oci_load_balancer_listener" "https_listener" {
   name                     = "https-listener"
   default_backend_set_name = oci_load_balancer_backend_set.backend_set.name
   port                     = 443
-  protocol                 = "HTTP"
+  protocol                 = "HTTPS"
 
   ssl_configuration {
     certificate_ids = var.ssl_certificate_ids

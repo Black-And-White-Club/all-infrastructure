@@ -1,5 +1,8 @@
 #!/bin/bash
-# Startup script to mount frolf-bot disks
+# DEPRECATED: GCP-specific disk mounting script - not used in OCI deployment
+# TODO: Remove or adapt for OCI block volumes if persistent storage is needed
+# OCI handles block volume attachment via Terraform + cloud-init
+# See: https://docs.oracle.com/en-us/iaas/Content/Block/Tasks/attachingavolume.htm
 
 set -e
 

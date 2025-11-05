@@ -58,8 +58,11 @@ resource "oci_identity_policy" "policy" {
 }
 
 // Optional: create an OCI OIDC identity provider for GitHub Actions.
-// This creates the provider on the OCI side; you must still configure
-// the GitHub side to trust the provider and issue tokens.
+// NOTE: This module is DORMANT/SCAFFOLDING - OCI doesn't natively support GitHub OIDC.
+// OCI's identity provider primarily supports SAML2-based federation (e.g., via IDCS).
+// For GitHub Actions authentication, use auth tokens (as currently implemented) or
+// set up SAML2 federation via Oracle IDCS as an intermediary.
+// See: https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/federatingIDCS.htm
 resource "oci_identity_identity_provider" "oidc" {
   count          = var.create_provider ? 1 : 0
   compartment_id = local.policy_compartment
@@ -67,7 +70,8 @@ resource "oci_identity_identity_provider" "oidc" {
   description    = var.provider_description
   product_type   = "IDCS"
 
-  # OIDC-specific settings
+  # SAML2 protocol (OCI's supported federation mechanism)
+  # GitHub OIDC → IDCS (SAML2) → OCI is the typical pattern
   protocol     = "SAML2"
   metadata_url = var.provider_issuer
   metadata     = ""

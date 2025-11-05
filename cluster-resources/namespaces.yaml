@@ -36,23 +36,3 @@ metadata:
     name: frolf-bot
     app: frolf-bot
     managed-by: argocd
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: postgres-frolf
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: nats-frolf
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: observability
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: resume
