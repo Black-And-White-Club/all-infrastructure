@@ -47,8 +47,8 @@ grafana:
           - jaromero.cloud
   persistence:
     enabled: true
-    storageClassName: ""
-    existingClaim: grafana-local-pvc
+    storageClassName: "oci-block-storage" # Use OCI block volume storage class
+    # existingClaim: grafana-local-pvc  # Removed - use dynamic provisioning instead
     accessModes:
       - ReadWriteOnce
     size: 5Gi
