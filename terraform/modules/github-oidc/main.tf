@@ -104,6 +104,8 @@ output "policy_compartment" {
   description = "Compartment OCID where policies/dynamic groups were created (or should be created)"
 }
 
+/*
+# Outputs for commented-out identity provider resource
 output "identity_provider_id" {
   value       = length(oci_identity_identity_provider.oidc) > 0 ? oci_identity_identity_provider.oidc[0].id : ""
   description = "OCID of the created OCI identity provider (if created)"
@@ -113,4 +115,5 @@ output "identity_provider_name" {
   value       = length(oci_identity_identity_provider.oidc) > 0 ? oci_identity_identity_provider.oidc[0].name : ""
   description = "Name of the created OCI identity provider (if created)"
 }
+*/
 

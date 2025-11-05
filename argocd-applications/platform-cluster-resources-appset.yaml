@@ -20,7 +20,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: "https://github.com/YOUR_ORG/all-infrastructure.git"
+        repoURL: "https://github.com/Black-And-White-Club/all-infrastructure.git"
         targetRevision: main
         path: cluster-resources
         directory:

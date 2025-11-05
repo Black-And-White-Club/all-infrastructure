@@ -45,10 +45,12 @@ resource "oci_core_public_ip" "reserved_ip" {
   display_name   = "${var.vm_names[each.value]}-public-ip"
 }
 
+# Disk attachments - currently attaches to first VM only
+# TODO: Make this configurable via variable specifying which VM receives which disks
 resource "oci_core_volume_attachment" "attachments" {
   for_each = var.disk_ocids
 
-  instance_id     = oci_core_instance.vm[0].id # Attach to first VM for now
+  instance_id     = oci_core_instance.vm[0].id
   volume_id       = each.value
   attachment_type = "paravirtualized"
 }
