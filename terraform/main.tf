@@ -4,6 +4,10 @@ terraform {
       source  = "oracle/oci"
       version = "~> 7.22.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
   }
 }
 
@@ -32,7 +36,20 @@ data "oci_identity_groups" "terraform_admins" {
 
 # Extract the group ID for easier reference
 locals {
-  terraform_admin_group_id = data.oci_identity_groups.terraform_admins.groups[0].id
+  # Use try() to handle case where terraform-admins group doesn't exist
+  terraform_admin_group_id = try(
+    data.oci_identity_groups.terraform_admins.groups[0].id,
+    null
+  )
+}
+
+# Validation: ensure terraform-admins group exists
+resource "null_resource" "validate_terraform_group" {
+  count = local.terraform_admin_group_id == null ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "echo 'ERROR: terraform-admins group not found in tenancy' && exit 1"
+  }
 }
 
 # Terraform management policies

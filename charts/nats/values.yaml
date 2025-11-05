@@ -9,7 +9,7 @@ nats:
     fileStorage:
       enabled: true
       size: 5Gi
-      storageClassName: oci-bv
+      storageClassName: oci-block-storage
 
 cluster:
   enabled: false

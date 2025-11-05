@@ -2,7 +2,7 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: oci-block-storage
-provisioner: "<replace-with-oci-csi-provisioner>"
+provisioner: blockvolume.csi.oraclecloud.com
 reclaimPolicy: Retain
 volumeBindingMode: WaitForFirstConsumer
 parameters:

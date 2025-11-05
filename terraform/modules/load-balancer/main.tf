@@ -17,24 +17,26 @@ resource "oci_load_balancer_backend_set" "backend_set" {
   }
 }
 
-resource "oci_load_balancer_backend" "backends" {
-  for_each = toset(var.backend_instance_ocids)
-
-  load_balancer_id = oci_load_balancer_load_balancer.lb.id
-  backendset_name  = oci_load_balancer_backend_set.backend_set.name
-  # TODO: This expects IP addresses, not OCIDs. Need to add data source:
-  # data "oci_core_instance" "backend" {
-  #   for_each = toset(var.backend_instance_ocids)
-  #   instance_id = each.value
-  # }
-  # Then use: data.oci_core_instance.backend[each.key].private_ip
-  ip_address = each.value # FIXME: Currently receives OCID, not IP
-  port       = var.backend_http_port
-  backup     = false
-  drain      = false
-  offline    = false
-  weight     = 1
-}
+# NOTE: Backend resource commented out - requires data source to convert OCIDs to IPs
+# Uncomment and implement when needed:
+#
+# data "oci_core_instance" "backend" {
+#   for_each = toset(var.backend_instance_ocids)
+#   instance_id = each.value
+# }
+#
+# resource "oci_load_balancer_backend" "backends" {
+#   for_each = toset(var.backend_instance_ocids)
+#
+#   load_balancer_id = oci_load_balancer_load_balancer.lb.id
+#   backendset_name  = oci_load_balancer_backend_set.backend_set.name
+#   ip_address       = data.oci_core_instance.backend[each.key].private_ip
+#   port             = var.backend_http_port
+#   backup           = false
+#   drain            = false
+#   offline          = false
+#   weight           = 1
+# }
 
 resource "oci_load_balancer_listener" "http_listener" {
   load_balancer_id         = oci_load_balancer_load_balancer.lb.id
