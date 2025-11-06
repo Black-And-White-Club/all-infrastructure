@@ -21,9 +21,9 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: resume
+  name: resume-app
   labels:
-    name: resume
+    name: resume-app
     app: resume
     managed-by: argocd
 ---
