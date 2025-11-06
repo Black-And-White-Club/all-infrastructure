@@ -46,12 +46,11 @@ grafana:
         hosts:
           - jaromero.cloud
   persistence:
-    enabled: true
-    storageClassName: "oci-block-storage" # Use OCI block volume storage class
-    # existingClaim: grafana-local-pvc  # Removed - use dynamic provisioning instead
-    accessModes:
-      - ReadWriteOnce
-    size: 5Gi
+    enabled: false # Disabled temporarily - need to install OCI CSI driver first
+    # storageClassName: "oci-block-storage"
+    # accessModes:
+    #   - ReadWriteOnce
+    # size: 5Gi
     finalizers:
       - kubernetes.io/pvc-protection
   securityContext:
