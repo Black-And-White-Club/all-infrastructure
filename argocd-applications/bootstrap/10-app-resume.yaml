@@ -28,7 +28,7 @@ spec:
       path: resume-app-manifests
   destination:
     server: https://kubernetes.default.svc
-    namespace: resume
+    namespace: resume-app
   syncPolicy:
     automated:
       prune: true
