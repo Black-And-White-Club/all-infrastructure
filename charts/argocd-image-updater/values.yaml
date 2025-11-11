@@ -1,0 +1,34 @@
+rbac:
+  enabled: true
+
+config:
+  argocd:
+    serverAddress: "argocd-server.argocd.svc.cluster.local"
+    tokenSecretName: "argocd-image-updater-secret"
+  gitCommitUser: "argocd-image-updater"
+  gitCommitMail: "argocd-image-updater@noreply.com"
+  logLevel: "debug"
+
+  # Git credentials for writing back to repository
+  git:
+    user: "argocd-image-updater"
+    email: "argocd-image-updater@noreply.com"
+
+  registries:
+    - name: OCIR
+      api_url: https://iad.ocir.io
+      prefix: iad.ocir.io
+      ping: yes
+      credentials: pullsecret:resume-app/ocir-secret
+
+serviceAccount:
+  create: true
+
+extraEnvVars:
+  - name: ARGOCD_SERVER
+    value: "argocd-server.argocd.svc.cluster.local"
+  - name: ARGOCD_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: argocd-image-updater-secret
+        key: argocd.token
