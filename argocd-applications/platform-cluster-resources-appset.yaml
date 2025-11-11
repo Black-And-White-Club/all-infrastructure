@@ -11,6 +11,11 @@ spec:
         revision: main
         files:
           - path: "cluster-resources/*.yaml"
+        exclude:
+          - path: "cluster-resources/namespaces.yaml"
+          - path: "cluster-resources/storage-class-oci.yaml"
+          - path: "cluster-resources/pv-mimir-frolf.yaml"
+          - path: "cluster-resources/sealed-secrets/**"
   template:
     metadata:
       name: 'cluster-{{ trimSuffix ".yaml" .path.filename }}'
