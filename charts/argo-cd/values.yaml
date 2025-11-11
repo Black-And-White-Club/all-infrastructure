@@ -24,24 +24,24 @@ server:
 controller:
   resources:
     limits:
-      cpu: 1000m
-      memory: 1Gi
+      cpu: 500m
+      memory: 512Mi
     requests:
       cpu: 200m
-      memory: 512Mi
+      memory: 256Mi
 
   # Single replica for small cluster
   replicas: 1
 
-# Repo Server - handles git operations
+# Repo Server - handles git operations (handles Helm templating, needs more memory)
 repoServer:
   resources:
     limits:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 500m
+      memory: 512Mi
     requests:
-      cpu: 50m
-      memory: 128Mi
+      cpu: 100m
+      memory: 256Mi
 
   replicas: 1
 
@@ -79,6 +79,6 @@ dex:
 redis-ha:
   enabled: false
 # Resource totals (approximate):
-# Limits:   ~1.1 CPU, ~1.28 GB RAM
-# Requests: ~0.25 CPU, ~0.64 GB RAM
-# Leaves headroom for apps on 2-node cluster
+# Limits:   ~1.4 CPU, ~1.54 GB RAM
+# Requests: ~0.375 CPU, ~0.896 GB RAM
+# Balanced for VM.Standard.E2.1 (1 OCPU, 8GB RAM) with headroom for applications
