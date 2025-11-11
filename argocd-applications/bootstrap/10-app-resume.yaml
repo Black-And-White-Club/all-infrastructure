@@ -42,3 +42,4 @@ spec:
       - Replace=true # Use replace for large CRDs instead of patch
       - SkipDryRunOnMissingResource=true
       - PruneLast=true
+      - SkipPreSyncHooks=true
