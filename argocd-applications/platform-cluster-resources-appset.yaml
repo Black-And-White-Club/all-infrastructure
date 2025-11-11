@@ -10,7 +10,7 @@ spec:
         repoURL: "https://github.com/Black-And-White-Club/all-infrastructure.git"
         revision: main
         files:
-          - path: "cluster-resources/sealed-secrets/*.yaml"
+          - path: "cluster-resources/*.yaml"
   template:
     metadata:
       name: 'cluster-{{ trimSuffix ".yaml" .path.filename }}'
