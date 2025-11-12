@@ -1,6 +1,6 @@
 ---
 # Resume Application
-# Deploys kube-prometheus-stack + resume-frontend + resume-backend
+# Deploys resume-frontend + resume-backend manifests only
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -10,25 +10,10 @@ metadata:
     argocd.argoproj.io/sync-wave: "20"
 spec:
   project: default
-  sources:
-    # Source 1: kube-prometheus-stack Helm chart
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: kube-prometheus-stack
-      targetRevision: 65.8.1 # Renovate will create PRs to update this
-      helm:
-        valueFiles:
-          - $values/charts/prometheus/values.yaml
-        parameters:
-          - name: prometheus-operator.admissionWebhooks.enabled
-            value: "false"
-    # Source 2: All-infrastructure repo (for centralized Helm values)
-    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
-      targetRevision: main
-      ref: values
-    # Source 3: Resume application manifests
-    - repoURL: https://github.com/Black-And-White-Club/resume-infrastructure
-      targetRevision: main
-      path: resume-app-manifests
+  source:
+    repoURL: https://github.com/Black-And-White-Club/resume-infrastructure
+    targetRevision: main
+    path: resume-app-manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: resume-app
@@ -39,7 +24,3 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-      - Replace=true # Use replace for large CRDs instead of patch
-      - SkipDryRunOnMissingResource=true
-      - PruneLast=true
-      - SkipPreSyncHooks=true
