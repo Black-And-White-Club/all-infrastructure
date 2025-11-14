@@ -62,3 +62,12 @@ KUBECONFIG=~/.kube/config-oci kubectl port-forward svc/argocd-server -n argocd 8
 - `applications/` - Application bootstrappers (point to app repos)
 
 See `/docs/MIGRATION-PLAN.md` for detailed architecture and migration guide.
+
+## CRD Management & Sync-Wave Ordering
+
+When a controller (like Argo CD Image Updater) installs CRDs via a Helm chart, Argo can still try to apply Custom Resources (CRs) before the CRD is registered, resulting in "not found" errors. To avoid this race and stay GitOps-native, prefer one of these patterns:
+
+- Chart-managed CRDs (recommended): Keep `crds.install: true` in the chart `values.yaml`. Set the controller Application to an early sync-wave (e.g., "2"), and set any per-app CR Applications to a later sync-wave (e.g., "21"). This ensures CRDs are installed by the chart before per-app CRs sync.
+- Explicit CRD Application: Manage CRDs in a dedicated path and Argo Application (e.g., `cluster-resources/crds`), give it the earliest sync-wave, set the controller chart `crds.install: false`, and keep per-app CRs in later waves. This is useful when you need explicit control over CRD lifecycle.
+
+We follow the chart-managed CRDs pattern in this repo: the Image Updater chart installs CRDs and per-app ImageUpdater Application(s) live under `argocd-applications/` with `sync-wave: 21` to ensure proper ordering.
