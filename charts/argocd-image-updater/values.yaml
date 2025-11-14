@@ -15,11 +15,11 @@ config:
     email: "argocd-image-updater@noreply.com"
 
   registries:
-    - name: OCIR
-      api_url: https://iad.ocir.io
-      prefix: iad.ocir.io
+    - name: Oracle Cloud Infrastructure Registry
+      api_url: https://us-ashburn-1.ocir.io
+      prefix: us-ashburn-1.ocir.io
       ping: yes
-      credentials: pullsecret:resume-app/ocir-secret
+      credentials: pullsecret:argocd/ocir-secret
 
 serviceAccount:
   create: true
