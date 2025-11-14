@@ -1,0 +1,25 @@
+---
+# ArgoCD Image Updater CRDs Bootstrap Application
+# Deploys the ImageUpdater CRD before the controller is installed
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-image-updater-crds
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+    targetRevision: main
+    path: cluster-resources/crds
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - Replace=true
