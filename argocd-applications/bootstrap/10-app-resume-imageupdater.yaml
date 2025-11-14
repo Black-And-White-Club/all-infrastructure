@@ -1,0 +1,38 @@
+---
+# ImageUpdater CRD for Resume Application
+# Manages automatic image updates for resume-frontend and resume-backend
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: resume-image-updater
+  namespace: argocd
+spec:
+  # Target namespace where the Argo Application lives
+  namespace: argocd
+
+  # Application selection and image configuration
+  applicationRefs:
+    - namePattern: "app-resume"
+      images:
+        - alias: resume-frontend
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume"
+          commonUpdateSettings:
+            updateStrategy: "semver"
+            # Match short commit SHAs (7 hex chars)
+            allowTags: "regexp:^[0-9a-f]{7}$"
+
+        - alias: resume-backend
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume-backend"
+          commonUpdateSettings:
+            updateStrategy: "semver"
+            # Match short commit SHAs (7 hex chars)
+            allowTags: "regexp:^[0-9a-f]{7}$"
+
+  # Git write-back configuration
+  # Commented out initially - uncomment after validating image discovery works
+  # writeBackConfig:
+  #   method: git
+  #   gitConfig:
+  #     repository: "git@github.com:Black-And-White-Club/resume-infrastructure"
+  #     branch: "main"
+  #     writeBackTarget: "helmvalues:resume-app-manifests/global-values.yaml"

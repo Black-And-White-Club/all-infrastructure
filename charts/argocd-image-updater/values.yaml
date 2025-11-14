@@ -1,5 +1,11 @@
+crds:
+  install: true
+  keep: true
+
 rbac:
   enabled: true
+
+createClusterRoles: true
 
 config:
   argocd:
