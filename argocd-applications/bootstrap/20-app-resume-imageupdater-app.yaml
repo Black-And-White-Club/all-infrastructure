@@ -1,0 +1,25 @@
+---
+# ImageUpdater CRD for Resume Application
+# Manages automatic image updates for resume-frontend and resume-backend
+# NOTE: This resource depends on the ImageUpdater CRD being installed by the argocd-image-updater chart.
+# The chart installs CRDs via sync-wave "2", so this must use a later wave.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-resume-imageupdater
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "21"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+    targetRevision: main
+    path: argocd-applications/image-updaters
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
