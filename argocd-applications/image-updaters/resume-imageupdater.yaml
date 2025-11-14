@@ -28,13 +28,13 @@ spec:
             # Match short commit SHAs (7 hex chars)
             allowTags: "regexp:^[0-9a-f]{7}$"
 
-  # Git write-back configuration
-  # Commented out initially - uncomment after validating image discovery works
-    writeBackConfig:
-      method: git
-      gitConfig:
-        # HTTPS or SSH clone URL for the repository containing resume-app-manifests
-        repository: "https://github.com/Black-And-White-Club/resume-infrastructure"
-        branch: "main"
-        # Target files/paths to write back — we use the YAML manifests directory
-        writeBackTarget: "yaml:resume-app-manifests"
+      # Git write-back configuration
+      # Commented out initially - uncomment after validating image discovery works
+      writeBackConfig:
+        method: git
+        gitConfig:
+          # HTTPS or SSH clone URL for the repository containing resume-app-manifests
+          repository: "https://github.com/Black-And-White-Club/resume-infrastructure"
+          branch: "main"
+          # Target files/paths to write back — we use the YAML manifests directory
+          writeBackTarget: "yaml:resume-app-manifests"
