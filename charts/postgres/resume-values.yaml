@@ -1,0 +1,26 @@
+# Values for resume-backend Postgres (managed by all-infrastructure)
+fullnameOverride: resume-backend
+auth:
+  database: resume_db
+  username: resume_user
+  existingSecret: resume-backend-postgresql
+  secretKeys:
+    adminPasswordKey: postgres-password
+    userPasswordKey: postgresql-password
+architecture: standalone
+primary:
+  persistence:
+    size: 8Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 3m
+    scrapeTimeout: 10s

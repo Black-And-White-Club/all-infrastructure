@@ -1,0 +1,64 @@
+name: Validate infra Helm charts & templates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  helm-lint-and-kubeconform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.3
+
+      - name: Install kubeconform
+        run: |
+          wget -qO- https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz -C /usr/local/bin
+          chmod +x /usr/local/bin/kubeconform
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Lint local charts
+        run: |
+          for d in charts/*/; do
+            if [ -d "$d" ]; then
+              echo "Linting chart: $d"
+              helm lint "$d" || exit 1
+              # If values are present and a values file exists as charts/<chart>/values.yaml
+              if [ -f "$d/values.yaml" ]; then
+                helm template test-$d "$d" -f "$d/values.yaml" > /tmp/k8s-manifest.yaml
+                kubeconform -schema-location default -strict /tmp/k8s-manifest.yaml || exit 1
+              fi
+            fi
+          done
+
+      - name: Validate multi-source apps with remote charts
+        run: |
+          # For each multi-source-apps descriptor, try to render a template using helm repo
+          for f in multi-source-apps/*.yaml; do
+            if [ -f "$f" ]; then
+              echo "Processing $f"
+              CHART=$(yq -r '.app.chart' "$f")
+              REPOURL=$(yq -r '.app.repoUrl' "$f")
+              CHART_VERSION=$(yq -r '.app.chartVersion' "$f")
+              if [ -n "$CHART" ]; then
+                helm repo add tmprepo "$REPOURL" || true
+                helm repo update || true
+                helm pull "tmprepo/$CHART" --version "$CHART_VERSION" --untar --untardir /tmp || true
+                if [ -d "/tmp/$CHART" ]; then
+                  echo "Linting pulled chart /tmp/$CHART"
+                  helm lint "/tmp/$CHART" || true
+                fi
+              fi
+            fi
+          done
