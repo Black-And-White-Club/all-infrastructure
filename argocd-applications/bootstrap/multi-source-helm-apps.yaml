@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: infra-multi-source-helm-apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - git:
+        repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+        revision: main
+        files:
+          - path: "multi-source-apps/*.yaml"
+  template:
+    metadata:
+      name: "{{ .name }}"
+      labels:
+        app: "{{ .app.name }}"
+        type: infra-multi-source
+    spec:
+      project: default
+      sources:
+        - repoURL: "{{ .app.helmRepo }}"
+          chart: "{{ .app.chart }}"
+          targetRevision: "{{ .app.chartVersion }}"
+          helm:
+            valueFiles:
+              - "$values/{{ .app.valueFiles }}"
+        - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+          targetRevision: main
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .app.namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
