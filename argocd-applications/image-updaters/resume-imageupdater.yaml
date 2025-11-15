@@ -17,29 +17,19 @@ spec:
         - alias: resume-frontend
           imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend"
           commonUpdateSettings:
-            updateStrategy: "semver"
+            updateStrategy: "newest-build"
             # Match short commit SHAs (7 hex chars)
             allowTags: "regexp:^[0-9a-f]{7}$"
 
         - alias: resume-backend
           imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend"
           commonUpdateSettings:
-            updateStrategy: "semver"
+            updateStrategy: "newest-build"
             # Match short commit SHAs (7 hex chars)
             allowTags: "regexp:^[0-9a-f]{7}$"
 
         # Additional alias/fallbacks: sometimes ko publishes to the `/resume` repository name
-        - alias: resume-backend-legacy
-          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume"
-          commonUpdateSettings:
-            updateStrategy: "semver"
-            allowTags: "regexp:^[0-9a-f]{7}$"
-
-        - alias: resume-backend-ko
-          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/resume-backend"
-          commonUpdateSettings:
-            updateStrategy: "semver"
-            allowTags: "regexp:^[0-9a-f]{7}$"
+        # Removed legacy/ko fallback aliases now that ko publishes to resume/backend consistently
 
       # Git write-back configuration
       # Commented out initially - uncomment after validating image discovery works
