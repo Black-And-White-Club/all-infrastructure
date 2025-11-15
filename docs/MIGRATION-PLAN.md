@@ -21,8 +21,7 @@ The Lich King (all-infrastructure)
 │   ├── Mimir (shared)
 │   └── Alloy (shared)
 ├── Wave 2: Platform Shared Services
-│   ├── Postgres Operator
-│   └── NATS
+│   └── NATS (Postgres instances are deployed per-app via Helm)
 └── Wave 10+: Applications
     ├── Resume (points to resume-infrastructure/resume-app-manifests)
     └── Frolf Bot (points to frolf-bot-infrastructure/frolf-bot-app-manifests + multi-tenant)
@@ -44,7 +43,7 @@ frolf-bot-infrastructure/charts/alloy/          → all-infrastructure/charts/al
 
 # Shared services
 frolf-bot-infrastructure/charts/nats/           → all-infrastructure/charts/nats/
-frolf-bot-infrastructure/charts/postgres-frolf/ → all-infrastructure/charts/postgres-operator/
+frolf-bot-infrastructure/charts/postgres-frolf/ → all-infrastructure/charts/postgres/ (per-app Helm chart values)
 
 # Sealed Secrets
 frolf-bot-infrastructure/charts/sealed-secrets/ → all-infrastructure/charts/sealed-secrets/
@@ -127,7 +126,7 @@ all-infrastructure/
 │   ├── mimir/
 │   ├── alloy/
 │   ├── nats/
-│   └── postgres-operator/
+│   └── postgres/ (per-app helm values)
 ├── cluster-resources/                           # Raw Kubernetes manifests
 │   ├── namespaces.yaml
 │   ├── storage-class-oci.yaml
@@ -232,7 +231,7 @@ KUBECONFIG=~/.kube/config-oci kubectl get pods -n frolf-bot
 - ArgoCD itself
 - All cluster-wide resources (Sealed Secrets, cert-manager, ingress)
 - Observability stack (Grafana, Loki, Tempo, Mimir)
-- Shared services (Postgres operator, NATS)
+- Shared services (NATS)
 - The Lich King (master ApplicationSet)
 - Terraform for OCI infrastructure
 - Ansible for cluster bootstrap

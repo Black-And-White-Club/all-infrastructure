@@ -19,7 +19,6 @@ The Lich King (ApplicationSet)
 │   └── Grafana (shared visualization for resume + frolf-bot)
 │
 ├── Wave 2: Shared Services
-│   ├── Postgres Operator (CloudNativePG)
 │   └── NATS (JetStream enabled)
 │
 └── Wave 10: Applications

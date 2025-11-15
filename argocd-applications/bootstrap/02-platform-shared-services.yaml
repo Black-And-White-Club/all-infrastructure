@@ -1,6 +1,6 @@
 ---
 # Platform Shared Services
-# Postgres Operator + NATS (shared infrastructure)
+# NATS and other shared infrastructure
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -11,10 +11,7 @@ spec:
   generators:
     - list:
         elements:
-          - name: postgres-operator
-            chart: cloudnative-pg
-            chartVersion: "0.22.1"
-            repoURL: https://cloudnative-pg.github.io/charts
+          # Using per-app Helm charts for Postgres instances instead
           - name: nats
             chart: nats
             chartVersion: "1.2.11"

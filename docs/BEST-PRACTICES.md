@@ -23,8 +23,7 @@ The Lich King (Root Application)
 │   │
 │   ├── 02-platform-shared-services.yaml (Wave 15)
 │   │   └── ApplicationSet → shared-services namespace
-│   │       ├── Postgres Operator
-│   │       └── NATS
+│   │       └── NATS (Postgres instances are deployed per-app via Helm)
 │   │
 │   ├── 10-app-resume.yaml (Wave 20)
 │   │   └── Application → resume namespace
@@ -51,7 +50,7 @@ The Lich King (Root Application)
 
 **Shared Services** (ApplicationSet):
 
-- Postgres operator + NATS
+- NATS (Postgres instances are deployed per-app via Helm)
 - Same pattern for consistency
 
 **Frolf Bot Guilds** (ApplicationSet in frolf-bot repo):
@@ -79,7 +78,7 @@ generators:
 | `kube-system`     | Sealed Secrets                                              | ✅ Cluster-wide               |
 | `cert-manager`    | Cert-Manager                                                | ✅ Cluster-wide               |
 | `observability`   | **Grafana only** (shared visualization)                     | ✅ Shared visualization layer |
-| `shared-services` | Postgres Operator, NATS                                     | ✅ Operators (not instances)  |
+| `shared-services` | NATS                                                        | ✅ Operators (not instances)  |
 | `resume`          | Resume app + **Prometheus** (simple metrics)                | ❌ Resume only                |
 | `frolf-bot`       | Frolf app + **Mimir/Loki/Tempo/Alloy** (full observability) | ❌ Frolf only                 |
 | `guild-*`         | Per-guild deployments                                       | ❌ Guild-specific             |
