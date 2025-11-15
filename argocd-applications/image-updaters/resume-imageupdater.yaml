@@ -15,14 +15,14 @@ spec:
     - namePattern: "app-resume"
       images:
         - alias: resume-frontend
-          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume"
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend"
           commonUpdateSettings:
             updateStrategy: "semver"
             # Match short commit SHAs (7 hex chars)
             allowTags: "regexp:^[0-9a-f]{7}$"
 
         - alias: resume-backend
-          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume-backend"
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend"
           commonUpdateSettings:
             updateStrategy: "semver"
             # Match short commit SHAs (7 hex chars)
