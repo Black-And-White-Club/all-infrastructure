@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-image-updater-config
+  namespace: argocd
+data:
+  # Set a friendly commit author for AIU commits
+  git.user: "argocd-image-updater"
+  git.email: "noreply@argocd-image-updater.local"
+  # Customize the draft commit message for image updates applied by Image Updater
+  git.commit-message-template: |
+    build: automatic image update for {{ .AppName }}
+
+    {{ range .AppChanges -}}
+    updates image {{ .Image }} tag '{{ .OldTag }}' to '{{ .NewTag }}'
+    {{ end -}}
+  # Optionally, you can enable commit sign-off or signing keys here
+  # git.commit-sign-off: "true"
+  # git.commit-signing-key: /app/ssh-keys/id_rsa

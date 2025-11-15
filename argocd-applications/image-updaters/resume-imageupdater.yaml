@@ -28,16 +28,13 @@ spec:
             # Match short commit SHAs (7 hex chars)
             allowTags: "regexp:^[0-9a-f]{7}$"
 
-        # Additional alias/fallbacks: sometimes ko publishes to the `/resume` repository name
-        # Removed legacy/ko fallback aliases now that ko publishes to resume/backend consistently
-
-      # Git write-back configuration
-      # Commented out initially - uncomment after validating image discovery works
+      # Git write-back configuration — AIU will commit updates directly to main branch
       writeBackConfig:
-        method: git
+        method: "git:secret:argocd/repo-resume-infrastructure"
         gitConfig:
           # HTTPS or SSH clone URL for the repository containing resume-app-manifests
           repository: "https://github.com/Black-And-White-Club/resume-infrastructure"
+          # Commit changes directly to the main branch for this personal project
           branch: "main"
-          # Target files/paths to write back — we use the YAML manifests directory
-          writeBackTarget: "yaml:resume-app-manifests"
+          # Update the kustomization file so Kustomize apps get the new image tag
+          writeBackTarget: "kustomization"
