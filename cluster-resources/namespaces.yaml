@@ -8,7 +8,7 @@ metadata:
     name: observability
     managed-by: argocd
 ---
-# Shared Services - Postgres operator, NATS, other shared infrastructure
+# Shared Services - NATS and other shared infrastructure
 apiVersion: v1
 kind: Namespace
 metadata:

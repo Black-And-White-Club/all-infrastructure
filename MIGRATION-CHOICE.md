@@ -14,4 +14,4 @@ Notes & next steps:
 
 - Terraform modules were not moved in this quick-copy. If you want to consolidate infrastructure modules here, we can copy them next.
 - Update provider-specific values (GCP/OCI) and StorageClass provisioners before applying these manifests to a real cluster.
-- Consider whether sealed-secrets controller and postgres operator should be centralized or left to project repos.
+- Consider whether the sealed-secrets controller should be centralized or left to project repos. Postgres instances are managed via per-app Helm charts by default in this repo.

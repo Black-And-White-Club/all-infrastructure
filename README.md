@@ -9,7 +9,8 @@ Purpose
 - Install core platform services (ArgoCD, ingress, cert-manager)
 - Host cluster-level resources (namespaces, storage classes, PVs)
 - Install and manage the observability stack (Prometheus, Grafana, Loki, Tempo, Alloy)
-- Install cluster-level operators (Postgres operator, sealed-secrets controller if centralized)
+- Install cluster-level operators (sealed-secrets controller if centralized)
+  Postgres instances are managed by per-app Helm charts by default.
 
 Repository layout (skeleton)
 
@@ -21,7 +22,7 @@ Repository layout (skeleton)
 - `cluster-resources/` — Namespaces, StorageClasses, PV templates, cluster RBAC
 - `argocd-applications/` — platform-level ArgoCD `Application`/`ApplicationSet` manifests
 - `observability/` — Helm values and small examples for Prometheus/Grafana/Loki/Tempo/Alloy
-- `operators/` — operator install values/CR examples (postgres-operator, sealed-secrets)
+- `operators/` — operator install values/CR examples (sealed-secrets)
 - `MIGRATION.md` — guidance and commands for moving files from the project repos
 
 Quick notes
