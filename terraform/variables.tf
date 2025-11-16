@@ -79,6 +79,54 @@ variable "allowed_k8s_api_cidrs" {
   default     = []
 }
 
+variable "mimir_bucket_name" {
+  description = "Name of the OCI object bucket for Mimir"
+  type        = string
+  default     = "mimir-shared-bucket"
+}
+
+variable "loki_bucket_name" {
+  description = "Name of the OCI object bucket for Loki"
+  type        = string
+  default     = "loki-shared-bucket"
+}
+
+variable "tempo_bucket_name" {
+  description = "Name of the OCI object bucket for Tempo"
+  type        = string
+  default     = "tempo-shared-bucket"
+}
+
+variable "disks" {
+  description = "Optional map of block storage disks definitions for provisioning via block-storage module"
+  type = map(object({
+    name                = string
+    size                = number
+    type                = optional(string, "")
+    availability_domain = optional(string, "")
+    labels              = optional(map(string), {})
+  }))
+  default = {}
+}
+
+variable "vm_count" {
+  description = "Number of compute instances to create in the compute module"
+  type        = number
+  default     = 2
+}
+
+variable "vm_names" {
+  description = "List of VM names to create"
+  type        = list(string)
+  default     = ["k8s-control-plane", "k8s-worker"]
+}
+
+variable "assign_reserved_ips" {
+  description = "List of booleans indicating if each VM should receive a reserved public ip"
+  type        = list(bool)
+  default     = [false, true]
+}
+
 variable "allowed_ssh_cidrs" {
   description = "List of CIDR blocks allowed SSH access (port 22). Keep this in terraform.tfvars (gitignored). Empty list = deny all external SSH."
   type        = list(string)

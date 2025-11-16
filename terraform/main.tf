@@ -109,7 +109,9 @@ module "compute" {
   availability_domain   = var.availability_domain
   image_id              = var.image_id
   ssh_public_key        = var.ssh_public_key
-  vm_count              = 2
+  vm_count              = var.vm_count
+  vm_names              = var.vm_names
+  assign_reserved_ips   = var.assign_reserved_ips
   allowed_k8s_api_cidrs = var.allowed_k8s_api_cidrs
   allowed_ssh_cidrs     = var.allowed_ssh_cidrs
 
@@ -138,6 +140,25 @@ module "container_registry_resume" {
   repo_name         = "resume"
 
   depends_on = [oci_identity_policy.terraform_policy]
+}
+
+module "object_storage" {
+  source = "./modules/object-storage"
+
+  compartment_ocid = var.compartment_ocid
+  namespace        = data.oci_objectstorage_namespace.namespace.namespace
+  buckets = {
+    mimir = { name = var.mimir_bucket_name }
+    loki  = { name = var.loki_bucket_name }
+    tempo = { name = var.tempo_bucket_name }
+  }
+
+  depends_on = [oci_identity_policy.terraform_policy]
+}
+
+output "object_storage_buckets" {
+  description = "Created object storage buckets for observability"
+  value       = module.object_storage.bucket_names
 }
 
 output "instance_public_ips" {

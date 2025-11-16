@@ -1,3 +1,27 @@
+# Infrastructure Best Practices
+
+This file documents the general production-ready best practices this repo follows.
+
+1. Storage
+
+- Use dynamic provisioning via a StorageClass for block volumes (OCI: `oci-block-storage`). Do not check-in hostPath/local PV manifests to avoid node-specific paths and to enable portability.
+- Use object storage (S3/OCI) for long-lived blocks/chunks/traces (Mimir/Loki/Tempo).
+- Use `n` replicas & resource-appropriate cache sizes for ingestion nodes; caches use block volume while the long-term storage is object store.
+
+2. Chart values
+
+- Keep a single canonical production values file per chart (e.g., `charts/postgres/resume-values.yaml`) used by ArgoCD.
+- Use a `values.base.yaml` (optional) for defaults and `values-prod.yaml` for overrides per-app where appropriate; keep secrets outside the repo using Sealed Secrets.
+
+3. Secrets
+
+- Use SealedSecrets for cluster secrets; store sealed secret yaml in `cluster-resources/sealed-secrets/` and keep private keys or unsealed secrets out of Git.
+
+4. Migration
+
+- When migrating storage, backup first (Postgres: `pg_dump`, Mimir/Loki: export/backup utilities), then change the chart values to use dynamic PVC and deploy.
+- Validate new data stores before deleting old PVs.
+
 # 2025 Best Practices Implementation
 
 ## What We Built
