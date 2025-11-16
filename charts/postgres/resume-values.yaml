@@ -10,6 +10,7 @@ auth:
 architecture: standalone
 primary:
   persistence:
+    storageClass: oci-block-storage
     size: 8Gi
   resources:
     requests:

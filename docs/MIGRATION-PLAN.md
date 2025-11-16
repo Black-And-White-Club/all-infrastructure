@@ -133,11 +133,9 @@ all-infrastructure/
 │   ├── cert-manager/
 │   │   └── cluster-cert-issuer.yaml
 │   ├── resume/
-│   │   ├── pv-grafana.yaml
-│   │   └── pv-postgres.yaml
+│   │   ├── NOTE: Prometheus/Grafana and Postgres should use dynamic PVCs (oci-block-storage). Do not check hostPath PV YAML into repo.
 │   └── frolf-bot/
-│       ├── pv-nats.yaml
-│       └── pv-postgres.yaml
+│       ├── NOTE: The frolf-bot cluster-resources folder historically included hostPath PVs for NATS/Postgres/Grafana. These have been removed in favor of dynamically-provisioned PVCs using StorageClass 'oci-block-storage'.
 ├── sealed-secrets/                              # All sealed secrets
 │   ├── ocir-pull-secret-sealed.yaml
 │   ├── argocd-token-sealed.yaml
