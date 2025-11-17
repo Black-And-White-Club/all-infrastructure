@@ -1,0 +1,27 @@
+---
+# ArgoCD Application to install the OCI Block Storage CSI driver
+# This is a template that references the local `cluster-resources/csi/oci-csi-driver` directory
+# Add your driver values and a SealedSecret for the OCI credentials in the `cluster-resources/` path
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: oci-csi-driver
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "99"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    targetRevision: main
+    path: cluster-resources/csi/oci-csi-driver
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
