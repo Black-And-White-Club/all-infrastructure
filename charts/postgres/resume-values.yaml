@@ -11,6 +11,10 @@ architecture: standalone
 primary:
   persistence:
     storageClass: oci-block-storage
+    # Some Helm charts accept storageClassName instead of storageClass. We set both
+    # to ensure the underlying StatefulSet's volumeClaimTemplates get the correct
+    # storageClassName field for dynamic provisioning.
+    storageClassName: oci-block-storage
     size: 8Gi
   resources:
     requests:
