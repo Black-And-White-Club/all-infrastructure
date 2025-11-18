@@ -102,6 +102,31 @@ module "identity_users" {
   user_email_domain      = var.user_email_domain
 }
 
+/* resume_db_block_storage module and computed locals removed here; retained later in the file to avoid duplicates. */
+
+module "resume_db_block_storage" {
+  count  = var.create_resume_db_block_storage ? 1 : 0
+  source = "./modules/block-storage"
+
+  # Define a single disk for the resume database which will be attached to the compute instance
+  disks = {
+    resume-db = {
+      name = "resume-db-volume"
+      size = var.resume_db_disk_size
+      # Use availability_domain from the root terraform variables so the volume and instance are in the same AD
+      availability_domain = var.availability_domain
+    }
+  }
+
+  compartment_ocid            = var.compartment_ocid
+  default_availability_domain = var.availability_domain
+}
+
+locals {
+  computed_disk_ocids      = var.create_resume_db_block_storage ? module.resume_db_block_storage[0].disk_ocids : {}
+  computed_disk_attach_map = { for k, v in local.computed_disk_ocids : k => 1 }
+}
+
 module "compute" {
   source = "./modules/compute"
 
@@ -119,6 +144,36 @@ module "compute" {
     oci_identity_policy.terraform_policy,
     oci_identity_policy.administrators_policy
   ]
+
+  # Attach any created block-storage volumes to compute instances.
+  # module.block_storage.disk_ocids is provided below; we pass it into compute so attachments are created.
+  disk_ocids                  = local.computed_disk_ocids
+  disk_attach_to              = local.computed_disk_attach_map
+  enable_resume_db_auto_mount = false
+  resume_db_mount_point       = "/mnt/data/resume-db"
+}
+
+# Optional remote setup: ensure /mnt/data/resume-db directory exists and is owned appropriately
+resource "null_resource" "resume_db_directory_setup" {
+  count = var.enable_resume_db_remote_setup ? 1 : 0
+
+  # Make sure the compute module is ready
+  depends_on = [module.compute]
+
+  provisioner "remote-exec" {
+    inline = [
+      "#!/bin/bash -eux",
+      "sudo mkdir -p /mnt/data/resume-db",
+      "sudo chown 1001:1001 /mnt/data/resume-db",
+      "sudo chmod 700 /mnt/data/resume-db",
+    ]
+    connection {
+      type        = "ssh"
+      user        = "opc"
+      host        = var.resume_db_mount_host != "" ? var.resume_db_mount_host : module.compute.public_ips[0]
+      private_key = file(var.ssh_private_key_path)
+    }
+  }
 }
 
 # Create OCIR container repositories for projects (frolf & resume)
@@ -155,6 +210,12 @@ module "object_storage" {
 
   depends_on = [oci_identity_policy.terraform_policy]
 }
+
+/* resume_db_block_storage and locals moved up above compute to avoid forward reference and duplication */
+
+/* Pass generated disk OCIDs into compute module instance via provably-existing variable reference
+   The compute module attaches disks by index (disk_attach_to). Here we attach resume-db to instance at index 1. */
+/* compute_extra_disk_bindings removed; disk attachment wiring now occurs via variables passed to the compute module above. */
 
 output "object_storage_buckets" {
   description = "Created object storage buckets for observability"
