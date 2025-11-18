@@ -10,12 +10,15 @@ auth:
 architecture: standalone
 primary:
   persistence:
-    storageClass: oci-block-storage
+    # For the small resume backend we use a Node-local PV (local-storage) to avoid
+    # consuming the tenancy's OCI Always Free block volume quota. If you prefer
+    # to use OCI block storage, set storageClassName: oci-block-storage instead.
+    storageClass: local-storage
     # Some Helm charts accept storageClassName instead of storageClass. We set both
     # to ensure the underlying StatefulSet's volumeClaimTemplates get the correct
     # storageClassName field for dynamic provisioning.
-    storageClassName: oci-block-storage
-    size: 8Gi
+    storageClassName: local-storage
+    size: 2Gi
   resources:
     requests:
       cpu: 50m

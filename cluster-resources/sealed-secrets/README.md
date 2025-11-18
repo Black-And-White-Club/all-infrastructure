@@ -1,3 +1,40 @@
+# SealedSecrets for OCI Credentials
+
+This directory should contain SealedSecrets for any OCI credentials used by
+in-cluster services (OCI CSI driver, object storage uploads, etc.). Do NOT
+commit unsealed (plaintext) secrets to Git.
+
+To create a SealedSecret for object storage uploads (used by backups or other jobs/controllers):
+
+1. Create a local Kubernetes Secret (dry-run) with your values:
+
+```bash
+kubectl --kubeconfig ~/.kube/config-oci -n kube-system create secret generic oci-objectstore-creds \
+  --from-literal=tenancy="$OCI_TENANCY" \
+  --from-literal=user="$OCI_USER" \
+  --from-literal=fingerprint="$OCI_FINGERPRINT" \
+  --from-file=privateKey="$OCI_KEY_PATH" \
+  --from-literal=region="$OCI_REGION" \
+  --from-literal=compartmentId="$OCI_COMPARTMENT" \
+  --from-literal=namespace="$OCI_NAMESPACE" \
+  --dry-run=client -o yaml > /tmp/oci-objectstore-creds.yaml
+```
+
+2. Seal the secret (use the kubeconfig to target your cluster):
+
+```bash
+kubeseal --kubeconfig ~/.kube/config-oci --controller-name sealed-secrets \
+  --controller-namespace kube-system -o yaml < /tmp/oci-objectstore-creds.yaml \
+  > all-infrastructure/cluster-resources/sealed-secrets/oci-objectstore-creds-sealed.yaml
+```
+
+3. Commit the sealed secret file to Git and push. ArgoCD will apply it and the
+   sealed-secrets controller will create the real secret in the cluster.
+
+Important: Jobs or controllers that upload to object storage expect the secret named
+`oci-objectstore-creds` in the `kube-system` namespace and the Postgres password
+to be present in `resume-backend-postgresql` secret in the `resume-db` namespace.
+
 # SealedSecret management for infra-managed DBs
 
 This directory contains sealed secret templates for infra-managed DBs. The files are templates — they must contain `kubeseal`-generated encrypted data before being applied.

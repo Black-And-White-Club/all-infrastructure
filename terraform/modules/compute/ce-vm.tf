@@ -1,3 +1,8 @@
+locals {
+  # Mark instances that are targets for any disk attachments (so we can conditionally include user_data)
+  disk_attach_indexes = values(var.disk_attach_to)
+}
+
 resource "oci_core_instance" "vm" {
   count = var.vm_count
 
@@ -16,9 +21,44 @@ resource "oci_core_instance" "vm" {
     source_id   = var.image_id
   }
 
-  metadata = {
-    ssh_authorized_keys = var.ssh_public_key
-  }
+  metadata = merge(
+    {
+      ssh_authorized_keys = var.ssh_public_key
+    },
+    (var.enable_resume_db_auto_mount && contains(local.disk_attach_indexes, count.index)) ? {
+      user_data = base64encode(<<-CLOUDINIT
+        #cloud-config
+        runcmd:
+          - |
+            set -e
+            MOUNT_POINT="${var.resume_db_mount_point}"
+            if ! grep -qs "${var.resume_db_mount_point}" /proc/mounts; then
+              DEVICE=""
+              # pick first block device that's not the root (/dev/sda*) and not loop
+              for DEV in $(lsblk -ndo NAME | grep -vE '^loop|^sr|^sda'); do
+                  if [ -z "$(lsblk -ndo MOUNTPOINT /dev/$${DEV})" ]; then
+                    DEVICE="/dev/$${DEV}"
+                  break
+                fi
+              done
+              if [ -n "$DEVICE" ]; then
+                if ! blkid "$${DEVICE}" >/dev/null 2>&1; then
+                  mkfs.ext4 -F "$${DEVICE}"
+                fi
+                mkdir -p "${var.resume_db_mount_point}"
+                UUID=$(blkid -s UUID -o value "$${DEVICE}")
+                if ! grep -q "$${UUID}" /etc/fstab; then
+                  echo "UUID=$${UUID} ${var.resume_db_mount_point} ext4 defaults,noatime 0 2" >> /etc/fstab
+                fi
+                mount "${var.resume_db_mount_point}"
+                chown 1001:1001 "${var.resume_db_mount_point}"
+                chmod 700 "${var.resume_db_mount_point}"
+              fi
+            fi
+      CLOUDINIT
+      )
+    } : {}
+  )
 }
 
 data "oci_core_private_ips" "private_ips" {
@@ -50,7 +90,8 @@ resource "oci_core_public_ip" "reserved_ip" {
 resource "oci_core_volume_attachment" "attachments" {
   for_each = var.disk_ocids
 
-  instance_id     = oci_core_instance.vm[0].id
+  # Attach to the instance index provided in var.disk_attach_to (map), defaulting to 0 (first instance)
+  instance_id     = oci_core_instance.vm[lookup(var.disk_attach_to, each.key, 0)].id
   volume_id       = each.value
   attachment_type = "paravirtualized"
 }

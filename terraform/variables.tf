@@ -109,6 +109,36 @@ variable "disks" {
   default = {}
 }
 
+variable "resume_db_disk_size" {
+  description = "Size in GiB for the resume db block volume (default 20)"
+  type        = number
+  default     = 20
+}
+
+variable "create_resume_db_block_storage" {
+  description = "If true, create an OCI block volume for resume DB and attach it to a compute instance. Default false to avoid accidental Always Free usage."
+  type        = bool
+  default     = false
+}
+
+variable "enable_resume_db_remote_setup" {
+  description = "If true, Terraform will SSH into the worker and ensure /mnt/data/resume-db exists and has correct ownership. Requires ssh_private_key_path and SSH reachability to the worker."
+  type        = bool
+  default     = false
+}
+
+variable "resume_db_mount_host" {
+  description = "Optional explicit host (public IP) to use for remote-exec to set up the mount path. If empty, will default to module.compute.public_ips[0] if assign_reserved_ips is set appropriately."
+  type        = string
+  default     = ""
+}
+
+variable "ssh_private_key_path" {
+  description = "Path to SSH private key for connection when enable_resume_db_remote_setup is true. Ensure this path is accessible to the Terraform runtime and secured (not committed)."
+  type        = string
+  default     = ""
+}
+
 variable "vm_count" {
   description = "Number of compute instances to create in the compute module"
   type        = number

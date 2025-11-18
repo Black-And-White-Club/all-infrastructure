@@ -42,6 +42,24 @@ variable "disk_ocids" {
   default     = {}
 }
 
+variable "disk_attach_to" {
+  description = "Optional map of disk identifier -> instance index (which VM to attach the disk to). Defaults to 0 (first instance)."
+  type        = map(number)
+  default     = {}
+}
+
+variable "enable_resume_db_auto_mount" {
+  description = "If true, add cloud-init user_data to instances that will format and mount an attached block volume at /mnt/data/resume-db"
+  type        = bool
+  default     = false
+}
+
+variable "resume_db_mount_point" {
+  description = "Mount point path for the resume DB volume"
+  type        = string
+  default     = "/mnt/data/resume-db"
+}
+
 variable "backend_http_port" {
   type        = number
   description = "Port used by the ingress/nodeport that the external LB will target"
