@@ -5,7 +5,12 @@ auth:
   username: resume_user
   existingSecret: resume-backend-postgresql
   secretKeys:
-    adminPasswordKey: postgres-password
+    # The existing SealedSecret for resume-backend-postgresql uses the key
+    # name 'postgresql-password' (see cluster-resources/sealed-secrets/...), so
+    # ensure the chart's admin password key aligns with that. The Bitnami chart
+    # may expect 'postgres-password' by default, but our SealedSecret uses
+    # 'postgresql-password' so we configure the chart accordingly here.
+    adminPasswordKey: postgresql-password
     userPasswordKey: postgresql-password
 architecture: standalone
 primary:
@@ -19,6 +24,11 @@ primary:
     # storageClassName field for dynamic provisioning.
     storageClassName: local-storage
     size: 2Gi
+    # We have a node-local static PV available (resume-db-local-pv) and will
+    # create a PersistentVolumeClaim that binds to it. Configure the chart to
+    # use the existing claim so Helm/SS template does not attempt to dynamically
+    # provision a new PVC.
+    existingClaim: data-resume-backend-0
   resources:
     requests:
       cpu: 50m
@@ -27,7 +37,10 @@ primary:
       cpu: 250m
       memory: 512Mi
 metrics:
-  enabled: true
+  # Temporarily disable the Postgres metrics sidecar that expects a
+  # postgres_exporter.yml and a postgres-password key. We'll re-enable
+  # metrics once the secret and exporter configuration are aligned.
+  enabled: false
   serviceMonitor:
     enabled: true
     interval: 3m
