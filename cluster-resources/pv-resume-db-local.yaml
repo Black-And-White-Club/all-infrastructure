@@ -22,4 +22,4 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - k8s-worker # change to the actual node name where the data disk is attached (k8s-worker by default)
+                - worker-1 # change to the actual node name where the data disk is attached (worker-1 by default)

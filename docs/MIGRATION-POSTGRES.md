@@ -9,9 +9,9 @@ Prerequisites
 
 Steps
 
-1. Confirm current PV usage: `kubectl get pv,pvc -A | grep -E "hostPath|local|<your PV name>"`
+1. Confirm current PV usage: `kubectl --kubeconfig ~/.kube/config-oci get pv,pvc -A | grep -E "hostPath|local|<your PV name>"`
 2. Backup Postgres data:
-   - `kubectl -n resume-db exec <postgres-pod> -- pg_dumpall -U <user> > /tmp/resume-db-backup.sql` (copy out)
+   - `kubectl --kubeconfig ~/.kube/config-oci -n resume-db exec <postgres-pod> -- pg_dumpall -U <user> > /tmp/resume-db-backup.sql` (copy out)
    - Or use `pg_dump` for per-database backups.
 3. For Postgres: Update chart values (done in values file) and let Helm/ArgoCD create a PVC with `storageClass: oci-block-storage`:
    - Confirm `postresql/values.yaml` or specific app values has `primary.persistence.storageClass: oci-block-storage`.
@@ -19,7 +19,7 @@ Steps
 4. For Grafana/Prometheus/Mimir/Loki/Tempo:
    - Mimir/Loki/Tempo: Change blocks/chunks/trace store to use S3-compatible/OCI Object Storage and use 'oci-block-storage' for local caches (ingesters/ingester caches/queriers) in values file.
    - Grafana: Set persistence.storageClass: oci-block-storage in its values.
-5. Verify PVCs are bound and pods restart and run successfully: `kubectl get pvc -n <ns>` and `kubectl get pods -n <ns> --watch`.
+5. Verify PVCs are bound and pods restart and run successfully: `kubectl --kubeconfig ~/.kube/config-oci get pvc -n <ns>` and `kubectl --kubeconfig ~/.kube/config-oci get pods -n <ns> --watch`.
 6. Confirm new workloads are using the new storage and that data is present. If using a new database, validate application connectivity.
 7. When everything is validated, remove the old PV from the cluster: `kubectl delete pv <pv-name>`. Only after you confirm data is safe and no pods reference the PV.
 

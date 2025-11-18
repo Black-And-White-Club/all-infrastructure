@@ -45,7 +45,7 @@ Workflow (infra-centric):
 
 ```bash
 export PG_PASSWORD=$(openssl rand -hex 16)
-kubectl -n resume-db create secret generic resume-backend-postgresql \
+kubectl --kubeconfig ~/.kube/config-oci -n resume-db create secret generic resume-backend-postgresql \
   --from-literal=postgresql-password="${PG_PASSWORD}" \
   --from-literal=postgresql-username="resume_user" \
   --from-literal=postgresql-database="resume_db" \
