@@ -13,7 +13,7 @@ spec:
   source:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
-    path: argocd-applications/bootstrap
+    path: argocd-applications
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

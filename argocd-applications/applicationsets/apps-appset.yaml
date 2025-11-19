@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps-appset
+  namespace: argocd
+spec:
+  # NOTE: This is a placeholder/template for future conversion of per-app manifests
+  # to descriptor-style files (like observability/grafana-app.yaml). Presently, apps/
+  # contains full ArgoCD Application manifests; convert them to descriptors to use
+  # this ApplicationSet. The template below is intentionally inert/illustrative.
+  goTemplate: true
+  generators:
+    - git:
+        repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+        revision: main
+        files:
+          - path: "apps/*.yaml"
+  template:
+    metadata:
+      name: "{{ .path.basename }}"
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+        targetRevision: main
+        # The template would set path/chart/etc dynamically from each descriptor.
+        path: "argocd-applications/apps/{{ .path.basename }}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: default
+      syncPolicy:
+        automated:
+          prune: false
+          selfHeal: false

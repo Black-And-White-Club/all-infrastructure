@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: resume-db
+  labels:
+    name: resume-db
+    app: resume-db
+    managed-by: argocd
