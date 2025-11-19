@@ -1,0 +1,8 @@
+## Grafana overlay for OCI block storage
+## Use this for clusters where OCI block volumes are available (OCI CSI driver installed)
+
+persistence:
+  enabled: true
+  storageClassName: oci-block-storage
+  size: 10Gi
+## Note: Ensure the cluster has the OCI CSI driver and a dynamic provisioner.
