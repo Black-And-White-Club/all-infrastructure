@@ -1,0 +1,4 @@
+### DEPRECATED: Grafana local app moved to 'observability/grafana-app-local.yaml'
+### This file is preserved as a fallback during the migration; it is not intended to be applied.
+### REMOVED: Grafana local app descriptor archived.
+### Keepers: This file is deprecated and you can safely delete it from `argocd-applications/apps` to prevent duplicate Applications.

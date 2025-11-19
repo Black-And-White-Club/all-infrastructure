@@ -1,0 +1,17 @@
+## Grafana overlay for local node storage
+## Use this overlay for clusters that use a node-local storage class (local-storage or local-path)
+## Update storageClassName to match your local storage provisioner and size to your needs.
+
+persistence:
+  enabled: true
+  storageClassName: local-storage
+  size: 2Gi
+  # Bind to a pre-provisioned PVC if needed. Provide existingClaim matching a PVC in the observability namespace
+  # or provide a volumeName to match a static PersistentVolume. For dynamic provisioning with local-path,
+  # omitting these will allow the chart to create the PVC automatically.
+  existingClaim: grafana-local-pvc
+  volumeName: grafana-local-pv
+# Keep datasources and other config as in default values.yaml
+
+## NOTE: To use a static PV setup, provide a PVC named `grafana-local-pvc` in the `observability` namespace
+## and set persistence.enabled to true and persistence.size to the claim size.

@@ -1,0 +1,2 @@
+### DEPRECATED: Grafana OCI app was removed. Use a generic block-storage overlay if needed (charts/grafana/values-block.yaml)
+### Keep this file only as a stub placeholder to avoid confusion.
