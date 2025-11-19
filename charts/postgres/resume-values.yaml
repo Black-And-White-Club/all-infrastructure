@@ -37,11 +37,12 @@ primary:
       cpu: 250m
       memory: 512Mi
 metrics:
-  # Temporarily disable the Postgres metrics sidecar that expects a
-  # postgres_exporter.yml and a postgres-password key. We'll re-enable
-  # metrics once the secret and exporter configuration are aligned.
-  enabled: false
+  # Postgres exporter sidecar - enabled means the exported metrics are available
+  # on the Postgres exporter process (default port 9187) and can be scraped by Alloy.
+  # We do not deploy Prometheus ServiceMonitor here: Alloy will scrape directly and remote_write to Mimir.
+  enabled: true
   serviceMonitor:
-    enabled: true
+    # We do not deploy Prometheus in this environment; disable ServiceMonitor to avoid ServiceMonitor CRD creation.
+    enabled: false
     interval: 3m
     scrapeTimeout: 10s
