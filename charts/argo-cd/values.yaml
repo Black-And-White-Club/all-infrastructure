@@ -38,12 +38,16 @@ repoServer:
   resources:
     limits:
       cpu: 500m
-      memory: 512Mi
+      memory: 1024Mi
     requests:
       cpu: 100m
-      memory: 256Mi
+      memory: 512Mi
 
   replicas: 1
+  # Reduce the parallelism limit to avoid high memory usage during heavy concurrent manifests
+  extraEnv:
+    - name: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT
+      value: "4"
 
 # Redis - caching layer
 redis:
