@@ -1,9 +1,9 @@
 name: postgres-resume-backend
 app:
   name: resume-backend
-  helmRepo: https://charts.bitnami.com/bitnami
+  helmRepo: registry-1.docker.io
   chart: bitnami/postgresql
-  chartVersion: "18.1.10"
+  chartVersion: 18.1.10
   valueFiles: charts/postgres/resume-values.yaml
   namespace: resume-db
   ssa: ServerSideApply=false
