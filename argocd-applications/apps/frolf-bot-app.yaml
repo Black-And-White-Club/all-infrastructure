@@ -1,0 +1,48 @@
+---
+# Frolf Bot Backend and Discord bot (migrated from bootstrap/11-app-frolf-bot.yaml)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-frolf-bot-backend
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Black-And-White-Club/frolf-bot-infrastructure
+    targetRevision: main
+    path: frolf-bot-app-manifests/backend
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frolf-bot
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+# Frolf Bot Discord Bot (migrated from bootstrap/11-app-frolf-bot.yaml)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-frolf-bot-discord
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Black-And-White-Club/frolf-bot-infrastructure
+    targetRevision: main
+    path: frolf-bot-app-manifests/discord
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frolf-bot
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

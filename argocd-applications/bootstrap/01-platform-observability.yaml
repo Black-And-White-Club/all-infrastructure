@@ -1,35 +1,8 @@
 ---
-# Platform Observability - Shared Grafana Only
-# Each app manages its own metrics/logs/traces backend:
-# - Resume: Prometheus (in resume namespace)
-# - Frolf-bot: Mimir, Loki, Tempo, Alloy (in frolf-bot namespace)
-# - Grafana: Shared visualization (datasources point to both apps)
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: observability-grafana
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "10"
-spec:
-  project: default
-  sources:
-    - repoURL: https://grafana.github.io/helm-charts
-      chart: grafana
-      targetRevision: "8.7.3"
-      helm:
-        valueFiles:
-          - $values/charts/grafana/values.yaml
-    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
-      targetRevision: main
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: observability
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true
+# OBSOLETE: Grafana was previously created here as a bootstrap Application. It has been migrated
+# to a multi-source app in `multi-source-apps/grafana-app.yaml` so Grafana is managed like other
+# Helm charts (versioned, pinned, and maintained by the ApplicationSet workflow).
+#
+# Leaving a placeholder Application would create duplicate Grafana Apps. Keep this file as
+# a placeholder comment; the real Grafana Application lives under `multi-source-apps/`.
+

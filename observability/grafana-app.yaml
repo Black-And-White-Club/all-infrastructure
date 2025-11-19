@@ -1,0 +1,13 @@
+name: grafana
+app:
+  name: grafana
+  helmRepo: https://grafana.github.io/helm-charts
+  chart: grafana
+  chartVersion: 10.0.0
+  valueFiles: charts/grafana/values.yaml
+  namespace: observability
+  ssa: Prune=true,PrunePropagationPolicy=foreground
+  syncWave: "5"
+  repoName: grafana
+  repoUrl: https://grafana.github.io/helm-charts
+  showChart: grafana/grafana

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: frolf-bot
+  labels:
+    name: frolf-bot
+    app: frolf-bot
+    managed-by: argocd

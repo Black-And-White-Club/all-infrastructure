@@ -51,6 +51,7 @@ spec:
     directory:
       exclude: |
         namespaces.yaml
+        namespaces/**
         storage-class-oci.yaml
         sealed-secrets/**
           # Removed hostPath PVs in favor of dynamic PVCs

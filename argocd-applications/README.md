@@ -35,6 +35,18 @@ The Lich King (ApplicationSet)
 ```bash
 cd /Users/jace/Documents/GitHub/all-infrastructure
 ./scripts/bootstrap-lich-king.sh
+
+Note: As part of the new minimal bootstrap pattern, `bootstrap/` should only contain
+ArgoCD + critical cluster resources and the `the-lich-king` (root bootstrap application)
+that accepts the first install. All other apps and AppSets live under `argocd-applications/`:
+
+ - `argocd-applications/applicationsets/` contains ApplicationSet definitions
+ - `argocd-applications/apps/` contains full ArgoCD Application manifests (these are migrated
+     from `bootstrap/` for staged rollout).
+ - `argocd-applications/observability/` contains tiny chart descriptors for ApplicationSets to
+     generate Grafana/Alloy/Mimir apps.
+
+This enables `the-lich-king` to orchestrate ApplicationSets and create per-app ArgoCD Applications.
 ```
 
 ### Step 2: Watch Deployment
