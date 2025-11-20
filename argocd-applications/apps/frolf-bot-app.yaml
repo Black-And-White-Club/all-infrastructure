@@ -10,9 +10,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/Black-And-White-Club/frolf-bot-infrastructure
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
-    path: frolf-bot-app-manifests/backend
+    path: manifests/frolf-bot
   destination:
     server: https://kubernetes.default.svc
     namespace: frolf-bot
@@ -34,9 +34,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/Black-And-White-Club/frolf-bot-infrastructure
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
-    path: frolf-bot-app-manifests/discord
+    path: manifests/frolf-bot
   destination:
     server: https://kubernetes.default.svc
     namespace: frolf-bot

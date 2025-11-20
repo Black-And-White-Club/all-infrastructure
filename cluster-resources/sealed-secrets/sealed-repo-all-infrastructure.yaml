@@ -1,0 +1,21 @@
+---
+# Placeholder SealedSecret for writing back to the `all-infrastructure` repo.
+# To create this file:
+# 1. Create a git credential secret locally (HTTPS) in the argocd namespace:
+#    kubectl create secret generic repo-all-infrastructure --from-literal=username='<git-user>' --from-literal=password='<git-token>' -n argocd
+# 2. Export it as yaml and seal with `kubeseal --format=yaml --cert path/to/sealer-cert.pem`.
+# 3. Commit the sealed output here.
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: repo-all-infrastructure
+  namespace: argocd
+spec:
+  encryptedData:
+    # encrypted username and password (kubeseal output) go here
+    username: CHANGE_ME_ENCRYPTED
+    password: CHANGE_ME_ENCRYPTED
+  template:
+    metadata:
+      name: repo-all-infrastructure
+      namespace: argocd

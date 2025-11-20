@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: resume-app-route
+  namespace: resume-app
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: jaromero.cloud
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: resume-frontend-svc
+                port:
+                  number: 80
+          - path: /api/count
+            pathType: Prefix
+            backend:
+              service:
+                name: resume-backend-svc
+                port:
+                  number: 8000
+          - path: /healthz
+            pathType: Exact
+            backend:
+              service:
+                name: resume-backend-svc
+                port:
+                  number: 8000
