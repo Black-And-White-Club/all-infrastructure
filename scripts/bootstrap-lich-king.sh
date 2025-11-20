@@ -25,9 +25,9 @@ fi
 
 echo "✅ ArgoCD is running"
 
-# Apply the one-time bootstrap manifests (sealed secrets, Image Updater, CRDs)
-echo "Applying bootstrap manifests..."
-kubectl apply -f "$REPO_ROOT/argocd-applications/bootstrap/"
+# Ansible should install ArgoCD + Sealed Secrets and prepare the cluster (one-time).
+echo "Note: ArgoCD and Sealed Secrets should be installed via Ansible before running this script."
+echo "Skipping application of bootstrap manifests (moved to ansible/infrastructure)."
 
 # Apply The Lich King Application after bootstrap finishes
 echo "Applying The Lich King Application..."

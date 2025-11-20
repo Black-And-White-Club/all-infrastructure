@@ -33,7 +33,7 @@ A **production-ready GitOps architecture** following industry best practices:
 ```
 The Lich King (Root Application)
 │
-├── bootstrap/ (directory of ApplicationSets)
+├── argocd-applications/ (root; contains ApplicationSets and AppSets)
 │   │
 │   ├── 00-platform-base.yaml (Wave 0-2)
 │   │   ├── Sealed Secrets (kube-system)
@@ -124,9 +124,9 @@ generators:
 
 ### ✅ 4. Root Application (not ApplicationSet)
 
-**The Lich King** is an `Application` pointing to `bootstrap/` directory.
+**The Lich King** is an `Application` that targets the `argocd-applications/` directory and orchestrates ApplicationSets. The repository uses AppSets at the repository root (e.g., `argocd-applications/platform/*.yaml`) rather than a dedicated `bootstrap/` folder.
 
-**Why**: Simpler than ApplicationSet-of-ApplicationSets. The bootstrap directory contains the actual ApplicationSets.
+**Why**: Simpler than ApplicationSet-of-ApplicationSets. The Lich King applies ApplicationSets and the repo keeps AppSets at the `argocd-applications/` root (e.g., `platform/`, `apps/`, etc.).
 
 ### ✅ 5. Sync Waves for Ordering
 
@@ -179,8 +179,8 @@ git push
 ### Adding a New Platform Service
 
 ```bash
-# Add to bootstrap ApplicationSet
-vim argocd-applications/bootstrap/01-platform-observability.yaml
+# Add to platform ApplicationSet (or appropriate platform AppSet under `argocd-applications/`)
+vim argocd-applications/platform/01-platform-observability.yaml
 
 # Add to generators list
 - name: prometheus

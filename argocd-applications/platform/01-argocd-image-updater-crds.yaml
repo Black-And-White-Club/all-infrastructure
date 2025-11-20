@@ -1,6 +1,5 @@
 ---
-# ArgoCD Image Updater CRDs Bootstrap Application
-# Deploys the ImageUpdater CRD before the controller is installed
+# ArgoCD Image Updater CRDs - platform-level Application (moved from bootstrap)
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
