@@ -15,7 +15,7 @@ spec:
     targetRevision: main
     path: argocd-applications
     directory:
-      recurse: false
+      recurse: true
       include: "*-appset.yaml"
     # ensure platform resources are applied before apps
     # (AppSets at root should include infrastructure/appsets and platform/)
