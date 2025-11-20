@@ -14,17 +14,19 @@ spec:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         revision: main
         files:
-          - path: "apps/*.yaml"
+          - path: "argocd-applications/apps/*.yaml"
   template:
     metadata:
-      name: "{{ .path.basename }}"
+      name: '{{ trimSuffix ".yaml" .path.filename }}'
     spec:
       project: default
       source:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         targetRevision: main
-        # The template would set path/chart/etc dynamically from each descriptor.
-        path: "argocd-applications/apps/{{ .path.basename }}"
+        # The template uses the path to the application manifest file so the generated
+        # Application receives the same source. Template expects the Application file
+        # to be a complete ArgoCD Application manifest for the app.
+        path: "{{ .path }}"
       destination:
         server: https://kubernetes.default.svc
         namespace: default

@@ -6,9 +6,10 @@ app:
   helmRepo: https://grafana.github.io/helm-charts
   chart: grafana
   chartVersion: 10.0.0
-  # Use the base values file and the local overlay so Grafana runs on a node-local PV
+  # Use the local overlay so Grafana runs on a node-local PV. The overlay should
+  # be self-sufficient (contains any overrides needed); if you need the base
+  # file as well, set a combined values file or restore the base entry.
   valueFiles:
-    - charts/grafana/values.yaml
     - charts/grafana/values-local.yaml
   namespace: observability
   ssa: Prune=true,PrunePropagationPolicy=foreground

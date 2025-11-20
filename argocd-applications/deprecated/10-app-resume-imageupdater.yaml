@@ -1,8 +1,0 @@
----
-# Deprecated: This file was replaced by the manifest in `argocd-applications/image-updaters/resume-imageupdater.yaml`.
-# The ImageUpdater CR should be handled in that directory and applied by the '20-app-resume-imageupdater-app' Argo Application.
-# Keeping this placeholder avoids duplicate resources in the bootstrap path. If you want to remove it entirely, delete this file.
-
-# NOTE: If you're moving to chart-managed CRDs with sync-wave ordering, ensure:
-# - `02-argocd-image-updater.yaml` (controller) has a lower sync-wave (e.g., 2)
-# - `20-app-resume-imageupdater-app.yaml` has a higher sync-wave (e.g., 21) to avoid CRD race conditions
