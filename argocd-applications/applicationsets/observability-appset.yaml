@@ -22,13 +22,16 @@ spec:
         argocd.argoproj.io/sync-wave: "{{ .app.syncWave }}"
     spec:
       project: default
-      source:
-        repoURL: "{{ .app.helmRepo }}"
-        chart: "{{ .app.chart }}"
-        targetRevision: "{{ .app.chartVersion }}"
-        helm:
-          valueFiles:
-            - "$values/{{ .app.valueFiles }}"
+      sources:
+        - repoURL: "{{ .app.helmRepo }}"
+          chart: "{{ .app.chart }}"
+          targetRevision: "{{ .app.chartVersion }}"
+          helm:
+            valueFiles:
+              - "$values/{{ .app.valueFiles }}"
+        - repoURL: "https://github.com/Black-And-White-Club/all-infrastructure.git"
+          targetRevision: main
+          path: ""
           releaseName: "{{ default .app.name .app.releaseName }}"
       destination:
         server: https://kubernetes.default.svc
