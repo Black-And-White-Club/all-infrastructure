@@ -13,6 +13,7 @@ spec:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
     path: manifests/frolf-bot
+    kustomize: {}
   destination:
     server: https://kubernetes.default.svc
     namespace: frolf-bot
@@ -37,6 +38,7 @@ spec:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
     path: manifests/frolf-bot
+    kustomize: {}
   destination:
     server: https://kubernetes.default.svc
     namespace: frolf-bot

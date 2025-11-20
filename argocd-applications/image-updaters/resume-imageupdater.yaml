@@ -30,10 +30,10 @@ spec:
 
       # Git write-back configuration — AIU will commit updates directly to main branch
       writeBackConfig:
-        method: "git:secret:argocd/repo-all-infrastructure"
+        method: "git:secret:argocd/repo-resume-infrastructure"
         gitConfig:
           # HTTPS or SSH clone URL for the repository containing resume-app-manifests
-          repository: "https://github.com/Black-And-White-Club/all-infrastructure"
+          repository: "https://github.com/Black-And-White-Club/resume-infrastructure"
           # Commit changes directly to the main branch for this personal project
           branch: "main"
           # Update the kustomization file so Kustomize apps get the new image tag
