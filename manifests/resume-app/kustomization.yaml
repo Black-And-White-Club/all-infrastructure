@@ -1,5 +1,5 @@
 resources:
   - resume-backend.yaml
-  - resume-backend-migrate-job.yaml
   - resume-frontend.yaml
   - nginx-ingress.yaml
+  - resume-backend-migrate-job.yaml

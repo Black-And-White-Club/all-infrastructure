@@ -1,0 +1,17 @@
+---
+# This file is a placeholder example showing how to create a sealed secret for image-updater write-back.
+# DO NOT use this file to store your sealed secret. Instead, follow the steps below to generate a sealed secret
+# and then copy it into `sealed-repo-*.yaml` before committing.
+#
+# Steps:
+#  kubectl create secret generic repo-all-infrastructure --from-literal=username='<user>' --from-literal=password='<secret>' -n argocd --dry-run=client -o yaml |
+#  kubeseal --controller-name sealed-secrets --controller-namespace kube-system -o yaml > sealed-repo-all-infrastructure.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sealed-repo-all-infrastructure-example
+  namespace: argocd
+data:
+  README: |-
+    Example placeholder. Do NOT commit sealed credentials here.
