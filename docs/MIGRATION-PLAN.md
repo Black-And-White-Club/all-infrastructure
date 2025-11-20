@@ -108,7 +108,7 @@ Create this structure:
 ```
 all-infrastructure/
 ├── argocd-applications/
-│   ├── bootstrap/                              # one-and-done things (sealed secrets, Image Updater CRDs, Lich King)
+│   ├── argocd-applications/                    # root for AppSets; Ansible performs one-time installs (Sealed Secrets/ArgoCD)
 │   │   ├── 00-platform-base.yaml                # placeholder (platform resources moved out)
 │   │   ├── 01-argocd-image-updater-crds.yaml
 │   │   ├── 01-sealed-secrets.yaml
@@ -116,7 +116,7 @@ all-infrastructure/
 │   │   ├── 02-platform-shared-services.yaml     # placeholder (actual appset lives in platform/)
 │   │   ├── 02-sealed-secrets-manifests.yaml     # placeholder (actual Application is under platform/)
 │   │   ├── 99-oci-csi-driver.yaml               # placeholder (actual Application is under platform/)
-│   │   └── 99-the-lich-king.yaml                # Master bootstrap application
+│   │   └── 99-the-lich-king.yaml                # Master Lich King ApplicationSet (now managed at the argocd-applications root)
 │   ├── platform/                                # Actual platform manifests managed by the same repo
 │   │   ├── 00-platform-cert-manager.yaml
 │   │   ├── 01-platform-cluster-resources.yaml
@@ -170,8 +170,12 @@ Update `app-frolf-bot.yaml` to point to `multi-tenant-guilds` instead of `the-li
 
 ```bash
 # Apply The Lich King to your cluster
-KUBECONFIG=~/.kube/config-oci kubectl apply -f all-infrastructure/argocd-applications/bootstrap/
-KUBECONFIG=~/.kube/config-oci kubectl apply -f all-infrastructure/argocd-applications/the-lich-king/the-lich-king.yaml
+KUBECONFIG=~/.kube/config-oci ansible-playbook ansible/playbooks/bootstrap-argocd.yml
+
+NOTE: The `bootstrap/` directory has been removed. Ansible now only installs ArgoCD and Sealed Secrets
+as one-time bootstrap tasks. After that, apply `the-lich-king` to let Lich King manage platform resources
+from `argocd-applications/platform/` (for platform-level apps) and AppSets in `argocd-applications/*.yaml`.
+kubectl --kubeconfig ~/.kube/config-oci apply -f all-infrastructure/argocd-applications/the-lich-king/the-lich-king.yaml
 
 # Watch the magic happen
 KUBECONFIG=~/.kube/config-oci kubectl get applications -n argocd -w

@@ -36,15 +36,13 @@ The Lich King (ApplicationSet)
 cd /Users/jace/Documents/GitHub/all-infrastructure
 ./scripts/bootstrap-lich-king.sh
 
-Note: As part of the new minimal bootstrap pattern, `bootstrap/` should only contain
-one-and-done artifacts such as sealed secrets, ArgoCD Image Updater CRDs/controller, and the `the-lich-king`
-bootstrap helper. The bootstrap script applies those manifests and then applies the `the-lich-king` Application from
-`argocd-applications/the-lich-king/`, which in turn spins up all remaining ApplicationSets under `platform/`, `applications/`,
-and other directories.
+Note: As part of the new minimal bootstrap pattern Ansible performs ONE-TIME installs (ArgoCD + Sealed Secrets). The
+`scripts/bootstrap-lich-king.sh` script expects ArgoCD to be present and will apply `the-lich-king` to let Lich King
+manage all platform and application sets.
 
  - `argocd-applications/applicationsets/` contains ApplicationSet definitions
- - `argocd-applications/apps/` contains full ArgoCD Application manifests (these are migrated
-     from `bootstrap/` for staged rollout).
+ - `argocd-applications/apps/` contains full ArgoCD Application manifests (these were migrated
+     from the historical `bootstrap/` directory during the migration; use `platform/` for platform-level resources).
  - `argocd-applications/observability/` contains tiny chart descriptors for ApplicationSets to
      generate Grafana/Alloy/Mimir apps.
 
@@ -70,10 +68,12 @@ KUBECONFIG=~/.kube/config-oci kubectl port-forward svc/argocd-server -n argocd 8
 
 ## File Structure
 
-- `bootstrap/` - One-time install manifests (sealed secrets, Image Updater CRDs/controller)
-- `the-lich-king/` - The master Application that orchestrates every downstream ApplicationSet once the bootstrap completes
-- `platform/` - Platform Applications and ApplicationSets (cert-manager, cluster resources, shared services, etc.)
-- `applications/` - Application bootstrappers (pointing at resume/frolf repos)
+- `platform/` - platform-level Applications (cert-manager, argocd-image-updater, app-projects, etc.)
+- `bootstrap/` - (removed) previously contained one-time install manifests. Ansible now performs those one-time tasks.
+
+* `the-lich-king/` - The master Application that orchestrates every downstream ApplicationSet once the bootstrap completes
+* `platform/` - Platform Applications and ApplicationSets (cert-manager, cluster resources, shared services, etc.)
+* `applications/` - Application bootstrappers (pointing at resume/frolf repos)
 
 See `/docs/MIGRATION-PLAN.md` for detailed architecture and migration guide.
 

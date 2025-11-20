@@ -31,7 +31,7 @@ helm install oci-csi-driver oci-csi-driver/oci-block-csi-driver \
 ## GitOps approach
 
 1. Add manifests/helm chart values in this directory.
-2. Add an ArgoCD Application that references this directory (see `argocd-applications/bootstrap/99-oci-csi-driver.yaml` example).
+2. Add an ArgoCD Application that references this directory (see `argocd-applications/platform/99-oci-csi-driver.yaml` example).
 3. Add the OCI secret as a SealedSecret in `cluster-resources/sealed-secrets/` so ArgoCD can create it in `kube-system`.
 
 ## Note on credentials
