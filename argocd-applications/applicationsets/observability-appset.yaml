@@ -29,6 +29,7 @@ spec:
         helm:
           valueFiles:
             - "$values/{{ .app.valueFiles }}"
+          releaseName: "{{ default .app.name .app.releaseName }}"
       destination:
         server: https://kubernetes.default.svc
         namespace: "{{ .app.namespace }}"

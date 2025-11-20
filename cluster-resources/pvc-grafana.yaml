@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: grafana-local-pvc
+  name: grafana-pvc
   namespace: observability
   labels:
     app.kubernetes.io/name: grafana
-    app.kubernetes.io/instance: grafana-local
+    app.kubernetes.io/instance: grafana
 spec:
   accessModes:
     - ReadWriteOnce
@@ -13,4 +13,4 @@ spec:
     requests:
       storage: 2Gi
   storageClassName: local-storage
-  volumeName: grafana-local-pv
+  volumeName: grafana-pv

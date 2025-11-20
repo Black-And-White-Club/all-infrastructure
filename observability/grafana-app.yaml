@@ -1,10 +1,15 @@
 name: grafana
 app:
   name: grafana
+  # Ensures Helm release name stays stable across overlays or replacement app variants
+  releaseName: grafana
   helmRepo: https://grafana.github.io/helm-charts
   chart: grafana
   chartVersion: 10.0.0
-  valueFiles: charts/grafana/values.yaml
+  # Use the base values file and the local overlay so Grafana runs on a node-local PV
+  valueFiles:
+    - charts/grafana/values.yaml
+    - charts/grafana/values-local.yaml
   namespace: observability
   ssa: Prune=true,PrunePropagationPolicy=foreground
   syncWave: "5"
