@@ -37,8 +37,10 @@ cd /Users/jace/Documents/GitHub/all-infrastructure
 ./scripts/bootstrap-lich-king.sh
 
 Note: As part of the new minimal bootstrap pattern, `bootstrap/` should only contain
-ArgoCD + critical cluster resources and the `the-lich-king` (root bootstrap application)
-that accepts the first install. All other apps and AppSets live under `argocd-applications/`:
+one-and-done artifacts such as sealed secrets, ArgoCD Image Updater CRDs/controller, and the `the-lich-king`
+bootstrap helper. The bootstrap script applies those manifests and then applies the `the-lich-king` Application from
+`argocd-applications/the-lich-king/`, which in turn spins up all remaining ApplicationSets under `platform/`, `applications/`,
+and other directories.
 
  - `argocd-applications/applicationsets/` contains ApplicationSet definitions
  - `argocd-applications/apps/` contains full ArgoCD Application manifests (these are migrated
@@ -68,9 +70,10 @@ KUBECONFIG=~/.kube/config-oci kubectl port-forward svc/argocd-server -n argocd 8
 
 ## File Structure
 
-- `the-lich-king.yaml` - Master ApplicationSet orchestrator
-- `platform/` - Platform ApplicationSets (infrastructure)
-- `applications/` - Application bootstrappers (point to app repos)
+- `bootstrap/` - One-time install manifests (sealed secrets, Image Updater CRDs/controller)
+- `the-lich-king/` - The master Application that orchestrates every downstream ApplicationSet once the bootstrap completes
+- `platform/` - Platform Applications and ApplicationSets (cert-manager, cluster resources, shared services, etc.)
+- `applications/` - Application bootstrappers (pointing at resume/frolf repos)
 
 See `/docs/MIGRATION-PLAN.md` for detailed architecture and migration guide.
 

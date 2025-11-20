@@ -1,8 +1,0 @@
----
-# OBSOLETE: Grafana was previously created here as a bootstrap Application. It has been migrated
-# to a multi-source app in `multi-source-apps/grafana-app.yaml` so Grafana is managed like other
-# Helm charts (versioned, pinned, and maintained by the ApplicationSet workflow).
-#
-# Leaving a placeholder Application would create duplicate Grafana Apps. Keep this file as
-# a placeholder comment; the real Grafana Application lives under `multi-source-apps/`.
-

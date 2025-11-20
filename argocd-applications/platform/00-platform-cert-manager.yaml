@@ -1,0 +1,33 @@
+# Cert-Manager - TLS certificate management (moved from bootstrap/00-platform-base.yaml)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-cert-manager
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  sources:
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.16.2
+      helm:
+        valueFiles:
+          - $values/charts/cert-manager/values.yaml
+        parameters:
+          - name: crds.enabled
+            value: "true"
+    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
