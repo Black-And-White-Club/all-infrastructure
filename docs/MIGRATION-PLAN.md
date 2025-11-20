@@ -108,11 +108,21 @@ Create this structure:
 ```
 all-infrastructure/
 ├── argocd-applications/
-│   ├── the-lich-king.yaml                      # ✅ Created
-│   ├── platform/
-│   │   ├── platform-cluster-resources.yaml     # ✅ Created
-│   │   ├── platform-observability.yaml         # ✅ Created
-│   │   └── platform-shared-services.yaml       # ✅ Created
+│   ├── bootstrap/                              # one-and-done things (sealed secrets, Image Updater CRDs, Lich King)
+│   │   ├── 00-platform-base.yaml                # placeholder (platform resources moved out)
+│   │   ├── 01-argocd-image-updater-crds.yaml
+│   │   ├── 01-sealed-secrets.yaml
+│   │   ├── 02-argocd-image-updater.yaml
+│   │   ├── 02-platform-shared-services.yaml     # placeholder (actual appset lives in platform/)
+│   │   ├── 02-sealed-secrets-manifests.yaml     # placeholder (actual Application is under platform/)
+│   │   ├── 99-oci-csi-driver.yaml               # placeholder (actual Application is under platform/)
+│   │   └── 99-the-lich-king.yaml                # Master bootstrap application
+│   ├── platform/                                # Actual platform manifests managed by the same repo
+│   │   ├── 00-platform-cert-manager.yaml
+│   │   ├── 01-platform-cluster-resources.yaml
+│   │   ├── platform-shared-services-appset.yaml
+│   │   ├── sealed-secrets-manifests.yaml
+│   │   └── oci-csi-driver.yaml
 │   └── applications/
 │       ├── app-resume.yaml                     # ✅ Created
 │       └── app-frolf-bot.yaml                  # ✅ Created
@@ -160,7 +170,8 @@ Update `app-frolf-bot.yaml` to point to `multi-tenant-guilds` instead of `the-li
 
 ```bash
 # Apply The Lich King to your cluster
-KUBECONFIG=~/.kube/config-oci kubectl apply -f all-infrastructure/argocd-applications/the-lich-king.yaml
+KUBECONFIG=~/.kube/config-oci kubectl apply -f all-infrastructure/argocd-applications/bootstrap/
+KUBECONFIG=~/.kube/config-oci kubectl apply -f all-infrastructure/argocd-applications/the-lich-king/the-lich-king.yaml
 
 # Watch the magic happen
 KUBECONFIG=~/.kube/config-oci kubectl get applications -n argocd -w

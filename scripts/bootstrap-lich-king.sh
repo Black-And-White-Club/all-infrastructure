@@ -25,9 +25,13 @@ fi
 
 echo "✅ ArgoCD is running"
 
-# Apply The Lich King ApplicationSet
-echo "Applying The Lich King ApplicationSet..."
-kubectl apply -f "$REPO_ROOT/argocd-applications/the-lich-king.yaml"
+# Apply the one-time bootstrap manifests (sealed secrets, Image Updater, CRDs)
+echo "Applying bootstrap manifests..."
+kubectl apply -f "$REPO_ROOT/argocd-applications/bootstrap/"
+
+# Apply The Lich King Application after bootstrap finishes
+echo "Applying The Lich King Application..."
+kubectl apply -f "$REPO_ROOT/argocd-applications/the-lich-king/the-lich-king.yaml"
 
 echo ""
 echo "🎉 The Lich King has been summoned!"
