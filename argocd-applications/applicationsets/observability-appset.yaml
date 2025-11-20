@@ -21,7 +21,7 @@ spec:
         argocd.argoproj.io/sync-options: "{{ .app.ssa }}"
         argocd.argoproj.io/sync-wave: "{{ .app.syncWave }}"
     spec:
-      project: default
+      project: resume
       sources:
         - repoURL: "{{ .app.helmRepo }}"
           chart: "{{ .app.chart }}"
