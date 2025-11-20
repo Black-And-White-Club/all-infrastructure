@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frolf-discord
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: frolf-bot
+  source:
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    targetRevision: main
+    path: manifests/frolf-discord
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frolf-bot
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

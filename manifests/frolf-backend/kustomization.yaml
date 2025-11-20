@@ -1,0 +1,2 @@
+resources:
+  - ../frolf-bot/backend-deployment.yaml

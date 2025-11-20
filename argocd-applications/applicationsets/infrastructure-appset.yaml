@@ -15,7 +15,7 @@ spec:
     metadata:
       name: '{{ trimSuffix ".yaml" .path.filename }}'
       annotations:
-        argocd.argoproj.io/sync-wave: "0"
+        argocd.argoproj.io/sync-wave: "5"
     spec:
       project: default
       source:
