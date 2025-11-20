@@ -13,7 +13,7 @@ spec:
           - path: "observability/*.yaml"
   template:
     metadata:
-      name: "{{ .app.name }}"
+      name: "{{ default .app.name .name }}"
       labels:
         app: "{{ .app.name }}"
         type: observability
@@ -35,7 +35,7 @@ spec:
           releaseName: "{{ default .app.name .app.releaseName }}"
       destination:
         server: https://kubernetes.default.svc
-        namespace: "{{ .app.namespace }}"
+        namespace: "{{ default .app.namespace .namespace }}"
       syncPolicy:
         automated:
           prune: true

@@ -3,6 +3,9 @@ kind: ApplicationSet
 metadata:
   name: apps-appset
   namespace: argocd
+  annotations:
+    # Ensure platform resources, projects and CRDs apply before apps
+    argocd.argoproj.io/sync-wave: "21"
 spec:
   # NOTE: This is a placeholder/template for future conversion of per-app manifests
   # to descriptor-style files (like observability/grafana-app.yaml). Presently, apps/
