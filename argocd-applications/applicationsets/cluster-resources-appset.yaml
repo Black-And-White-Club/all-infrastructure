@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: apps-appset
+  name: cluster-resources-appset
   namespace: argocd
 spec:
   goTemplate: true
@@ -10,20 +10,24 @@ spec:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         revision: main
         files:
-          - path: "argocd-applications/apps/*.yaml"
+          - path: "cluster-resources/*.yaml"
   template:
     metadata:
-      name: '{{ trimSuffix ".yaml" .path.filename }}'
+      name: 'cluster-{{ trimSuffix ".yaml" .path.filename }}'
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
     spec:
       project: default
       source:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         targetRevision: main
-        path: "{{ .path }}"
+        path: "{{ .path.path }}"
       destination:
         server: https://kubernetes.default.svc
         namespace: default
       syncPolicy:
         automated:
-          prune: false
-          selfHeal: false
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

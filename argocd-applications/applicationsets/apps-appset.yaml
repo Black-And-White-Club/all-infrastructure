@@ -17,7 +17,13 @@ spec:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         revision: main
         files:
-          - path: "argocd-applications/apps/*.yaml"
+          - path: "argocd-applications/apps/resume-backend-app.yaml"
+          - path: "argocd-applications/apps/resume-frontend-app.yaml"
+          - path: "argocd-applications/apps/resume-postgres-app.yaml"
+          - path: "argocd-applications/apps/frolf-backend-app.yaml"
+          - path: "argocd-applications/apps/frolf-discord-app.yaml"
+          - path: "argocd-applications/apps/frolf-postgres-app.yaml"
+          - path: "argocd-applications/apps/frolf-nats-app.yaml"
   template:
     metadata:
       name: '{{ trimSuffix ".yaml" .path.filename }}'

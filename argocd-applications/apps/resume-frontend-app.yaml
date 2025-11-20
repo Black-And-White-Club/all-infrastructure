@@ -1,21 +1,16 @@
----
-# Resume Application (migrated from bootstrap/10-app-resume.yaml)
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: app-resume
+  name: resume-frontend
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "20"
-    argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/repo-resume-infrastructure
-    argocd-image-updater.argoproj.io/git-branch: main
 spec:
   project: resume
   source:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
-    path: manifests/resume-app
-    kustomize: {}
+    path: manifests/resume-frontend
   destination:
     server: https://kubernetes.default.svc
     namespace: resume-app
