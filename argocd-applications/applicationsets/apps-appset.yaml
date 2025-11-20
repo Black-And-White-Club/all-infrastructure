@@ -29,7 +29,8 @@ spec:
         # The template uses the path to the application manifest file so the generated
         # Application receives the same source. Template expects the Application file
         # to be a complete ArgoCD Application manifest for the app.
-        path: "{{ .path }}"
+        # .path is an object; use .path.path to reference the file path string.
+        path: "{{ .path.path }}"
       destination:
         server: https://kubernetes.default.svc
         namespace: default
@@ -37,3 +38,7 @@ spec:
         automated:
           prune: false
           selfHeal: false
+      metadata:
+        annotations:
+          # ensure generated apps sync later so AppProjects and platform resources exist
+          argocd.argoproj.io/sync-wave: "21"
