@@ -9,8 +9,7 @@ app:
   # Use the local overlay so Grafana runs on a node-local PV. The overlay should
   # be self-sufficient (contains any overrides needed); if you need the base
   # file as well, set a combined values file or restore the base entry.
-  valueFiles:
-    - charts/grafana/values-local.yaml
+  valueFiles: charts/grafana/values-local.yaml
   namespace: observability
   ssa: Prune=true,PrunePropagationPolicy=foreground
   syncWave: "5"
