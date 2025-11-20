@@ -11,6 +11,24 @@
     argocd_version: stable # or pin to specific version like v2.9.3
     repo_url: https://github.com/Black-And-White-Club/all-infrastructure.git
 
+  pre_tasks:
+    - name: Check for passwordless sudo (preflight)
+      shell: sudo -n true
+      register: sudo_check
+      changed_when: false
+      failed_when: false
+
+    - name: Fail early if remote sudo requires a password and no become info provided
+      ansible.builtin.fail:
+        msg: |
+          The remote host requires a sudo password but none was provided.
+          Re-run with one of the following options:
+            * Use the become password prompt: ansible-playbook -K
+            * Export a temporary password (not recommended): export ANSIBLE_BECOME_PASS='your-pass'
+            * Use Ansible Vault to store the become password securely
+            * Configure passwordless sudo for the remote user (preferred for automation)
+      when: sudo_check.rc != 0 and (ansible_become_password is not defined or ansible_become_password == '')
+
   tasks:
     - name: Check if kubectl is available
       command: kubectl version --client
