@@ -41,7 +41,7 @@ spec:
           # For safety, namespaces won't be removed by auto-prune. Other items
           # like storage and network policies are safe to prune and will be
           # opted-in via the element 'prune' flag in the generator when needed.
-          prune: { { default "true" .prune } }
+          prune: '{{ default "true" .prune }}'
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
