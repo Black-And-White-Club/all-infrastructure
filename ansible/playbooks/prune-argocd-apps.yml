@@ -1,92 +1,325 @@
 ---
-- name: Prune non-core ArgoCD Applications (keep ArgoCD and core apps)
-  hosts: kube_control_plane
+# Prune ArgoCD Applications while keeping infrastructure
+# This suspends auto-sync but keeps resources in the cluster
+
+- name: Suspend ArgoCD Applications (keep resources, stop syncing)
+  hosts: localhost
+  connection: local
   gather_facts: false
-  become: "{{ use_sudo | default(false) }}"
+  # Make sure all kubectl/oc commands use the kubeconfig path we calculate below
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
   vars:
     argocd_namespace: argocd
-    kubeconfig_path: "{{ lookup('env','KUBECONFIG') | default('~/.kube/config') }}"
+    # Path to kubeconfig to use for kubectl commands. It prefers the KUBECONFIG
+    # environment variable when present, otherwise falls back to $HOME/.kube/config.
+    # Example usage:
+    #   export KUBECONFIG=$HOME/.kube/config-oci
+    # or pass at runtime:
+    #   ansible-playbook ... -e kubeconfig_path=~/.kube/config-oci
+    kubeconfig_path: "{{ lookup('env','KUBECONFIG') | default(lookup('env','HOME') + '/.kube/config') }}"
+
+    # If running in automation/non-interactive context set auto_confirm: true
+    # to skip the pause prompt during pre_tasks (use with care — this will
+    # allow the playbook to continue and perform destructive changes).
+    auto_confirm: false
+    # Dry run mode will stop before making destructive changes (no finalizer
+    # removal, no deletes). Use dry_run=false when you want the play to be
+    # destructive.
+    dry_run: false
+
+    # If true, also delete the ApplicationSet CRs after deleting Applications.
+    # This ensures ArgoCD forgets about those apps completely. Default false
+    # to avoid accidental removal of AppSets that control infra.
+    remove_appsets: false
+
+    # Which ApplicationSets to keep active
+    keep_appsets:
+      - cluster-resources
+      - infrastructure
+      - sealed-secrets-manifests
+
+    # Which ApplicationSets to suspend (stop creating apps)
+    suspend_appsets:
+      - observability
+      - apps
+
+    # Which Applications to keep (never delete)
     keep_apps:
       - the-lich-king
-      - sealed-secrets
       - argocd
+      - cert-manager
+      - sealed-secrets
 
   pre_tasks:
-    - name: Confirm prune intent
-      pause:
-        prompt: |
-          This will delete ArgoCD Application CRs in the argocd namespace except: {{ keep_apps }}.
-          Type 'yes' to proceed.
-      register: confirm
+    - name: Verify kubeconfig file exists at resolved kubeconfig_path
+      # We prefer giving a kubeconfig via env KUBECONFIG before running the playbook.
+      # If not, kubeconfig_path falls back to $HOME/.kube/config. Ensure that
+      # the path actually exists so subsequent kubectl calls will succeed.
+      stat:
+        path: "{{ kubeconfig_path }}"
+      register: kubeconfig_stat
 
-    - name: Fail if not confirmed
-      ansible.builtin.fail:
-        msg: "User did not confirm prune."
-      when: confirm.user_input != 'yes'
-      become: false
+    - name: Fail if kubeconfig_path is missing
+      fail:
+        msg: |
+          kubeconfig file not found at '{{ kubeconfig_path }}'.
+          Export KUBECONFIG or pass an alternate path with -e kubeconfig_path=/path/to/kubeconfig
+      when: not (kubeconfig_stat.stat is defined and kubeconfig_stat.stat.exists)
 
-    - name: Create backup directory
-      file:
-        path: /tmp/argocd-prune-backup
-        state: directory
-        mode: "0700"
-      become: false
-
-    - name: Save list of existing ArgoCD Applications
-      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} get applications -o yaml > /tmp/argocd-prune-backup/applications-before-prune.yaml
-      become: false
-      failed_when: false
-
-  tasks:
-    - name: Scale down ApplicationSet controller (prevent re-creation)
-      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} scale deployment argocd-applicationset-controller --replicas=0
-      register: scale_as
-      failed_when: false
-
-    - name: Scale down Application controller (prevent requeueing/resume)
-      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} scale statefulset argocd-application-controller --replicas=0
-      register: scale_app
-      failed_when: false
-
-    - name: Get list of applications to delete
-      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} get applications -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
-      register: all_apps
-
-    - name: Remove core apps from list and delete generated apps
-      shell: |
-        for app in $(echo "{{ all_apps.stdout }}"); do
-          keep=false
-          for k in {{ keep_apps | join(' ') }}; do
-            if [ "$app" = "$k" ]; then
-              keep=true
-            fi
-          done
-            if [ "$keep" = false ]; then
-            echo "Deleting application: $app"
-            kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} patch application "$app" --type=merge -p '{"metadata":{"finalizers":[]}}' || true
-            kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} delete application "$app" --grace-period=0 --force || true
-          else
-            echo "KEEPING: $app"
-          fi
-        done
-      register: delete_result
-      failed_when: false
-
-    - name: Wait for deletion to finish (short)
-      pause:
-        seconds: 5
-
-    - name: Confirm remaining apps
-      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} get applications
-      register: final_list
-
-    - name: Print info
+    - name: Display what will happen
       debug:
         msg:
-          - "Apps after prune: \n{{ final_list.stdout }}"
-          - "Remember: ApplicationSet controller is still scaled to 0. Scale it up when you want AppSets to re-generate apps."
+          - "========================================"
+          - "This playbook will:"
+          - "========================================"
+          - ""
+          - "1. Suspend these ApplicationSets (stop creating new apps):"
+          - "   {{ suspend_appsets | join(', ') }}"
+          - ""
+          - "2. Delete Applications created by suspended AppSets"
+          - "   (Kubernetes resources will remain in cluster)"
+          - ""
+          - "3. Keep these ApplicationSets active:"
+          - "   {{ keep_appsets | join(', ') }}"
+          - ""
+          - "4. Keep these Applications (never delete):"
+          - "   {{ keep_apps | join(', ') }}"
+          - ""
+          - "Result: ArgoCD stops managing apps, but resources stay running"
+          - ""
+
+    - name: Auto confirm when requested (automation/non-interactive runs)
+      set_fact:
+        confirm_user_input: "yes"
+      when: auto_confirm | bool
+
+    - name: Confirm intent
+      pause:
+        prompt: |
+
+          This will SUSPEND ApplicationSets and DELETE Applications.
+          Kubernetes resources (pods, services, etc.) will REMAIN in the cluster.
+
+          Type 'yes' to proceed, anything else to abort.
+      register: confirm
+      when: not (auto_confirm | bool)
+
+    - name: Abort if not confirmed
+      meta: end_play
+      # Continue only when either the interactive 'confirm' register indicates
+      # 'yes' OR the automation variable `confirm_user_input` equals 'yes'. Any
+      # other case means we should abort.
+      when: "not ((confirm_user_input | default(false) | bool) or (confirm is defined and confirm.user_input | default('') == 'yes'))"
+
+    - name: Create backup directory
+      # ansible_date_time is only available when gather_facts is enabled.
+      # We keep gather_facts: false for speed, so fall back to calling date
+      # if the fact is not present.
+      vars:
+        backup_epoch: "{{ (ansible_date_time.epoch if (ansible_date_time is defined) else lookup('pipe', 'date +%s')) }}"
+      file:
+        path: "/tmp/argocd-prune-backup-{{ backup_epoch }}"
+        state: directory
+        mode: "0700"
+      register: backup_dir
+
+    - name: Backup all Applications
+      shell: kubectl -n {{ argocd_namespace }} get applications -o yaml > {{ backup_dir.path }}/applications-backup.yaml
+      changed_when: false
+
+    - name: Backup all ApplicationSets
+      shell: kubectl -n {{ argocd_namespace }} get applicationsets -o yaml > {{ backup_dir.path }}/applicationsets-backup.yaml
+      changed_when: false
+
+    - name: Display backup location
+      debug:
+        msg: "Backup saved to: {{ backup_dir.path }}"
+
+  tasks:
+    # ============================================
+    # Step 1: Suspend ApplicationSets
+    # ============================================
+    - name: Get list of all ApplicationSets
+      command: kubectl -n {{ argocd_namespace }} get applicationsets -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
+      register: all_appsets
+      changed_when: false
+
+    - name: Build a pattern string for suspend_appsets
+      set_fact:
+        suspend_regex: "{{ suspend_appsets | map('regex_escape') | join('|') }}"
+
+    # We'll determine which ApplicationSets to suspend after we identify which
+    # Applications are candidates for deletion (appsets that own those
+    # applications should be suspended to avoid instant re-creation).
+
+    - name: Display suspended ApplicationSets
+      debug:
+        msg: "Suspended ApplicationSets: {{ suspend_appsets | join(', ') }}"
+
+    # ============================================
+    # Step 2: Delete Applications (keep resources)
+    # ============================================
+    - name: Get list of all Applications
+      command: kubectl -n {{ argocd_namespace }} get applications -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
+      register: all_apps
+      changed_when: false
+
+    - name: Identify apps to delete (not in keep list)
+      set_fact:
+        apps_to_delete: "{{ all_apps.stdout_lines | difference(keep_apps) }}"
+
+    - name: Find owning ApplicationSets for apps_to_delete (if any)
+      shell: |
+        set -o pipefail
+        for a in {{ apps_to_delete | join(' ') | default('') }}; do
+          o=$(kubectl -n {{ argocd_namespace }} get application "$a" -o jsonpath='{.metadata.ownerReferences[?(@.kind=="ApplicationSet")].name}' 2>/dev/null || true)
+          if [ -n "$o" ]; then printf "%s\n" "$o"; fi
+        done | grep -v '^$' | sort -u || true
+      register: owning_appsets
+      changed_when: false
+      failed_when: false
+      when: apps_to_delete | length > 0
+
+    - name: Compute ApplicationSets to suspend (pattern matches + owners) and exclude keep_appsets
+      set_fact:
+        appsets_to_suspend: >-
+          {{ (
+            (all_appsets.stdout_lines | select('search', suspend_regex) | list)
+            + (owning_appsets.stdout_lines | default([]))
+          ) | unique | difference(keep_appsets) | list }}
+
+    - name: Debug appsets_to_suspend
+      debug:
+        msg: "ApplicationSets that will be suspended: {{ appsets_to_suspend | join(', ') }}"
+
+    - name: Suspend ApplicationSets which match patterns or are owners of apps to delete
+      command: >
+        kubectl -n {{ argocd_namespace }} patch applicationset {{ item }} --type=merge -p '{"spec":{"syncPolicy":{"automated":null}}}'
+      loop: "{{ appsets_to_suspend }}"
+      register: suspend_result
+      failed_when: false
+      when: not dry_run | bool
+
+    - name: Display apps that will be deleted
+      debug:
+        msg:
+          - "Applications to delete ({{ apps_to_delete | length }}):"
+          - "{{ apps_to_delete | join(', ') }}"
+      when: apps_to_delete | length > 0
+
+    - name: Pause before deletion
+      pause:
+        prompt: "About to delete {{ apps_to_delete | length }} Applications. Press Enter to continue or Ctrl+C to abort."
+      when: (apps_to_delete | length > 0) and (not dry_run | bool)
+
+    - name: Remove finalizers from Applications
+      command: >
+        kubectl -n {{ argocd_namespace }} patch application {{ item }}
+        --type=json
+        -p='[{"op": "remove", "path": "/metadata/finalizers"}]'
+      loop: "{{ apps_to_delete }}"
+      when: (apps_to_delete | length > 0) and (not dry_run | bool)
+      failed_when: false
+      register: remove_finalizers
+
+    - name: Delete Applications (keep Kubernetes resources)
+      command: kubectl -n {{ argocd_namespace }} delete application {{ item }} --cascade=orphan
+      loop: "{{ apps_to_delete }}"
+      when: (apps_to_delete | length > 0) and (not dry_run | bool)
+      register: delete_apps
+
+    - name: Wait for deletions to complete
+      pause:
+        seconds: 5
+      when: (apps_to_delete | length > 0) and (not dry_run | bool)
+
+    # Optionally delete applicationsets that were suspended above, if the
+    # user requested -- remove_appsets=true and not a dry run.
+    - name: Pause before deleting ApplicationSets (if requested)
+      pause:
+        prompt: "About to delete {{ appsets_to_suspend | length }} ApplicationSets. Press Enter to continue or Ctrl+C to abort."
+      when: (remove_appsets | bool) and (appsets_to_suspend is defined) and (appsets_to_suspend | length > 0) and (not dry_run | bool)
+
+    - name: Remove finalizers from ApplicationSets
+      command: >
+        kubectl -n {{ argocd_namespace }} patch applicationset {{ item }} --type=json -p='[{"op": "remove", "path": "/metadata/finalizers"}]'
+      loop: "{{ appsets_to_suspend }}"
+      when: (remove_appsets | bool) and (appsets_to_suspend is defined) and (appsets_to_suspend | length > 0) and (not dry_run | bool)
+      failed_when: false
+      register: remove_appsets_finalizers
+
+    - name: Delete ApplicationSets (keep Kubernetes resources)
+      command: kubectl -n {{ argocd_namespace }} delete applicationset {{ item }} --cascade=orphan
+      loop: "{{ appsets_to_suspend }}"
+      when: (remove_appsets | bool) and (appsets_to_suspend is defined) and (appsets_to_suspend | length > 0) and (not dry_run | bool)
+      register: delete_appsets
+
+    - name: Wait for appset deletions to complete
+      pause:
+        seconds: 5
+      when: (remove_appsets | bool) and (appsets_to_suspend is defined) and (appsets_to_suspend | length > 0) and (not dry_run | bool)
+
+    # ============================================
+    # Step 3: Verify state
+    # ============================================
+    - name: List remaining Applications
+      command: kubectl -n {{ argocd_namespace }} get applications
+      register: remaining_apps
+      changed_when: false
+
+    - name: List ApplicationSets status
+      command: kubectl -n {{ argocd_namespace }} get applicationsets
+      register: appsets_status
+      changed_when: false
+
+    - name: Verify Kubernetes resources still exist
+      command: kubectl get pods -A
+      register: all_pods
+      changed_when: false
 
   post_tasks:
-    - name: Optionally scale controllers back up (commented out for safety)
+    - name: Display final status
       debug:
-        msg: "If you want the ApplicationSet controller to re-create apps after fixing repo issues, run: kubectl --kubeconfig={{ kubeconfig_path }} -n argocd scale deployment argocd-applicationset-controller --replicas=1"
+        msg:
+          - "========================================"
+          - "Prune Complete"
+          - "========================================"
+          - ""
+          - "Remaining Applications:"
+          - "{{ remaining_apps.stdout }}"
+          - ""
+          - "ApplicationSets status:"
+          - "{{ appsets_status.stdout }}"
+          - ""
+          - "Kubernetes resources status:"
+          - "  All pods still running: {{ all_pods.stdout_lines | length }} pods"
+          - ""
+          - "What happened:"
+          - "  ✓ Suspended: {{ appsets_to_suspend | default([]) | join(', ') }}"
+          - "  {{ 'Will delete' if (dry_run | bool) else 'Deleted' }} {{ apps_to_delete | length }} Applications"
+          - "  {{ 'Will delete' if (dry_run | bool and (remove_appsets | bool)) else ('Deleted' if (delete_appsets is defined) else 'No') }} ApplicationSets: {{ (appsets_to_suspend | default([]) | length) if (remove_appsets | bool) else 0 }}"
+          - "  ✓ Kept Kubernetes resources (--cascade=orphan)"
+          - "  ✓ Backup saved: {{ backup_dir.path }}"
+          - ""
+          - "========================================"
+
+    - name: Display restoration instructions
+      debug:
+        msg:
+          - "To restore ArgoCD management:"
+          - ""
+          - "1. Re-enable suspended ApplicationSets:"
+          - "   For each AppSet in {{ appsets_to_suspend | default([]) | join(', ') }}:"
+          - '   kubectl -n argocd patch applicationset <name> --type=merge -p ''{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'''
+          - ""
+          - "2. ApplicationSets will recreate Applications"
+          - "   ArgoCD will detect existing resources and adopt them"
+          - ""
+          - "3. Or restore from backup:"
+          - "   kubectl apply -f {{ backup_dir.path }}/applications-backup.yaml"
+          - "   kubectl apply -f {{ backup_dir.path }}/applicationsets-backup.yaml"
+          - ""
+          - "To re-enable a specific ApplicationSet:"
+          - '   kubectl -n argocd patch applicationset apps --type=merge -p ''{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'''
+          - ""
