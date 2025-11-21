@@ -13,4 +13,5 @@ resources:
   - resume-project.yaml
   - oci-csi-driver.yaml
   - platform-shared-services-appset.yaml
-  - sealed-secrets-manifests.yaml
+  # sealed-secrets-manifests is intentionally managed separately to avoid ApplicationSet
+  # generators from bulk-appsets creating duplicate Applications.

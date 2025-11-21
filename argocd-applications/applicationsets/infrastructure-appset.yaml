@@ -9,8 +9,10 @@ spec:
     - git:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         revision: main
+        # Only match files that start with a numeric prefix so bulk generators don't pick up
+        # manually-managed Application manifests (like sealed-secrets-manifests.yaml).
         files:
-          - path: "argocd-applications/platform/*.yaml"
+          - path: "argocd-applications/platform/[0-9]*.yaml"
   template:
     metadata:
       name: '{{ trimSuffix ".yaml" .path.filename }}'
