@@ -18,7 +18,7 @@ spec:
 
   template:
     metadata:
-      name: "{{ .name }}"
+      name: '{{ .name }}'
       annotations:
         argocd.argoproj.io/sync-wave: '{{ default "21" .syncWave }}'
 
@@ -28,10 +28,22 @@ spec:
       # ---------------------------
       # Sources handling
       # ---------------------------
-      # We must use 'sources' (plural) to maintain valid YAML structure.
-      # The '{{ if }}' logic cannot be used to switch keys (source vs sources)
-      # because it breaks the YAML parser before templating occurs.
-      sources: { { - toYaml .sources | nindent 8 } }
+      # We must explicitly iterate over sources to keep the file valid YAML.
+      # We cannot use 'toYaml' for the root list because '{{' confuses the parser.
+      sources:
+      {{- range $source := .sources }}
+        - repoURL: '{{ $source.repoURL }}'
+          targetRevision: '{{ $source.targetRevision }}'
+          path: '{{ $source.path }}'
+          {{- if $source.ref }}
+          ref: '{{ $source.ref }}'
+          {{- end }}
+          {{- if $source.chart }}
+          chart: '{{ $source.chart }}'
+          {{- end }}
+          # If you need Helm/Kustomize params later, they must be added here manually
+          # or structured carefully to avoid YAML parsing errors.
+      {{- end }}
 
       destination:
         server: '{{ default "https://kubernetes.default.svc" .destination.server }}'
@@ -40,13 +52,10 @@ spec:
       # ---------------------------
       # Sync policy
       # ---------------------------
-      # Similar to sources, we define the structure explicitly to keep YAML valid.
-      # If .syncPolicy is provided in the descriptor, we use its values.
-      # Otherwise, we default to the values below.
       syncPolicy:
         automated:
-          prune: "{{ if .syncPolicy }}{{ .syncPolicy.automated.prune }}{{ else }}false{{ end }}"
-          selfHeal: "{{ if .syncPolicy }}{{ .syncPolicy.automated.selfHeal }}{{ else }}false{{ end }}"
+          prune: '{{ if .syncPolicy }}{{ .syncPolicy.automated.prune }}{{ else }}false{{ end }}'
+          selfHeal: '{{ if .syncPolicy }}{{ .syncPolicy.automated.selfHeal }}{{ else }}false{{ end }}'
 
       ignoreDifferences:
         - group: argoproj.io
