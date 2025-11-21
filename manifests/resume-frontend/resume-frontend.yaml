@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: resume-frontend-svc
+  namespace: resume-app
+  labels:
+    job: astro-web
+    app: resume-frontend
+    tier: frontend
+spec:
+  selector:
+    app: resume-frontend
+  ports:
+    - name: web-port
+      port: 443
+      targetPort: 3000
+    - name: http
+      port: 80
+      targetPort: 3000
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resume-frontend
+  namespace: resume-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resume-frontend
+  template:
+    metadata:
+      labels:
+        app: resume-frontend
+    spec:
+      imagePullSecrets:
+        - name: ocir-secret
+      containers:
+        - name: resume-frontend
+          image: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend:94ab36a
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          ports:
+            - containerPort: 3000

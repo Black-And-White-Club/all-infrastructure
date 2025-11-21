@@ -1,2 +1,2 @@
 resources:
-  - ../frolf-bot/discord-deployment.yaml
+  - discord-deployment.yaml

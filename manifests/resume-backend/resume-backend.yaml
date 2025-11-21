@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: resume-backend-svc
+  namespace: resume-app
+  labels:
+    job: go-api
+    app: resume-backend
+spec:
+  selector:
+    app: resume-backend
+  ports:
+    - name: api-port
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resume-backend
+  namespace: resume-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resume-backend
+  template:
+    metadata:
+      labels:
+        app: resume-backend
+    spec:
+      imagePullSecrets:
+        - name: ocir-secret
+      containers:
+        - name: resume-backend
+          image: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend:dev
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: resume-backend-postgresql
+          env:
+            - name: ALLOWED_ORIGINS
+              value: https://jaromero.cloud/
+            - name: APP_ENV
+              value: dev
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: resume-backend-postgresql
+                  key: DATABASE_URL
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "50m"
+            limits:
+              memory: "512Mi"
+              cpu: "250m"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
