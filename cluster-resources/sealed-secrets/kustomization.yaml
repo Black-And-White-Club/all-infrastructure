@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Bundle all sealed-secret manifests into a single Kustomize unit so ArgoCD
+# can manage them with one Application (sealed-secrets-manifests).
+resources:
+  - ocir-secret-argocd-sealed.yaml
+  - ocir-secret-resume-sealed.yaml
+  - objectstore-creds-sealed-secret-template.yaml
+  - resume-backend-postgres-sealed-secret-template.yaml
+  - resume-backend-postgres-resume-app-sealed-secret-template.yaml
+  - sealed-repo-all-infrastructure.yaml
+  - sealed-repo-resume-infrastructure.yaml
+  - sealed-resume-backend-postgresql.yaml
+  - sealed-resume-backend-postgresql-app.yaml
