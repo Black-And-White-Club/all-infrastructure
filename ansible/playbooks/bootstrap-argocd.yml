@@ -1,290 +1,138 @@
 ---
-# Bootstrap ArgoCD on the OCI Kubernetes cluster
-# This is the ONLY imperative step - everything else is GitOps
+# Clean, safe ArgoCD bootstrap for OCI cluster
 
-- name: Bootstrap ArgoCD
-  hosts: kube_control_plane
-  become: false
-  gather_facts: true
+- name: Bootstrap ArgoCD (clean version)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
   vars:
+    kubeconfig_path: "{{ lookup('env','HOME') }}/.kube/config-oci"
     argocd_namespace: argocd
-    argocd_version: stable # or pin to specific version like v2.9.3
-    repo_url: https://github.com/Black-And-White-Club/all-infrastructure.git
-    kubeconfig_path: "{{ lookup('env','KUBECONFIG') | default('~/.kube/config') }}"
+    lich_king_path: "{{ playbook_dir }}/../../argocd-applications/the-lich-king/the-lich-king.yaml"
+    argocd_values: "{{ playbook_dir }}/../../charts/argo-cd/values.yaml"
 
-  # no pre_tasks: we run this playbook without sudo (control plane user must have kubeconfig).
-  # If a task genuinely needs escalation it should set `become: true` on the task itself.
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
 
   tasks:
-    - name: Detect remote kubeconfig exists
+    ###########################################################################
+    # 0. VALIDATION
+    ###########################################################################
+
+    - name: Ensure kubeconfig exists
       stat:
         path: "{{ kubeconfig_path }}"
-      register: kubeconfig_remote
-      changed_when: false
+      register: kubeconf
 
-    - name: Decide whether to run kubectl/helm locally
-      set_fact:
-        use_local_kubectl: "{{ not kubeconfig_remote.stat.exists }}"
-      changed_when: false
+    - name: Fail if kubeconfig is missing
+      fail:
+        msg: "Kubeconfig not found at {{ kubeconfig_path }}. Did you forget to export it?"
+      when: not kubeconf.stat.exists
 
-    - name: Check if kubectl is available
-      command: kubectl --kubeconfig={{ kubeconfig_path }} version --client
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-      register: kubectl_check
-      changed_when: false
-      failed_when: kubectl_check.rc != 0
+    - name: Ensure Lich King file exists
+      stat:
+        path: "{{ lich_king_path }}"
+      register: lkfile
 
-    - name: Check if Helm is available
-      command: helm version --short
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-      register: helm_check
-      changed_when: false
-      failed_when: helm_check.rc != 0
+    - name: Fail if Lich King descriptor is missing
+      fail:
+        msg: "Lich King file not found at {{ lich_king_path }}. Fix the repo path."
+      when: not lkfile.stat.exists
 
-    - name: Create ArgoCD namespace
-      command: kubectl --kubeconfig={{ kubeconfig_path }} create namespace {{ argocd_namespace }} --dry-run=client -o yaml
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-      register: namespace_yaml
-      changed_when: false
+    - name: Ensure ArgoCD values file exists
+      stat:
+        path: "{{ argocd_values }}"
+      register: valuesfile
 
-    - name: Apply ArgoCD namespace
-      command: kubectl --kubeconfig={{ kubeconfig_path }} apply -f -
-      args:
-        stdin: "{{ namespace_yaml.stdout }}"
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-      changed_when: true
+    - name: Fail if ArgoCD Helm values file missing
+      fail:
+        msg: "ArgoCD values file not found at {{ argocd_values }}"
+      when: not valuesfile.stat.exists
 
-    - name: Add ArgoCD Helm repository
-      command: helm repo add argo https://argoproj.github.io/argo-helm
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-      register: helm_repo_add
-      changed_when: "'already exists' not in helm_repo_add.stderr"
+    ###########################################################################
+    # 1. CHECK IF ARGOCD IS ALREADY INSTALLED
+    ###########################################################################
+
+    - name: Detect if ArgoCD namespace exists
+      command: kubectl get ns {{ argocd_namespace }}
+      register: ns_check
       failed_when: false
-
-    - name: Update Helm repositories
-      command: helm repo update
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
       changed_when: false
 
-    - name: Copy values file to control plane (or local if delegated)
-      copy:
-        src: ../../charts/argo-cd/values.yaml
-        dest: /tmp/argocd-values.yaml
-        mode: "0644"
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
+    - name: Detect if ArgoCD server exists
+      command: kubectl -n {{ argocd_namespace }} get deploy argocd-server
+      register: server_check
+      failed_when: false
+      changed_when: false
 
-    - name: Install ArgoCD via Helm
+    ###########################################################################
+    # 2. INSTALL ARGOCD (ONLY IF MISSING)
+    ###########################################################################
+
+    - name: Add ArgoCD Helm repo (idempotent)
+      command: helm repo add argo https://argoproj.github.io/argo-helm
+      failed_when: false
+      changed_when: false
+
+    - name: Helm repo update
+      command: helm repo update
+      changed_when: false
+
+    - name: Install ArgoCD via Helm ONLY if missing
+      when: server_check.rc != 0
       command: >
         helm upgrade --install argocd argo/argo-cd
         --namespace {{ argocd_namespace }}
         --create-namespace
-        --values /tmp/argocd-values.yaml
-        --wait
-        --timeout 10m
-      register: argocd_install
-      changed_when: "'has been upgraded' in argocd_install.stdout or 'has been installed' in argocd_install.stdout"
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
+        --values {{ argocd_values }}
+        --wait --timeout 10m
 
-    - name: Get ArgoCD initial admin password
-      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}"
-      register: argocd_password_b64
+    - name: Wait for ArgoCD server (only on fresh install)
+      when: server_check.rc != 0
+      command: kubectl wait --for=condition=available --timeout=300s
+        deployment/argocd-server -n {{ argocd_namespace }}
+
+    ###########################################################################
+    # 3. APPLY THE LICH KING ROOT APPLICATION
+    ###########################################################################
+
+    - name: Check if Lich King application already exists
+      command: kubectl -n {{ argocd_namespace }} get application the-lich-king
+      register: lk_check
+      failed_when: false
       changed_when: false
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
 
-    - name: Decode ArgoCD password
-      command: echo "{{ argocd_password_b64.stdout }}" | base64 -d
-      register: argocd_password
-      changed_when: false
+    - name: Apply Lich King root application (safe, idempotent)
+      command: kubectl apply -f {{ lich_king_path }}
+      register: lk_apply
+      when: lk_check.rc != 0
 
-    - name: Display ArgoCD access information
+    - name: Re-apply Lich King if it exists (ensures updates)
+      command: kubectl apply -f {{ lich_king_path }}
+      register: lk_reapply
+      when: lk_check.rc == 0
+
+    ###########################################################################
+    # 4. OUTPUT RESULTS
+    ###########################################################################
+
+    - name: Display ArgoCD + Lich King status
       debug:
         msg:
-          - "ArgoCD installed successfully!"
-          - "Access ArgoCD UI: kubectl port-forward svc/argocd-server -n argocd 8080:443"
-          - "Username: admin"
-          - "Password: {{ argocd_password.stdout }}"
+          - "========================================"
+          - "ArgoCD Bootstrap Complete!"
+          - "========================================"
+          - "ArgoCD Installed: {{ 'yes' if server_check.rc == 0 else 'fresh install' }}"
           - ""
-          - "Next steps:"
-          - "1. Apply the root ApplicationSet to bootstrap GitOps"
-          - "2. Install Sealed Secrets via ArgoCD Application"
-          - "3. Generate and commit sealed OCIR pull secret"
-
-    - name: Apply Lich King root Application (the-lich-king)
-      command: kubectl --kubeconfig={{ kubeconfig_path }} apply -f https://raw.githubusercontent.com/Black-And-White-Club/all-infrastructure/main/argocd-applications/the-lich-king/the-lich-king.yaml
-      register: lich_apply
-      failed_when: false
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-
-    - name: Confirm Lich King sync status
-      command: kubectl --kubeconfig={{ kubeconfig_path }} -n argocd get application the-lich-king -o yaml
-      register: lich_status
-      failed_when: false
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-
-    - name: Create root ApplicationSet for platform resources
-      copy:
-        content: |
-          apiVersion: argoproj.io/v1alpha1
-          kind: ApplicationSet
-          metadata:
-            name: platform-cluster-resources
-            namespace: argocd
-          spec:
-            goTemplate: true
-            generators:
-              - git:
-                  repoURL: "{{ repo_url }}"
-                  revision: main
-                  files:
-                    - path: "cluster-resources/*.yaml"
-            template:
-              metadata:
-                name: 'cluster-{{ "{{" }} trimSuffix ".yaml" .path.filename {{ "}}" }}'
-                labels:
-                  app: '{{ "{{" }} trimSuffix ".yaml" .path.filename {{ "}}" }}'
-                  type: cluster-resource
-              spec:
-                project: default
-                source:
-                  repoURL: "{{ repo_url }}"
-                  targetRevision: main
-                  path: cluster-resources
-                  directory:
-                    include: "{{ "{{" }} .path.filename {{ "}}" }}"
-                destination:
-                  server: https://kubernetes.default.svc
-                  namespace: default
-                syncPolicy:
-                  automated:
-                    prune: true
-                    selfHeal: true
-                  syncOptions:
-                    - CreateNamespace=true
-        dest: /tmp/root-appset.yaml
-        mode: "0644"
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-
-    - name: Apply root ApplicationSet
-      command: kubectl --kubeconfig={{ kubeconfig_path }} apply -f /tmp/root-appset.yaml
-      register: appset_result
-      changed_when: "'created' in appset_result.stdout or 'configured' in appset_result.stdout"
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-
-    - name: Create resume ArgoCD project (if not using explicit project AppSet)
-      k8s:
-        definition:
-          apiVersion: argoproj.io/v1alpha1
-          kind: AppProject
-          metadata:
-            name: resume
-            namespace: argocd
-          spec:
-            description: Resume AppProject (auto-created by bootstrap)
-            sourceRepos:
-              - "https://github.com/Black-And-White-Club/resume-infrastructure.git"
-              - "https://github.com/Black-And-White-Club/*"
-            destinations:
-              - namespace: "resume-app"
-                server: https://kubernetes.default.svc
-              - namespace: "resume-db"
-                server: https://kubernetes.default.svc
-            clusterResourceWhitelist:
-              - group: ""
-                kind: Namespace
-            namespaceResourceWhitelist:
-              - group: ""
-                kind: Secret
-      register: resume_project
-      failed_when: false
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-
-    - name: Create frolf-bot ArgoCD project (mirror frolf repo pattern)
-      k8s:
-        definition:
-          apiVersion: argoproj.io/v1alpha1
-          kind: AppProject
-          metadata:
-            name: frolf-bot
-            namespace: argocd
-          spec:
-            description: Frolf Bot Project (auto-created by bootstrap)
-            sourceRepos:
-              - "https://github.com/Black-And-White-Club/frolf-bot-infrastructure.git"
-              - "https://github.com/Black-And-White-Club/*"
-            destinations:
-              - namespace: "frolf-bot"
-                server: https://kubernetes.default.svc
-              - namespace: "postgres-frolf"
-                server: https://kubernetes.default.svc
-            clusterResourceWhitelist:
-              - group: ""
-                kind: Namespace
-            namespaceResourceWhitelist:
-              - group: ""
-                kind: Secret
-      register: frolf_bot_project
-      failed_when: false
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-
-    - name: Create Sealed Secrets Application manifest
-      copy:
-        content: |
-          apiVersion: argoproj.io/v1alpha1
-          kind: Application
-          metadata:
-            name: sealed-secrets
-            namespace: argocd
-          spec:
-            project: default
-            source:
-              repoURL: https://bitnami-labs.github.io/sealed-secrets
-              chart: sealed-secrets
-              targetRevision: 2.16.2
-              helm:
-                releaseName: sealed-secrets
-            destination:
-              server: https://kubernetes.default.svc
-              namespace: kube-system
-            syncPolicy:
-              automated:
-                prune: true
-                selfHeal: true
-              syncOptions:
-                - CreateNamespace=true
-        dest: /tmp/sealed-secrets-app.yaml
-        mode: "0644"
-
-    - name: Apply Sealed Secrets Application
-      command: kubectl --kubeconfig={{ kubeconfig_path }} apply -f /tmp/sealed-secrets-app.yaml
-      register: sealed_app_result
-      changed_when: "'created' in sealed_app_result.stdout or 'configured' in sealed_app_result.stdout"
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-
-    - name: Wait for Sealed Secrets controller to be ready
-      command: kubectl --kubeconfig={{ kubeconfig_path }} wait --for=condition=available --timeout=300s deployment/sealed-secrets -n kube-system
-      register: wait_sealed
-      changed_when: false
-      retries: 5
-      delay: 15
-      until: wait_sealed.rc == 0
-      ignore_errors: true
-      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
-
-    - name: Display next steps
-      debug:
-        msg:
-          - "Bootstrap complete!"
+          - "Lich King applied from:"
+          - "  {{ lich_king_path }}"
           - ""
-          - "Sealed Secrets controller should be deploying..."
-          - "Check status: kubectl get pods -n kube-system -l app.kubernetes.io/name=sealed-secrets"
+          - "To check status:"
+          - "  kubectl get applicationsets -n argocd"
+          - "  kubectl get applications -n argocd"
           - ""
-          - "Next: Generate OCIR pull secret and seal it:"
-          - "kubectl create secret docker-registry ocir-pull-secret \\"
-          - "  --docker-server=${OCI_REGION}.ocir.io \\"
-          - "  --docker-username='${OCI_TENANCY_NAMESPACE}/oracleidentitycloudservice/${OCI_USERNAME}' \\"
-          - "  --docker-password='${OCI_AUTH_TOKEN}' \\"
-          - "  --docker-email='${OCI_USERNAME}' \\"
-          - "  --namespace resume \\"
-          - "  --dry-run=client -o yaml | \\"
-          - "  kubeseal --controller-name sealed-secrets --controller-namespace kube-system \\"
-          - "  -o yaml > sealed-secrets/ocir-pull-secret-sealed.yaml"
+          - "To watch apps sync:"
+          - "  watch kubectl get applications -n argocd"
+          - ""
+          - "========================================"
