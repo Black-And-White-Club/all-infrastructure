@@ -1,6 +1,5 @@
 ---
 # The Lich King: Root Application that bootstraps all platform and application resources
-# Best Practice: Simple Application (not ApplicationSet) that deploys other ApplicationSets
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -16,13 +15,9 @@ spec:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
     path: argocd-applications
-    # Allow ArgoCD to recurse into subdirectories so ApplicationSets in
-    # `argocd-applications/applicationsets/` are discovered and applied.
-    directory:
-      recurse: true
-      include: "applicationsets/*.yaml"
-    # ensure platform resources are applied before apps
-    # (AppSets at root should include infrastructure/appsets and platform/)
+    # REMOVED: The 'directory' block.
+    # ArgoCD will now automatically find 'kustomization.yaml' in the path above.
+
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
