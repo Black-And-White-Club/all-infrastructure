@@ -1,7 +1,10 @@
 # Descriptor file used by apps-appset to generate Application for frolf-backend
 name: frolf-backend
 project: frolf-bot
-path: manifests/frolf-backend
+sources:
+  - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    targetRevision: main
+    path: manifests/frolf-backend
 destination:
   server: https://kubernetes.default.svc
   namespace: frolf-bot

@@ -1,7 +1,10 @@
 # Descriptor file for frolf-discord (will be expanded to an ArgoCD Application by apps-appset)
 name: frolf-discord
 project: frolf-bot
-path: manifests/frolf-discord
+sources:
+  - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    targetRevision: main
+    path: manifests/frolf-discord
 destination:
   server: https://kubernetes.default.svc
   namespace: frolf-bot

@@ -4,7 +4,10 @@
 # values below.
 name: resume-backend
 project: resume
-path: manifests/resume-backend
+sources:
+  - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    targetRevision: main
+    path: manifests/resume-backend
 destination:
   server: https://kubernetes.default.svc
   namespace: resume-app
