@@ -1,0 +1,92 @@
+---
+- name: Prune non-core ArgoCD Applications (keep ArgoCD and core apps)
+  hosts: kube_control_plane
+  gather_facts: false
+  become: "{{ use_sudo | default(false) }}"
+  vars:
+    argocd_namespace: argocd
+    kubeconfig_path: "{{ lookup('env','KUBECONFIG') | default('~/.kube/config') }}"
+    keep_apps:
+      - the-lich-king
+      - sealed-secrets
+      - argocd
+
+  pre_tasks:
+    - name: Confirm prune intent
+      pause:
+        prompt: |
+          This will delete ArgoCD Application CRs in the argocd namespace except: {{ keep_apps }}.
+          Type 'yes' to proceed.
+      register: confirm
+
+    - name: Fail if not confirmed
+      ansible.builtin.fail:
+        msg: "User did not confirm prune."
+      when: confirm.user_input != 'yes'
+      become: false
+
+    - name: Create backup directory
+      file:
+        path: /tmp/argocd-prune-backup
+        state: directory
+        mode: "0700"
+      become: false
+
+    - name: Save list of existing ArgoCD Applications
+      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} get applications -o yaml > /tmp/argocd-prune-backup/applications-before-prune.yaml
+      become: false
+      failed_when: false
+
+  tasks:
+    - name: Scale down ApplicationSet controller (prevent re-creation)
+      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} scale deployment argocd-applicationset-controller --replicas=0
+      register: scale_as
+      failed_when: false
+
+    - name: Scale down Application controller (prevent requeueing/resume)
+      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} scale statefulset argocd-application-controller --replicas=0
+      register: scale_app
+      failed_when: false
+
+    - name: Get list of applications to delete
+      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} get applications -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
+      register: all_apps
+
+    - name: Remove core apps from list and delete generated apps
+      shell: |
+        for app in $(echo "{{ all_apps.stdout }}"); do
+          keep=false
+          for k in {{ keep_apps | join(' ') }}; do
+            if [ "$app" = "$k" ]; then
+              keep=true
+            fi
+          done
+            if [ "$keep" = false ]; then
+            echo "Deleting application: $app"
+            kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} patch application "$app" --type=merge -p '{"metadata":{"finalizers":[]}}' || true
+            kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} delete application "$app" --grace-period=0 --force || true
+          else
+            echo "KEEPING: $app"
+          fi
+        done
+      register: delete_result
+      failed_when: false
+
+    - name: Wait for deletion to finish (short)
+      pause:
+        seconds: 5
+
+    - name: Confirm remaining apps
+      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} get applications
+      register: final_list
+
+    - name: Print info
+      debug:
+        msg:
+          - "Apps after prune: \n{{ final_list.stdout }}"
+          - "Remember: ApplicationSet controller is still scaled to 0. Scale it up when you want AppSets to re-generate apps."
+
+  post_tasks:
+    - name: Optionally scale controllers back up (commented out for safety)
+      debug:
+        msg: "If you want the ApplicationSet controller to re-create apps after fixing repo issues, run: kubectl --kubeconfig={{ kubeconfig_path }} -n argocd scale deployment argocd-applicationset-controller --replicas=1"

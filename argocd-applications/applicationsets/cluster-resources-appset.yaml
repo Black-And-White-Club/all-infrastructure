@@ -6,16 +6,27 @@ metadata:
 spec:
   goTemplate: true
   generators:
-    - git:
-        repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
-        revision: main
-        files:
-          - path: "cluster-resources/*.yaml"
+    - list:
+        elements:
+          - name: namespaces
+            path: cluster-resources/namespaces
+            wave: "1"
+            prune: "false"
+          - name: storage
+            path: cluster-resources
+            wave: "2"
+            prune: "true"
+          - name: networkpolicies
+            path: cluster-resources/networkpolicies
+            wave: "3"
+            prune: "true"
   template:
     metadata:
       name: 'cluster-{{ trimSuffix ".yaml" .path.filename }}'
       annotations:
-        argocd.argoproj.io/sync-wave: "1"
+        # Default to low-number waves for cluster resources; per-element
+        # 'wave' value is applied to each generated app
+        argocd.argoproj.io/sync-wave: '{{ default "1" .wave }}'
     spec:
       project: default
       source:
@@ -27,7 +38,18 @@ spec:
         namespace: default
       syncPolicy:
         automated:
-          prune: true
+          # For safety, namespaces won't be removed by auto-prune. Other items
+          # like storage and network policies are safe to prune and will be
+          # opted-in via the element 'prune' flag in the generator when needed.
+          prune: { { default "true" .prune } }
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
+      ignoreDifferences:
+        - group: argoproj.io
+          kind: Application
+          jsonPointers:
+            - /spec/syncPolicy
+      preservedFields:
+        annotations:
+          - argocd.argoproj.io/skip-reconcile

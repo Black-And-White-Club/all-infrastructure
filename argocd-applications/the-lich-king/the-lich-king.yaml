@@ -6,6 +6,8 @@ kind: Application
 metadata:
   name: the-lich-king
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -15,7 +17,7 @@ spec:
     targetRevision: main
     path: argocd-applications
     directory:
-      recurse: true
+      recurse: false
       include: "applicationsets/*-appset.yaml"
     # ensure platform resources are applied before apps
     # (AppSets at root should include infrastructure/appsets and platform/)

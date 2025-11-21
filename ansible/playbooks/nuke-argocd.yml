@@ -1,0 +1,72 @@
+---
+- name: "Nuke ArgoCD (destructive) - confirm first"
+  hosts: kube_control_plane
+  gather_facts: false
+  become: "{{ use_sudo | default(false) }}"
+  vars:
+    argocd_namespace: argocd
+    kubeconfig_path: "{{ lookup('env','KUBECONFIG') | default('~/.kube/config') }}"
+    backup_location: /tmp/argocd-backup
+    delete_namespace: false
+
+  pre_tasks:
+    - name: Confirm deletion
+      pause:
+        prompt: |
+          You are about to permanently remove ArgoCD from the cluster.
+          Type 'yes' to proceed. This is destructive and will also delete
+          any ArgoCD Applications, ApplicationSets and app state.
+      register: confirmation
+
+    - name: Fail if user did not confirm
+      ansible.builtin.fail:
+        msg: "User did not confirm ArgoCD deletion. Aborting."
+      when: confirmation.user_input != 'yes'
+      become: false
+
+    - name: Ensure backup directory exists
+      file:
+        path: "{{ backup_location }}"
+        state: directory
+        mode: "0700"
+        become: false
+
+    - name: Backup ArgoCD Application resources (CRDs)
+      command: kubectl --kubeconfig={{ kubeconfig_path }} get application,applicationset,appproject -n {{ argocd_namespace }} -o yaml > {{ backup_location }}/argocd-apps-backup.yaml
+      become: false
+      failed_when: false
+
+    - name: Backup argocd namespace resources
+      command: kubectl --kubeconfig={{ kubeconfig_path }} get all -n {{ argocd_namespace }} -o yaml > {{ backup_location }}/argocd-resources-backup.yaml
+      become: false
+      failed_when: false
+
+  tasks:
+    - name: Scale down argocd appset controller to 0
+      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} scale deployment argocd-applicationset-controller --replicas=0
+      failed_when: false
+      changed_when: false
+
+    - name: Scale down argocd application controller statefulset to 0
+      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} scale statefulset argocd-application-controller --replicas=0
+      failed_when: false
+      changed_when: false
+
+    - name: Uninstall argocd via Helm (if installed)
+      command: helm uninstall argocd -n {{ argocd_namespace }} --kubeconfig {{ kubeconfig_path }}
+      register: helm_uninstall
+      failed_when: false
+
+    - name: Delete argocd namespace (optional)
+      when: delete_namespace | bool
+      command: kubectl --kubeconfig={{ kubeconfig_path }} delete namespace {{ argocd_namespace }} --ignore-not-found
+
+    - name: Delete ArgoCD CRDs (Applications, ApplicationSets) - optional will only run if delete_namespace is true
+      when: delete_namespace | bool
+      command: kubectl --kubeconfig={{ kubeconfig_path }} delete crd applications.argoproj.io applicationsets.argoproj.io appprojects.argoproj.io --ignore-not-found
+
+    - name: Provide follow-up information
+      debug:
+        msg:
+          - "ArgoCD uninstall attempted: {{ helm_uninstall.stdout }}"
+          - "If you plan to re-bootstrap ArgoCD, run bootstrap-argocd.yml next."
