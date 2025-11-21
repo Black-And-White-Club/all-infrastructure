@@ -31,7 +31,8 @@ spec:
       # We must use 'sources' (plural) to maintain valid YAML structure.
       # The '{{ if }}' logic cannot be used to switch keys (source vs sources)
       # because it breaks the YAML parser before templating occurs.
-      sources: { { - toYaml .sources | nindent 8 } }
+      sources:
+    {{- toYaml .sources | nindent 8 }}
 
       destination:
         server: '{{ default "https://kubernetes.default.svc" .destination.server }}'
@@ -44,9 +45,13 @@ spec:
       # If .syncPolicy is provided in the descriptor, we use its values.
       # Otherwise, we default to the values below.
       syncPolicy:
+{{- if .syncPolicy }}
+{{ toYaml .syncPolicy | nindent 6 }}
+{{- else }}
         automated:
-          prune: "{{ if .syncPolicy }}{{ .syncPolicy.automated.prune }}{{ else }}false{{ end }}"
-          selfHeal: "{{ if .syncPolicy }}{{ .syncPolicy.automated.selfHeal }}{{ else }}false{{ end }}"
+          prune: false
+          selfHeal: false
+{{- end }}
 
       ignoreDifferences:
         - group: argoproj.io
