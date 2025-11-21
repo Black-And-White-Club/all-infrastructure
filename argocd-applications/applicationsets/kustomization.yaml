@@ -7,4 +7,3 @@ resources:
   - infrastructure-appset.yaml
   - multi-source-helm-apps.yaml
   - observability-appset.yaml
-  - sealed-secrets-appset.yaml
