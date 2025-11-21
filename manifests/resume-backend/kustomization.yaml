@@ -1,2 +1,2 @@
 resources:
-  - ../resume-app/resume-backend.yaml
+  - resume-backend.yaml
