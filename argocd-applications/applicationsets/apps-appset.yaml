@@ -25,17 +25,9 @@ spec:
     spec:
       project: '{{ default "default" .project }}'
       
-      # We define destination here as it's a standard scalar structure
       destination:
         server: '{{ default "https://kubernetes.default.svc" .destination.server }}'
         namespace: '{{ default "default" .destination.namespace }}'
-
-      # We define a default syncPolicy here. 
-      # If the user provides one in the descriptor, we will overwrite it in the patch below.
-      syncPolicy:
-        automated:
-          prune: false
-          selfHeal: false
 
       ignoreDifferences:
         - group: argoproj.io
@@ -51,23 +43,12 @@ spec:
   # ---------------------------------------------------------------------------
   # TEMPLATE PATCH
   # ---------------------------------------------------------------------------
-  # We use templatePatch for 'sources' and complex 'syncPolicy' logic.
-  # This is required because {{ range }} or {{ toYaml }} loops are invalid 
-  # syntax in the main YAML 'template' structure above.
+  # Simplified: We strictly expect 'sources' (plural) and 'syncPolicy'
+  # This removes the {{ if }} statements that were breaking the YAML parser.
   # ---------------------------------------------------------------------------
   templatePatch: |
     spec:
-      # Handle Source / Sources
-      {{- if .sources }}
       sources:
 {{ toYaml .sources | indent 6 }}
-      {{- else if .source }}
-      source:
-{{ toYaml .source | indent 6 }}
-      {{- end }}
-
-      # Handle SyncPolicy Override
-      {{- if .syncPolicy }}
       syncPolicy:
 {{ toYaml .syncPolicy | indent 6 }}
-      {{- end }}
