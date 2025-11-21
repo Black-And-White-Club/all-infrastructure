@@ -4,70 +4,74 @@
 
 - name: Bootstrap ArgoCD
   hosts: kube_control_plane
-  become: true
+  become: false
   gather_facts: true
   vars:
     argocd_namespace: argocd
     argocd_version: stable # or pin to specific version like v2.9.3
     repo_url: https://github.com/Black-And-White-Club/all-infrastructure.git
+    kubeconfig_path: "{{ lookup('env','KUBECONFIG') | default('~/.kube/config') }}"
 
-  pre_tasks:
-    - name: Check for passwordless sudo (preflight)
-      shell: sudo -n true
-      register: sudo_check
-      changed_when: false
-      failed_when: false
-
-    - name: Fail early if remote sudo requires a password and no become info provided
-      ansible.builtin.fail:
-        msg: |
-          The remote host requires a sudo password but none was provided.
-          Re-run with one of the following options:
-            * Use the become password prompt: ansible-playbook -K
-            * Export a temporary password (not recommended): export ANSIBLE_BECOME_PASS='your-pass'
-            * Use Ansible Vault to store the become password securely
-            * Configure passwordless sudo for the remote user (preferred for automation)
-      when: sudo_check.rc != 0 and (ansible_become_password is not defined or ansible_become_password == '')
+  # no pre_tasks: we run this playbook without sudo (control plane user must have kubeconfig).
+  # If a task genuinely needs escalation it should set `become: true` on the task itself.
 
   tasks:
+    - name: Detect remote kubeconfig exists
+      stat:
+        path: "{{ kubeconfig_path }}"
+      register: kubeconfig_remote
+      changed_when: false
+
+    - name: Decide whether to run kubectl/helm locally
+      set_fact:
+        use_local_kubectl: "{{ not kubeconfig_remote.stat.exists }}"
+      changed_when: false
+
     - name: Check if kubectl is available
-      command: kubectl version --client
+      command: kubectl --kubeconfig={{ kubeconfig_path }} version --client
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
       register: kubectl_check
       changed_when: false
       failed_when: kubectl_check.rc != 0
 
     - name: Check if Helm is available
       command: helm version --short
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
       register: helm_check
       changed_when: false
       failed_when: helm_check.rc != 0
 
     - name: Create ArgoCD namespace
-      command: kubectl create namespace {{ argocd_namespace }} --dry-run=client -o yaml
+      command: kubectl --kubeconfig={{ kubeconfig_path }} create namespace {{ argocd_namespace }} --dry-run=client -o yaml
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
       register: namespace_yaml
       changed_when: false
 
     - name: Apply ArgoCD namespace
-      command: kubectl apply -f -
+      command: kubectl --kubeconfig={{ kubeconfig_path }} apply -f -
       args:
         stdin: "{{ namespace_yaml.stdout }}"
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
       changed_when: true
 
     - name: Add ArgoCD Helm repository
       command: helm repo add argo https://argoproj.github.io/argo-helm
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
       register: helm_repo_add
       changed_when: "'already exists' not in helm_repo_add.stderr"
       failed_when: false
 
     - name: Update Helm repositories
       command: helm repo update
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
       changed_when: false
 
-    - name: Copy values file to control plane
+    - name: Copy values file to control plane (or local if delegated)
       copy:
         src: ../../charts/argo-cd/values.yaml
         dest: /tmp/argocd-values.yaml
         mode: "0644"
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
 
     - name: Install ArgoCD via Helm
       command: >
@@ -79,11 +83,13 @@
         --timeout 10m
       register: argocd_install
       changed_when: "'has been upgraded' in argocd_install.stdout or 'has been installed' in argocd_install.stdout"
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
 
     - name: Get ArgoCD initial admin password
-      command: kubectl -n {{ argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}"
+      command: kubectl --kubeconfig={{ kubeconfig_path }} -n {{ argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}"
       register: argocd_password_b64
       changed_when: false
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
 
     - name: Decode ArgoCD password
       command: echo "{{ argocd_password_b64.stdout }}" | base64 -d
@@ -102,6 +108,18 @@
           - "1. Apply the root ApplicationSet to bootstrap GitOps"
           - "2. Install Sealed Secrets via ArgoCD Application"
           - "3. Generate and commit sealed OCIR pull secret"
+
+    - name: Apply Lich King root Application (the-lich-king)
+      command: kubectl --kubeconfig={{ kubeconfig_path }} apply -f https://raw.githubusercontent.com/Black-And-White-Club/all-infrastructure/main/argocd-applications/the-lich-king/the-lich-king.yaml
+      register: lich_apply
+      failed_when: false
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
+
+    - name: Confirm Lich King sync status
+      command: kubectl --kubeconfig={{ kubeconfig_path }} -n argocd get application the-lich-king -o yaml
+      register: lich_status
+      failed_when: false
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
 
     - name: Create root ApplicationSet for platform resources
       copy:
@@ -146,9 +164,10 @@
         mode: "0644"
 
     - name: Apply root ApplicationSet
-      command: kubectl apply -f /tmp/root-appset.yaml
+      command: kubectl --kubeconfig={{ kubeconfig_path }} apply -f /tmp/root-appset.yaml
       register: appset_result
       changed_when: "'created' in appset_result.stdout or 'configured' in appset_result.stdout"
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
 
     - name: Create resume ArgoCD project (if not using explicit project AppSet)
       k8s:
@@ -176,6 +195,7 @@
                 kind: Secret
       register: resume_project
       failed_when: false
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
 
     - name: Create frolf-bot ArgoCD project (mirror frolf repo pattern)
       k8s:
@@ -203,6 +223,7 @@
                 kind: Secret
       register: frolf_bot_project
       failed_when: false
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
 
     - name: Create Sealed Secrets Application manifest
       copy:
@@ -233,18 +254,20 @@
         mode: "0644"
 
     - name: Apply Sealed Secrets Application
-      command: kubectl apply -f /tmp/sealed-secrets-app.yaml
+      command: kubectl --kubeconfig={{ kubeconfig_path }} apply -f /tmp/sealed-secrets-app.yaml
       register: sealed_app_result
       changed_when: "'created' in sealed_app_result.stdout or 'configured' in sealed_app_result.stdout"
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
 
     - name: Wait for Sealed Secrets controller to be ready
-      command: kubectl wait --for=condition=available --timeout=300s deployment/sealed-secrets -n kube-system
+      command: kubectl --kubeconfig={{ kubeconfig_path }} wait --for=condition=available --timeout=300s deployment/sealed-secrets -n kube-system
       register: wait_sealed
       changed_when: false
       retries: 5
       delay: 15
       until: wait_sealed.rc == 0
       ignore_errors: true
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
 
     - name: Display next steps
       debug:

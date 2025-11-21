@@ -31,3 +31,12 @@ spec:
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
+      # Avoid AppSet clobbering per-app syncPolicy or 'skip-reconcile' annotation
+      ignoreDifferences:
+        - group: argoproj.io
+          kind: Application
+          jsonPointers:
+            - /spec/syncPolicy
+      preservedFields:
+        annotations:
+          - argocd.argoproj.io/skip-reconcile

@@ -40,3 +40,11 @@ spec:
         automated:
           prune: true
           selfHeal: true
+      ignoreDifferences:
+        - group: argoproj.io
+          kind: Application
+          jsonPointers:
+            - /spec/syncPolicy
+      preservedFields:
+        annotations:
+          - argocd.argoproj.io/skip-reconcile

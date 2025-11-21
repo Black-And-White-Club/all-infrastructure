@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
   annotations:
     # Ensure platform resources, projects and CRDs apply before apps
-    argocd.argoproj.io/sync-wave: "21"
+    argocd.argoproj.io/sync-wave: "20"
 spec:
   # NOTE: This is a placeholder/template for future conversion of per-app manifests
   # to descriptor-style files (like observability/grafana-app.yaml). Presently, apps/
@@ -17,13 +17,7 @@ spec:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         revision: main
         files:
-          - path: "argocd-applications/apps/resume-backend-app.yaml"
-          - path: "argocd-applications/apps/resume-frontend-app.yaml"
-          - path: "argocd-applications/apps/resume-postgres-app.yaml"
-          - path: "argocd-applications/apps/frolf-backend-app.yaml"
-          - path: "argocd-applications/apps/frolf-discord-app.yaml"
-          - path: "argocd-applications/apps/frolf-postgres-app.yaml"
-          - path: "argocd-applications/apps/frolf-nats-app.yaml"
+          - path: "argocd-applications/apps/*.yaml"
   template:
     metadata:
       name: '{{ trimSuffix ".yaml" .path.filename }}'
@@ -41,9 +35,21 @@ spec:
         server: https://kubernetes.default.svc
         namespace: default
       syncPolicy:
+        # default to manual sync for apps - they opt-in to automation
         automated:
           prune: false
           selfHeal: false
+      # preserve per-App sync policy changes (users can toggle auto-sync per app)
+      ignoreDifferences:
+        - group: argoproj.io
+          kind: Application
+          jsonPointers:
+            - /spec/syncPolicy
+            - /spec/syncWindows
+      # ensure ApplicationSet preserves annotations like skip-reconcile when present
+      preservedFields:
+        annotations:
+          - argocd.argoproj.io/skip-reconcile
       metadata:
         annotations:
           # ensure generated apps sync later so AppProjects and platform resources exist
