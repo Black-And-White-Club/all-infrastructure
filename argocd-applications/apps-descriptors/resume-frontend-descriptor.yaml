@@ -1,0 +1,11 @@
+name: resume-frontend
+project: resume
+path: manifests/resume-frontend
+destination:
+  server: https://kubernetes.default.svc
+  namespace: resume-app
+syncWave: "21"
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true

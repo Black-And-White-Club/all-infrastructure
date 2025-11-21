@@ -41,8 +41,12 @@ Note: As part of the new minimal bootstrap pattern Ansible performs ONE-TIME ins
 manage all platform and application sets.
 
  - `argocd-applications/applicationsets/` contains ApplicationSet definitions
- - `argocd-applications/apps/` contains full ArgoCD Application manifests (these were migrated
-     from the historical `bootstrap/` directory during the migration; use `platform/` for platform-level resources).
+ - `argocd-applications/apps-descriptors/` contains small application descriptor files used by
+     `apps-appset.yaml` to generate full ArgoCD Application manifests. This is the canonical place
+     to add or modify app entries when following the Lich King/AppSet pattern.
+ - `argocd-applications/apps/` previously contained full Application manifests; those files have
+     been migrated to descriptors and archived at `argocd-applications/apps-archived/`. The stub
+     files under `apps/` remain to preserve history but are no longer the primary source-of-truth.
  - `argocd-applications/observability/` contains tiny chart descriptors for ApplicationSets to
      generate Grafana/Alloy/Mimir apps.
 

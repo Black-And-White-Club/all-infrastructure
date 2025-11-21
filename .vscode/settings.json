@@ -1,0 +1,11 @@
+{
+	// Workspace settings: treat ArgoCD AppSet template files as 'helm' templates
+	// so editor-level YAML validation is less noisy for go-template tokens.
+	"files.associations": {
+		"**/argocd-applications/**/*.yaml": "helm-template"
+	},
+	// Optionally, for editors without a helm-template language, fall back to plain text
+	"files.exclude": {
+		"**/argocd-applications/apps-archived/**": true
+	}
+}

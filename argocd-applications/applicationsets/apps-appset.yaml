@@ -4,53 +4,62 @@ metadata:
   name: apps-appset
   namespace: argocd
   annotations:
-    # Ensure platform resources, projects and CRDs apply before apps
     argocd.argoproj.io/sync-wave: "20"
+
 spec:
-  # NOTE: This is a placeholder/template for future conversion of per-app manifests
-  # to descriptor-style files (like observability/grafana-app.yaml). Presently, apps/
-  # contains full ArgoCD Application manifests; convert them to descriptors to use
-  # this ApplicationSet. The template below is intentionally inert/illustrative.
   goTemplate: true
+
   generators:
     - git:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         revision: main
         files:
-          - path: "argocd-applications/apps/*.yaml"
+          - path: "argocd-applications/apps-descriptors/*.yaml"
+
   template:
     metadata:
-      name: '{{ trimSuffix ".yaml" .path.filename }}'
+      name: '{{ .name }}'
+      annotations:
+        argocd.argoproj.io/sync-wave: '{{ default "21" .syncWave }}'
+
     spec:
-      project: default
+      project: '{{ default "default" .project }}'
+
+      # ---------------------------
+      # Source / Sources handling
+      # ---------------------------
+      {{- if .sources }}
+      sources:
+        {{- toYaml .sources | nindent 8 }}
+      {{- else if .source }}
       source:
-        repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
-        targetRevision: main
-        # The template uses the path to the application manifest file so the generated
-        # Application receives the same source. Template expects the Application file
-        # to be a complete ArgoCD Application manifest for the app.
-        # .path is an object; use .path.path to reference the file path string.
-        path: "{{ .path.path }}"
+        {{- toYaml .source | nindent 8 }}
+      {{- end }}
+
       destination:
-        server: https://kubernetes.default.svc
-        namespace: default
+        server: '{{ default "https://kubernetes.default.svc" .destination.server }}'
+        namespace: '{{ default "default" .destination.namespace }}'
+
+      # ---------------------------
+      # Sync policy
+      # ---------------------------
+      {{- if .syncPolicy }}
       syncPolicy:
-        # default to manual sync for apps - they opt-in to automation
+        {{- toYaml .syncPolicy | nindent 8 }}
+      {{- else }}
+      syncPolicy:
         automated:
           prune: false
           selfHeal: false
-      # preserve per-App sync policy changes (users can toggle auto-sync per app)
+      {{- end }}
+
       ignoreDifferences:
         - group: argoproj.io
           kind: Application
           jsonPointers:
             - /spec/syncPolicy
             - /spec/syncWindows
-      # ensure ApplicationSet preserves annotations like skip-reconcile when present
+
       preservedFields:
         annotations:
           - argocd.argoproj.io/skip-reconcile
-      metadata:
-        annotations:
-          # ensure generated apps sync later so AppProjects and platform resources exist
-          argocd.argoproj.io/sync-wave: "21"
