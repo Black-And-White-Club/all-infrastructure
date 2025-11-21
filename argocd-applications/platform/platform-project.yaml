@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  description: "Platform / shared services project (cluster-level and platform apps)"
+
+  sourceRepos:
+    - "https://github.com/Black-And-White-Club/all-infrastructure.git"
+    - "https://github.com/Black-And-White-Club/*"
+
+  destinations:
+    - namespace: "argocd"
+      server: https://kubernetes.default.svc
+    - namespace: "shared-services"
+      server: https://kubernetes.default.svc
+    - namespace: "kube-system"
+      server: https://kubernetes.default.svc
+    - namespace: "grafana"
+      server: https://kubernetes.default.svc
+    - namespace: "postgres-resources"
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: ""
+      kind: PersistentVolume
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy

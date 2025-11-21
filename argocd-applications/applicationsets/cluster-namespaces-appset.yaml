@@ -17,7 +17,7 @@ spec:
       annotations:
         argocd.argoproj.io/sync-wave: "1"
     spec:
-      project: default
+      project: platform
       source:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         targetRevision: main

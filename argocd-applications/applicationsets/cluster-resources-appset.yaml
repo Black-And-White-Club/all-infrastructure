@@ -28,7 +28,7 @@ spec:
         # 'wave' value is applied to each generated app
         argocd.argoproj.io/sync-wave: '{{ default "1" .wave }}'
     spec:
-      project: default
+      project: platform
       source:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         targetRevision: main
