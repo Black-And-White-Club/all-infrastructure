@@ -29,8 +29,9 @@ spec:
       # Sources handling
       # ---------------------------
       # We must use 'sources' (plural) to maintain valid YAML structure.
-      sources:
-{{ toYaml .sources | nindent 8 }}
+      # The '{{ if }}' logic cannot be used to switch keys (source vs sources)
+      # because it breaks the YAML parser before templating occurs.
+      sources: { { - toYaml .sources | nindent 8 } }
 
       destination:
         server: '{{ default "https://kubernetes.default.svc" .destination.server }}'
@@ -39,9 +40,13 @@ spec:
       # ---------------------------
       # Sync policy
       # ---------------------------
-      # If .syncPolicy is provided in the descriptor, render it; otherwise default.
+      # Similar to sources, we define the structure explicitly to keep YAML valid.
+      # If .syncPolicy is provided in the descriptor, we use its values.
+      # Otherwise, we default to the values below.
       syncPolicy:
-{{ toYaml .syncPolicy | nindent 8 }}
+        automated:
+          prune: "{{ if .syncPolicy }}{{ .syncPolicy.automated.prune }}{{ else }}false{{ end }}"
+          selfHeal: "{{ if .syncPolicy }}{{ .syncPolicy.automated.selfHeal }}{{ else }}false{{ end }}"
 
       ignoreDifferences:
         - group: argoproj.io
