@@ -24,7 +24,7 @@ spec:
 
     spec:
       project: '{{ default "default" .project }}'
-      
+
       destination:
         server: '{{ default "https://kubernetes.default.svc" .destination.server }}'
         namespace: '{{ default "default" .destination.namespace }}'
@@ -49,6 +49,18 @@ spec:
   templatePatch: |
     spec:
       sources:
-{{ toYaml .sources | indent 6 }}
+{{ toYaml .sources | nindent 8 }}
+      destination:
+        server: '{{ default "https://kubernetes.default.svc" .destination.server }}'
+        namespace: '{{ default "default" .destination.namespace }}'
       syncPolicy:
-{{ toYaml .syncPolicy | indent 6 }}
+{{ toYaml .syncPolicy | nindent 8 }}
+      ignoreDifferences:
+        - group: argoproj.io
+          kind: Application
+          jsonPointers:
+            - /spec/syncPolicy
+            - /spec/syncWindows
+      preservedFields:
+        annotations:
+          - argocd.argoproj.io/skip-reconcile
