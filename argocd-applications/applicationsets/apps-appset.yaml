@@ -30,13 +30,7 @@ spec:
       # ---------------------------
       # We must use 'sources' (plural) to maintain valid YAML structure.
       sources:
-{{- if .sources }}
 {{ toYaml .sources | nindent 8 }}
-{{- else }}
-  - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
-    targetRevision: main
-    path: '{{ .path.path }}'
-{{- end }}
 
       destination:
         server: '{{ default "https://kubernetes.default.svc" .destination.server }}'
@@ -47,13 +41,7 @@ spec:
       # ---------------------------
       # If .syncPolicy is provided in the descriptor, render it; otherwise default.
       syncPolicy:
-{{- if .syncPolicy }}
 {{ toYaml .syncPolicy | nindent 8 }}
-{{- else }}
-  automated:
-    prune: false
-    selfHeal: false
-{{- end }}
 
       ignoreDifferences:
         - group: argoproj.io
