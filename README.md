@@ -45,7 +45,7 @@ If you want help with any of the steps above (creating module implementations, w
 Moving an app into `all-infrastructure`:
 
 1. Create a `manifests/<app-name>/` folder and copy K8s manifests and any `kustomization.yaml` files.
-2. Update corresponding ArgoCD `Application` in `argocd-applications/apps/` to point to the new `manifests/<app-name>` path.
+2. Create or update a small descriptor in `argocd-applications/apps-descriptors/` which the `apps-appset` will use to generate the ArgoCD Application. The descriptor approach is the recommended and canonical pattern for the Lich King flow.
 3. Optionally add a `sealed-secrets/<app>-*.yaml` to `cluster-resources/sealed-secrets/` and update any image-updater configs to use `repo-all-infrastructure`.
 
 Make sure to coordinate with app teams for the final step: deleting old infra from the app repo to avoid drift.
@@ -56,7 +56,7 @@ This repository supports a Lich King pattern to control AppSets and sync behavio
 
 - `the-lich-king` is an Application that creates only ApplicationSets (found in `argocd-applications/`).
 - ApplicationSets are each configured with a category-level sync policy (cluster resources, infra, observability, secrets, apps).
-- Apps in `argocd-applications/apps/` are manual by default and must opt-in to automated sync via their `syncPolicy` (safety for workloads).
+  -- App descriptors in `argocd-applications/apps-descriptors/` are used by `apps-appset` and generated Applications are manual by default; they may opt-in to automated sync via `syncPolicy` (safety for workloads). Full Application manifests that previously lived in `argocd-applications/apps/` were migrated to descriptors and archived under `argocd-applications/apps-archived/`.
 
 If you experience corrupted ArgoCD state or a lot of stuck operations, the `ansible/playbooks/nuke-argocd.yml` playbook provides a documented, repeatable way to remove ArgoCD and re-bootstrap it with `ansible/playbooks/bootstrap-argocd.yml`. Use with extreme care — it will erase ArgoCD state and must be followed by a re-install if you intend to continue GitOps with this repo.
 

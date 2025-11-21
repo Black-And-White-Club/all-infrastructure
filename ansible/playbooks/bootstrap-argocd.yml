@@ -162,6 +162,7 @@
                     - CreateNamespace=true
         dest: /tmp/root-appset.yaml
         mode: "0644"
+      delegate_to: "{{ 'localhost' if use_local_kubectl | default(false) else inventory_hostname }}"
 
     - name: Apply root ApplicationSet
       command: kubectl --kubeconfig={{ kubeconfig_path }} apply -f /tmp/root-appset.yaml

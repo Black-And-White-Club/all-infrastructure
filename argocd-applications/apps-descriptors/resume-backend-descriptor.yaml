@@ -1,0 +1,15 @@
+# Descriptor file used by apps-appset to generate Application for resume-backend
+# This is a small descriptor (not a full Application manifest). When apps-appset
+# template runs, it will expand this into a fully formed Application using the
+# values below.
+name: resume-backend
+project: resume
+path: manifests/resume-backend
+destination:
+  server: https://kubernetes.default.svc
+  namespace: resume-app
+syncWave: "21"
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
