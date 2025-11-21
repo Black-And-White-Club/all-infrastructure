@@ -16,9 +16,11 @@ spec:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
     path: argocd-applications
+    # Allow ArgoCD to recurse into subdirectories so ApplicationSets in
+    # `argocd-applications/applicationsets/` are discovered and applied.
     directory:
-      recurse: false
-      include: "applicationsets/*-appset.yaml"
+      recurse: true
+      include: "applicationsets/*.yaml"
     # ensure platform resources are applied before apps
     # (AppSets at root should include infrastructure/appsets and platform/)
   destination:
