@@ -24,38 +24,18 @@ spec:
 
     spec:
       project: '{{ default "default" .project }}'
-
-      # ---------------------------
-      # Sources handling
-      # ---------------------------
-      # We must explicitly iterate over sources to keep the file valid YAML.
-      # We cannot use 'toYaml' for the root list because '{{' confuses the parser.
-      sources:
-      {{- range $source := .sources }}
-        - repoURL: '{{ $source.repoURL }}'
-          targetRevision: '{{ $source.targetRevision }}'
-          path: '{{ $source.path }}'
-          {{- if $source.ref }}
-          ref: '{{ $source.ref }}'
-          {{- end }}
-          {{- if $source.chart }}
-          chart: '{{ $source.chart }}'
-          {{- end }}
-          # If you need Helm/Kustomize params later, they must be added here manually
-          # or structured carefully to avoid YAML parsing errors.
-      {{- end }}
-
+      
+      # We define destination here as it's a standard scalar structure
       destination:
         server: '{{ default "https://kubernetes.default.svc" .destination.server }}'
         namespace: '{{ default "default" .destination.namespace }}'
 
-      # ---------------------------
-      # Sync policy
-      # ---------------------------
+      # We define a default syncPolicy here. 
+      # If the user provides one in the descriptor, we will overwrite it in the patch below.
       syncPolicy:
         automated:
-          prune: '{{ if .syncPolicy }}{{ .syncPolicy.automated.prune }}{{ else }}false{{ end }}'
-          selfHeal: '{{ if .syncPolicy }}{{ .syncPolicy.automated.selfHeal }}{{ else }}false{{ end }}'
+          prune: false
+          selfHeal: false
 
       ignoreDifferences:
         - group: argoproj.io
@@ -67,3 +47,27 @@ spec:
       preservedFields:
         annotations:
           - argocd.argoproj.io/skip-reconcile
+
+  # ---------------------------------------------------------------------------
+  # TEMPLATE PATCH
+  # ---------------------------------------------------------------------------
+  # We use templatePatch for 'sources' and complex 'syncPolicy' logic.
+  # This is required because {{ range }} or {{ toYaml }} loops are invalid 
+  # syntax in the main YAML 'template' structure above.
+  # ---------------------------------------------------------------------------
+  templatePatch: |
+    spec:
+      # Handle Source / Sources
+      {{- if .sources }}
+      sources:
+{{ toYaml .sources | indent 6 }}
+      {{- else if .source }}
+      source:
+{{ toYaml .source | indent 6 }}
+      {{- end }}
+
+      # Handle SyncPolicy Override
+      {{- if .syncPolicy }}
+      syncPolicy:
+{{ toYaml .syncPolicy | indent 6 }}
+      {{- end }}
