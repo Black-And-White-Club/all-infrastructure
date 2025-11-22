@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - git:
+        repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+        revision: main
+        files:
+          - path: "argocd-applications/apps/*.yaml"
+  template:
+    metadata:
+      name: '{{.path.basenameNormalized}}'
+      annotations:
+        # Allow the individual app file to override the wave, default to 20
+        argocd.argoproj.io/sync-wave: '{{ default "20" .metadata.annotations.syncWave }}'
+      labels:
+        category: application
+        managed-by: lich-king
+    spec:
+      project: '{{ default "default" .spec.project }}'
+      source:
+        repoURL: '{{.spec.source.repoURL}}'
+        targetRevision: '{{.spec.source.targetRevision}}'
+        path: '{{.spec.source.path}}'
+        {{- if .spec.source.kustomize }}
+        kustomize:
+          {{- if .spec.source.kustomize.images }}
+          images:
+          {{- range .spec.source.kustomize.images }}
+            - name: '{{.name}}'
+              newName: '{{.newName}}'
+              newTag: '{{.newTag}}'
+          {{- end }}
+          {{- end }}
+        {{- end }}
+      destination:
+        server: '{{.spec.destination.server}}'
+        namespace: '{{.spec.destination.namespace}}'
+      syncPolicy:
+        {{- if .spec.syncPolicy }}
+        {{- if .spec.syncPolicy.automated }}
+        automated:
+          prune: {{ default "false" .spec.syncPolicy.automated.prune }}
+          selfHeal: {{ default "false" .spec.syncPolicy.automated.selfHeal }}
+        {{- end }}
+        {{- end }}
+        syncOptions:
+          - CreateNamespace=true

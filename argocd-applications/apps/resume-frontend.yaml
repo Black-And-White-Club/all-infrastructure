@@ -12,7 +12,7 @@ spec:
   sources:
     - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
       targetRevision: main
-      path: manifests/resume-frontend
+      path: kustomize/resume-frontend
   destination:
     server: https://kubernetes.default.svc
     namespace: resume-app

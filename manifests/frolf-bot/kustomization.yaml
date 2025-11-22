@@ -1,4 +1,0 @@
-resources:
-  - backend-deployment.yaml
-  - discord-deployment.yaml
-  - sealed-discord-secrets.yaml

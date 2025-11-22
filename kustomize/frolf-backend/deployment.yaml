@@ -2,9 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frolf-bot-backend
-  namespace: frolf-bot
-  labels:
-    app: frolf-bot-backend
 spec:
   replicas: 1
   selector:
@@ -144,16 +141,3 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: frolf-bot-backend
-  namespace: frolf-bot
-spec:
-  selector:
-    app: frolf-bot-backend
-  ports:
-    - port: 80
-      targetPort: 8080
-  type: ClusterIP
