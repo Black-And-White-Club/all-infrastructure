@@ -17,8 +17,27 @@ spec:
     server: https://kubernetes.default.svc
     namespace: frolf-bot
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: frolf-backend
+      namespace: argocd
+      annotations:
+        argocd.argoproj.io/sync-wave: "21"
+      finalizers:
+        - resources-finalizer.argocroj.argoproj.io
+    spec:
+      project: frolf-bot
+      sources:
+        - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+          targetRevision: main
+          path: kustomize/frolf-backend
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: frolf-bot
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

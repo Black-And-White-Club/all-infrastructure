@@ -13,6 +13,8 @@
 
     # Repo + files
     lich_king_file: "{{ playbook_dir }}/../../argocd-applications/the-lich-king/the-lich-king.yaml"
+    # CRITICAL: Required to break the Chicken-Egg loop
+    platform_project_file: "{{ playbook_dir }}/../../argocd-applications/platform/platform-project.yaml"
     argocd_values: "{{ playbook_dir }}/../../charts/argo-cd/values.yaml"
 
   environment:
@@ -30,15 +32,9 @@
           - "========================================"
           - "This will:"
           - "  1. Install ArgoCD"
-          - "  2. Apply Lich King (root orchestrator)"
-          - "  3. Wait for ApplicationSets & Apps"
-          - ""
-          - "Terraform steps are completely disabled."
-          - ""
-
-    - name: Confirm
-      pause:
-        prompt: "Press Enter to start bootstrap (ArgoCD-only), or Ctrl+C to abort"
+          - "  2. Bootstrap 'platform' Project (Manual)"
+          - "  3. Apply Lich King (root orchestrator)"
+          - "  4. Wait for ApplicationSets & Apps"
 
     - name: Verify required files exist
       stat:
@@ -47,6 +43,7 @@
       failed_when: not file_check.stat.exists
       loop:
         - "{{ lich_king_file }}"
+        - "{{ platform_project_file }}"
         - "{{ argocd_values }}"
 
     ###########################################################################
@@ -93,12 +90,22 @@
         --values {{ argocd_values }}
         --wait --timeout 10m
       when: argocd_check.rc != 0
-      register: argocd_install
 
     - name: Wait for ArgoCD server
       command: kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n {{ argocd_namespace }}
       when: argocd_check.rc != 0
       changed_when: false
+
+    ###########################################################################
+    # PHASE 2.5: BOOTSTRAP PROJECT (CRITICAL FIX)
+    ###########################################################################
+    - name: Bootstrap Platform Project
+      command: kubectl apply -f {{ platform_project_file }}
+      register: project_apply
+
+    - name: Display Project Status
+      debug:
+        msg: "Platform project applied. Lich King can now reference 'project: platform'."
 
     ###########################################################################
     # PHASE 3: APPLY LICH KING
@@ -114,11 +121,23 @@
     ###########################################################################
     # PHASE 4: WAIT FOR SYNC
     ###########################################################################
+    # We added a check here to verify Lich King status before waiting
+    - name: Check Lich King Status
+      command: kubectl get app the-lich-king -n {{ argocd_namespace }} -o jsonpath='{.status.health.status}'
+      register: lk_health
+      retries: 5
+      delay: 2
+      ignore_errors: true
+
+    - name: Debug Lich King Health
+      debug:
+        msg: "Lich King Health: {{ lk_health.stdout }}"
+
     - name: Wait for ApplicationSets
       shell: kubectl get applicationsets -n {{ argocd_namespace }} --no-headers | wc -l
       register: appset_count
       retries: 30
-      delay: 5
+      delay: 10
       until: appset_count.stdout|int > 0
       changed_when: false
 
@@ -131,10 +150,10 @@
       debug:
         msg: "{{ appsets.stdout_lines }}"
 
-    - name: Wait for Applications
+    - name: Wait for Applications (Infrastructure to bootstrap)
       shell: kubectl get applications -n {{ argocd_namespace }} --no-headers | wc -l
       register: apps_count
-      retries: 30
+      retries: 60
       delay: 5
       until: apps_count.stdout|int > 0
       changed_when: false
@@ -147,48 +166,17 @@
       register: apps_final
       changed_when: false
 
-    - name: List pods across all namespaces
-      command: kubectl get pods -A
-      register: pods_final
-      changed_when: false
-
     - name: Display summary
       debug:
         msg:
           - "========================================"
           - "BOOTSTRAP COMPLETE!"
           - "========================================"
-          - ""
           - "ArgoCD Installed & Running"
+          - "Platform Project Bootstrapped"
           - "Lich King Applied"
           - "ApplicationSets Created"
           - ""
           - "Applications:"
           - "{{ apps_final.stdout }}"
           - ""
-          - "Pods:"
-          - "{{ pods_final.stdout }}"
-          - ""
-
-    # ###########################################################################
-    # # HELPERS
-    # ###########################################################################
-    # - name: Create access script
-    #   copy:
-    #     dest: "{{ playbook_dir }}/../../scripts/access-argocd.sh"
-    #     mode: "0755"
-    #     content: |
-    #       #!/bin/bash
-    #       echo "ArgoCD UI"
-    #       echo "Username: admin"
-    #       echo "Password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)"
-    #       echo "Port-forwarding..."
-    #       kubectl port-forward svc/argocd-server -n argocd 8080:443
-
-    # - name: Create watch script
-    #   copy:
-    #     dest: "{{ playbook_dir }}/../../scripts/watch-sync.sh"
-    #     mode: "0755"
-    #     content: |
-    #       #!/bin/bash
-    #       watch -n 2 'kubectl get applications -n argocd && echo && kubectl get pods -A'
