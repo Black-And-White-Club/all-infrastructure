@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - cluster-namespaces-appset.yaml
   - cluster-resources-appset.yaml
+  - apps-files-appset.yaml
   - infrastructure-appset.yaml
   - multi-source-helm-apps.yaml
   - observability-appset.yaml
