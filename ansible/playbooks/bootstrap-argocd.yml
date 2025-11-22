@@ -1,7 +1,8 @@
 ---
-# Clean, safe ArgoCD bootstrap for OCI cluster
+# BOOTSTRAP ARGOCD + LICH KING ONLY
+# Usage: ansible-playbook ansible/playbooks/bootstrap-argocd-only.yml
 
-- name: Bootstrap ArgoCD (clean version)
+- name: Bootstrap ArgoCD + Lich King (no Terraform)
   hosts: localhost
   connection: local
   gather_facts: false
@@ -9,7 +10,9 @@
   vars:
     kubeconfig_path: "{{ lookup('env','HOME') }}/.kube/config-oci"
     argocd_namespace: argocd
-    lich_king_path: "{{ playbook_dir }}/../../argocd-applications/the-lich-king/the-lich-king.yaml"
+
+    # Repo + files
+    lich_king_file: "{{ playbook_dir }}/../../argocd-applications/the-lich-king/the-lich-king.yaml"
     argocd_values: "{{ playbook_dir }}/../../charts/argo-cd/values.yaml"
 
   environment:
@@ -17,122 +20,175 @@
 
   tasks:
     ###########################################################################
-    # 0. VALIDATION
+    # PHASE 0: VALIDATION
     ###########################################################################
+    - name: Display bootstrap plan
+      debug:
+        msg:
+          - "========================================"
+          - "BOOTSTRAP ARGOCD + LICH KING"
+          - "========================================"
+          - "This will:"
+          - "  1. Install ArgoCD"
+          - "  2. Apply Lich King (root orchestrator)"
+          - "  3. Wait for ApplicationSets & Apps"
+          - ""
+          - "Terraform steps are completely disabled."
+          - ""
 
+    - name: Confirm
+      pause:
+        prompt: "Press Enter to start bootstrap (ArgoCD-only), or Ctrl+C to abort"
+
+    - name: Verify required files exist
+      stat:
+        path: "{{ item }}"
+      register: file_check
+      failed_when: not file_check.stat.exists
+      loop:
+        - "{{ lich_king_file }}"
+        - "{{ argocd_values }}"
+
+    ###########################################################################
+    # PHASE 1: CHECK CLUSTER
+    ###########################################################################
     - name: Ensure kubeconfig exists
       stat:
         path: "{{ kubeconfig_path }}"
-      register: kubeconf
+      register: kubeconfig_stat
+      failed_when: not kubeconfig_stat.stat.exists
 
-    - name: Fail if kubeconfig is missing
-      fail:
-        msg: "Kubeconfig not found at {{ kubeconfig_path }}. Did you forget to export it?"
-      when: not kubeconf.stat.exists
-
-    - name: Ensure Lich King file exists
-      stat:
-        path: "{{ lich_king_path }}"
-      register: lkfile
-
-    - name: Fail if Lich King descriptor is missing
-      fail:
-        msg: "Lich King file not found at {{ lich_king_path }}. Fix the repo path."
-      when: not lkfile.stat.exists
-
-    - name: Ensure ArgoCD values file exists
-      stat:
-        path: "{{ argocd_values }}"
-      register: valuesfile
-
-    - name: Fail if ArgoCD Helm values file missing
-      fail:
-        msg: "ArgoCD values file not found at {{ argocd_values }}"
-      when: not valuesfile.stat.exists
-
-    ###########################################################################
-    # 1. CHECK IF ARGOCD IS ALREADY INSTALLED
-    ###########################################################################
-
-    - name: Detect if ArgoCD namespace exists
-      command: kubectl get ns {{ argocd_namespace }}
-      register: ns_check
-      failed_when: false
-      changed_when: false
-
-    - name: Detect if ArgoCD server exists
-      command: kubectl -n {{ argocd_namespace }} get deploy argocd-server
-      register: server_check
-      failed_when: false
+    - name: Verify cluster connectivity
+      command: kubectl cluster-info
+      register: cluster_info
+      retries: 10
+      delay: 3
+      until: cluster_info.rc == 0
       changed_when: false
 
     ###########################################################################
-    # 2. INSTALL ARGOCD (ONLY IF MISSING)
+    # PHASE 2: INSTALL ARGOCD
     ###########################################################################
+    - name: Check if ArgoCD is already installed
+      command: kubectl -n {{ argocd_namespace }} get deployment argocd-server
+      register: argocd_check
+      failed_when: false
+      changed_when: false
 
-    - name: Add ArgoCD Helm repo (idempotent)
+    - name: Add Argo Helm repo
       command: helm repo add argo https://argoproj.github.io/argo-helm
-      failed_when: false
+      when: argocd_check.rc != 0
       changed_when: false
 
-    - name: Helm repo update
+    - name: Update Helm repos
       command: helm repo update
+      when: argocd_check.rc != 0
       changed_when: false
 
-    - name: Install ArgoCD via Helm ONLY if missing
-      when: server_check.rc != 0
+    - name: Install ArgoCD via Helm
       command: >
         helm upgrade --install argocd argo/argo-cd
         --namespace {{ argocd_namespace }}
         --create-namespace
         --values {{ argocd_values }}
         --wait --timeout 10m
+      when: argocd_check.rc != 0
+      register: argocd_install
 
-    - name: Wait for ArgoCD server (only on fresh install)
-      when: server_check.rc != 0
-      command: kubectl wait --for=condition=available --timeout=300s
-        deployment/argocd-server -n {{ argocd_namespace }}
-
-    ###########################################################################
-    # 3. APPLY THE LICH KING ROOT APPLICATION
-    ###########################################################################
-
-    - name: Check if Lich King application already exists
-      command: kubectl -n {{ argocd_namespace }} get application the-lich-king
-      register: lk_check
-      failed_when: false
+    - name: Wait for ArgoCD server
+      command: kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n {{ argocd_namespace }}
+      when: argocd_check.rc != 0
       changed_when: false
 
-    - name: Apply Lich King root application (safe, idempotent)
-      command: kubectl apply -f {{ lich_king_path }}
-      register: lk_apply
-      when: lk_check.rc != 0
+    ###########################################################################
+    # PHASE 3: APPLY LICH KING
+    ###########################################################################
+    - name: Apply Lich King
+      command: kubectl apply -f {{ lich_king_file }}
+      register: lich_king_apply
 
-    - name: Re-apply Lich King if it exists (ensures updates)
-      command: kubectl apply -f {{ lich_king_path }}
-      register: lk_reapply
-      when: lk_check.rc == 0
+    - name: Display Lich King apply status
+      debug:
+        msg: "{{ lich_king_apply.stdout_lines }}"
 
     ###########################################################################
-    # 4. OUTPUT RESULTS
+    # PHASE 4: WAIT FOR SYNC
     ###########################################################################
+    - name: Wait for ApplicationSets
+      shell: kubectl get applicationsets -n {{ argocd_namespace }} --no-headers | wc -l
+      register: appset_count
+      retries: 30
+      delay: 5
+      until: appset_count.stdout|int > 0
+      changed_when: false
 
-    - name: Display ArgoCD + Lich King status
+    - name: Show ApplicationSets
+      command: kubectl get applicationsets -n {{ argocd_namespace }}
+      register: appsets
+      changed_when: false
+
+    - name: Display ApplicationSets
+      debug:
+        msg: "{{ appsets.stdout_lines }}"
+
+    - name: Wait for Applications
+      shell: kubectl get applications -n {{ argocd_namespace }} --no-headers | wc -l
+      register: apps_count
+      retries: 30
+      delay: 5
+      until: apps_count.stdout|int > 0
+      changed_when: false
+
+    ###########################################################################
+    # PHASE 5: FINAL STATUS
+    ###########################################################################
+    - name: List final applications
+      command: kubectl get applications -n {{ argocd_namespace }}
+      register: apps_final
+      changed_when: false
+
+    - name: List pods across all namespaces
+      command: kubectl get pods -A
+      register: pods_final
+      changed_when: false
+
+    - name: Display summary
       debug:
         msg:
           - "========================================"
-          - "ArgoCD Bootstrap Complete!"
+          - "BOOTSTRAP COMPLETE!"
           - "========================================"
-          - "ArgoCD Installed: {{ 'yes' if server_check.rc == 0 else 'fresh install' }}"
           - ""
-          - "Lich King applied from:"
-          - "  {{ lich_king_path }}"
+          - "ArgoCD Installed & Running"
+          - "Lich King Applied"
+          - "ApplicationSets Created"
           - ""
-          - "To check status:"
-          - "  kubectl get applicationsets -n argocd"
-          - "  kubectl get applications -n argocd"
+          - "Applications:"
+          - "{{ apps_final.stdout }}"
           - ""
-          - "To watch apps sync:"
-          - "  watch kubectl get applications -n argocd"
+          - "Pods:"
+          - "{{ pods_final.stdout }}"
           - ""
-          - "========================================"
+
+    # ###########################################################################
+    # # HELPERS
+    # ###########################################################################
+    # - name: Create access script
+    #   copy:
+    #     dest: "{{ playbook_dir }}/../../scripts/access-argocd.sh"
+    #     mode: "0755"
+    #     content: |
+    #       #!/bin/bash
+    #       echo "ArgoCD UI"
+    #       echo "Username: admin"
+    #       echo "Password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)"
+    #       echo "Port-forwarding..."
+    #       kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+    # - name: Create watch script
+    #   copy:
+    #     dest: "{{ playbook_dir }}/../../scripts/watch-sync.sh"
+    #     mode: "0755"
+    #     content: |
+    #       #!/bin/bash
+    #       watch -n 2 'kubectl get applications -n argocd && echo && kubectl get pods -A'
