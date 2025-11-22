@@ -14,9 +14,11 @@ spec:
   source:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
-    path: argocd-applications
-    # REMOVED: The 'directory' block.
-    # ArgoCD will now automatically find 'kustomization.yaml' in the path above.
+    path: argocd-applications/applicationsets
+    # The Lich King should only create ApplicationSets. Pointing at
+    # `argocd-applications/applicationsets` prevents duplication where
+    # both The Lich King and other static Application manifests manage
+    # the same resources.
 
   destination:
     server: https://kubernetes.default.svc
