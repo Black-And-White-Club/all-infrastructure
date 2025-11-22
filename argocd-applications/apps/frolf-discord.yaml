@@ -6,13 +6,13 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "21"
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    - resources-finalizer.argocroj.argocroj.io
 spec:
   project: frolf-bot
-  sources:
-    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
-      targetRevision: main
-      path: kustomize/frolf-discord
+  source:
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    targetRevision: main
+    path: kustomize/frolf-discord
   destination:
     server: https://kubernetes.default.svc
     namespace: frolf-bot
@@ -25,13 +25,13 @@ spec:
       annotations:
         argocd.argoproj.io/sync-wave: "21"
       finalizers:
-        - resources-finalizer.argocroj.argoproj.io
+        - resources-finalizer.argocd.argoproj.io
     spec:
       project: frolf-bot
-      sources:
-        - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
-          targetRevision: main
-          path: kustomize/frolf-discord
+      source:
+        repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+        targetRevision: main
+        path: kustomize/frolf-discord
       destination:
         server: https://kubernetes.default.svc
         namespace: frolf-bot
