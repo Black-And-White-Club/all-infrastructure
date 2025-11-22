@@ -14,7 +14,7 @@
     # Repo + files
     lich_king_file: "{{ playbook_dir }}/../../argocd-applications/the-lich-king/the-lich-king.yaml"
     # CRITICAL: Required to break the Chicken-Egg loop
-    platform_project_file: "{{ playbook_dir }}/../../argocd-applications/platform/platform-project.yaml"
+    platform_project_file: "{{ playbook_dir }}/../../cluster-resources/projects/platform-project.yaml"
     argocd_values: "{{ playbook_dir }}/../../charts/argo-cd/values.yaml"
 
   environment:
