@@ -5,12 +5,6 @@ resources:
   # The Application Definitions
   - sealed-secrets-manifests.yaml
 
-  # The Projects
-  - platform-project.yaml
-  - resume-project.yaml
-  - frolf-bot-project.yaml
-  - observability-project.yaml
-
   # Platform Resources
   - 00-argocd.yaml
   - 00-platform-cert-manager.yaml
