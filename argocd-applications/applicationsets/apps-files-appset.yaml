@@ -6,7 +6,7 @@ metadata:
 spec:
   # 1. Enable Go Templating (Required for {{.spec...}})
   goTemplate: true
-  
+
   generators:
     - git:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
@@ -28,23 +28,23 @@ spec:
     spec:
       # Pass through Project
       project: {{ default "default" .spec.project }}
-      
+
       source:
         repoURL: "{{ .spec.source.repoURL }}"
         targetRevision: "{{ .spec.source.targetRevision }}"
         path: "{{ .spec.source.path }}"
-        
+
         # 3. CRITICAL: Pass through Kustomize Image tags
         # If the app file has 'images', we must copy them into the generated App
         {{- if .spec.source.kustomize }}
         kustomize:
           {{- if .spec.source.kustomize.images }}
           images:
-          {{- range .spec.source.kustomize.images }}
+            {{- range .spec.source.kustomize.images }}
             - name: '{{.name}}'
               newName: '{{.newName}}'
               newTag: '{{.newTag}}'
-          {{- end }}
+            {{- end }}
           {{- end }}
         {{- end }}
 
