@@ -4,8 +4,8 @@ metadata:
   name: apps
   namespace: argocd
 spec:
-  # 1. Enable Go Templating (Required for {{.spec...}})
   goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
 
   generators:
     - git:
@@ -16,34 +16,30 @@ spec:
 
   template:
     metadata:
-      # 2. Use Normalized basename to remove ".yaml" extension
       name: "{{ .path.basenameNormalized }}"
       labels:
         category: application
         managed-by: lich-king
       annotations:
-        # Pass through Sync Wave if defined
         argocd.argoproj.io/sync-wave: '{{ default "20" .metadata.annotations.syncWave }}'
 
     spec:
-      # Pass through Project
-      project: {{ default "default" .spec.project }}
+      # FIX: Add quotes around the entire line
+      project: '{{ default "default" .spec.project }}'
 
       source:
         repoURL: "{{ .spec.source.repoURL }}"
         targetRevision: "{{ .spec.source.targetRevision }}"
         path: "{{ .spec.source.path }}"
 
-        # 3. CRITICAL: Pass through Kustomize Image tags
-        # If the app file has 'images', we must copy them into the generated App
         {{- if .spec.source.kustomize }}
         kustomize:
           {{- if .spec.source.kustomize.images }}
           images:
             {{- range .spec.source.kustomize.images }}
-            - name: '{{.name}}'
-              newName: '{{.newName}}'
-              newTag: '{{.newTag}}'
+            - name: '{{ .name }}'
+              newName: '{{ .newName }}'
+              newTag: '{{ .newTag }}'
             {{- end }}
           {{- end }}
         {{- end }}
@@ -52,14 +48,13 @@ spec:
         server: "{{ .spec.destination.server }}"
         namespace: "{{ .spec.destination.namespace }}"
 
-      # 4. Respect the Sync Policy defined in the file
-      # If the file says 'automated', use it. Otherwise default to manual.
       syncPolicy:
         {{- if .spec.syncPolicy }}
         {{- if .spec.syncPolicy.automated }}
         automated:
-          prune: {{ default "false" .spec.syncPolicy.automated.prune }}
-          selfHeal: {{ default "false" .spec.syncPolicy.automated.selfHeal }}
+          # FIX: Use proper boolean syntax (no quotes for true/false)
+          prune: {{ .spec.syncPolicy.automated.prune | default false }}
+          selfHeal: {{ .spec.syncPolicy.automated.selfHeal | default false }}
         {{- end }}
         {{- end }}
         syncOptions:
