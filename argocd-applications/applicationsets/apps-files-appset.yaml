@@ -5,7 +5,6 @@ metadata:
   namespace: argocd
 spec:
   goTemplate: true
-  goTemplateOptions: ["missingkey=error"]
 
   generators:
     - git:
@@ -20,33 +19,19 @@ spec:
       labels:
         category: application
         managed-by: lich-king
-      annotations:
-        argocd.argoproj.io/sync-wave: '{{ default "20" .metadata.annotations.syncWave }}'
 
     spec:
-      project: '{{ default "default" .spec.project }}'
+      project: default
 
       source:
         repoURL: "{{ .spec.source.repoURL }}"
         targetRevision: "{{ .spec.source.targetRevision }}"
         path: "{{ .spec.source.path }}"
-        
-        # Always include kustomize section, but it can be empty
         kustomize:
           images:
-          {{- if .spec.source.kustomize }}
-          {{- if .spec.source.kustomize.images }}
-          {{- range .spec.source.kustomize.images }}
-          - name: '{{ .name }}'
-            {{- if .newName }}
-            newName: '{{ .newName }}'
-            {{- end }}
-            {{- if .newTag }}
-            newTag: '{{ .newTag }}'
-            {{- end }}
-          {{- end }}
-          {{- end }}
-          {{- end }}
+            - name: "{{ .spec.source.kustomize.images.0.name }}"
+              newName: "{{ .spec.source.kustomize.images.0.newName }}"
+              newTag: "{{ .spec.source.kustomize.images.0.newTag }}"
 
       destination:
         server: "{{ .spec.destination.server }}"
@@ -54,7 +39,7 @@ spec:
 
       syncPolicy:
         automated:
-          prune: {{ if .spec.syncPolicy.automated }}{{ .spec.syncPolicy.automated.prune | default false }}{{ else }}false{{ end }}
-          selfHeal: {{ if .spec.syncPolicy.automated }}{{ .spec.syncPolicy.automated.selfHeal | default false }}{{ else }}false{{ end }}
+          prune: true
+          selfHeal: true
         syncOptions:
           - CreateNamespace=true
