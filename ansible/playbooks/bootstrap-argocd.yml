@@ -72,28 +72,28 @@
       failed_when: false
       changed_when: false
 
-    - name: Add Argo Helm repo
+    - name: Ensure Argo Helm repo is added
       command: helm repo add argo https://argoproj.github.io/argo-helm
-      when: argocd_check.rc != 0
+      failed_when: false
       changed_when: false
 
     - name: Update Helm repos
       command: helm repo update
-      when: argocd_check.rc != 0
+      failed_when: false
       changed_when: false
 
-    - name: Install ArgoCD via Helm
+    - name: Install or upgrade ArgoCD via Helm (idempotent)
       command: >
         helm upgrade --install argocd argo/argo-cd
         --namespace {{ argocd_namespace }}
         --create-namespace
         --values {{ argocd_values }}
         --wait --timeout 10m
-      when: argocd_check.rc != 0
+      register: helm_upgrade
 
     - name: Wait for ArgoCD server
       command: kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n {{ argocd_namespace }}
-      when: argocd_check.rc != 0
+      when: helm_upgrade is succeeded or argocd_check.rc == 0
       changed_when: false
 
     ###########################################################################

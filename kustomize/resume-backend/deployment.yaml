@@ -16,7 +16,7 @@ spec:
         - name: ocir-secret
       containers:
         - name: resume-backend
-          image: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend:dev
+          image: resume-backend
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
