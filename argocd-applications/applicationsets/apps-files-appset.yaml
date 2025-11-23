@@ -12,7 +12,7 @@ spec:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         revision: main
         files:
-          - path: "apps/*.yaml"
+          - path: "argocd-applications/apps/*.yaml"
 
   template:
     metadata:
@@ -24,38 +24,37 @@ spec:
         argocd.argoproj.io/sync-wave: '{{ default "20" .metadata.annotations.syncWave }}'
 
     spec:
-      # FIX: Add quotes around the entire line
       project: '{{ default "default" .spec.project }}'
 
       source:
         repoURL: "{{ .spec.source.repoURL }}"
         targetRevision: "{{ .spec.source.targetRevision }}"
         path: "{{ .spec.source.path }}"
-
-        {{- if .spec.source.kustomize }}
+        
+        # Always include kustomize section, but it can be empty
         kustomize:
-          {{- if .spec.source.kustomize.images }}
           images:
-            {{- range .spec.source.kustomize.images }}
-            - name: '{{ .name }}'
-              newName: '{{ .newName }}'
-              newTag: '{{ .newTag }}'
+          {{- if .spec.source.kustomize }}
+          {{- if .spec.source.kustomize.images }}
+          {{- range .spec.source.kustomize.images }}
+          - name: '{{ .name }}'
+            {{- if .newName }}
+            newName: '{{ .newName }}'
+            {{- end }}
+            {{- if .newTag }}
+            newTag: '{{ .newTag }}'
             {{- end }}
           {{- end }}
-        {{- end }}
+          {{- end }}
+          {{- end }}
 
       destination:
         server: "{{ .spec.destination.server }}"
         namespace: "{{ .spec.destination.namespace }}"
 
       syncPolicy:
-        {{- if .spec.syncPolicy }}
-        {{- if .spec.syncPolicy.automated }}
         automated:
-          # FIX: Use proper boolean syntax (no quotes for true/false)
-          prune: {{ .spec.syncPolicy.automated.prune | default false }}
-          selfHeal: {{ .spec.syncPolicy.automated.selfHeal | default false }}
-        {{- end }}
-        {{- end }}
+          prune: {{ if .spec.syncPolicy.automated }}{{ .spec.syncPolicy.automated.prune | default false }}{{ else }}false{{ end }}
+          selfHeal: {{ if .spec.syncPolicy.automated }}{{ .spec.syncPolicy.automated.selfHeal | default false }}{{ else }}false{{ end }}
         syncOptions:
           - CreateNamespace=true
