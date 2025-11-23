@@ -1,5 +1,4 @@
----
-# The Lich King: Root Application that bootstraps all platform and application resources
+# argocd-applications/the-lich-king/the-lich-king.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -15,11 +14,8 @@ spec:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
     path: argocd-applications/applicationsets
-    # The Lich King should only create ApplicationSets. Pointing at
-    # `argocd-applications/applicationsets` prevents duplication where
-    # both The Lich King and other static Application manifests manage
-    # the same resources.
-
+    directory:
+      recurse: false # Don't recurse into subdirectories
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
