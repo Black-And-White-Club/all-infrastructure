@@ -16,7 +16,7 @@ spec:
         - name: ocir-secret
       containers:
         - name: resume-frontend
-          image: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend:94ab36a
+          image: resume-frontend
           imagePullPolicy: Always
           resources:
             requests:

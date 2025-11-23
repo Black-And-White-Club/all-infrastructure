@@ -2,16 +2,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- deployment.yaml
-- service.yaml
-
+  - deployment.yaml
+  - service.yaml
 
 images:
-- name: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend
-  newName: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend
-  newTag: dev
+  - name: resume-backend
+    newName: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend
+    newTag: prod
+
 labels:
-- includeSelectors: true
-  pairs:
-    app: resume-backend
-    managed-by: lich-king
+  - includeSelectors: true
+    pairs:
+      app: resume-backend
+      managed-by: lich-king
