@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: resume-postgres
+  namespace: argocd
+spec:
+  project: resume
+  source:
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    targetRevision: main
+    path: kustomize/resume-postgres
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: resume-db

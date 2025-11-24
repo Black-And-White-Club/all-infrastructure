@@ -12,7 +12,7 @@ spec:
 
   # Application selection and image configuration
   applicationRefs:
-    - namePattern: "app-resume"
+    - namePattern: "^resume-(frontend|backend)$"
       images:
         - alias: resume-frontend
           imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend"
@@ -30,11 +30,11 @@ spec:
 
       # Git write-back configuration — AIU will commit updates directly to main branch
       writeBackConfig:
-        method: "git:secret:argocd/repo-resume-infrastructure"
+        method: "git:secret:argocd/repo-all-infrastructure"
         gitConfig:
-          # HTTPS or SSH clone URL for the repository containing resume-app-manifests
-          repository: "https://github.com/Black-And-White-Club/resume-infrastructure"
-          # Commit changes directly to the main branch for this personal project
+          # HTTPS or SSH clone URL for the repository containing the kustomize apps
+          repository: "https://github.com/Black-And-White-Club/all-infrastructure"
+          # Commit changes directly to the main branch for this shared infra repo
           branch: "main"
-          # Update the kustomization file so Kustomize apps get the new image tag
+          # Update the kustomization file so Kustomize apps pick up the new tag
           writeBackTarget: "kustomization"
