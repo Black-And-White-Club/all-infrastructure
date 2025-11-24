@@ -21,7 +21,7 @@ spec:
         managed-by: lich-king
 
     spec:
-      project: "{{ default "platform" .spec.project }}"
+      project: '{{ default "platform" .spec.project }}'
 
       source:
         repoURL: "{{ .spec.source.repoURL }}"
