@@ -17,25 +17,27 @@ spec:
     metadata:
       name: "{{ .path.basenameNormalized }}"
       labels:
-        category: "application"
-        managed-by: "lich-king"
+        category: application
+        managed-by: lich-king
 
     spec:
-      project: "platform"
+      project: platform
 
       source:
         repoURL: "{{ .spec.source.repoURL }}"
         targetRevision: "{{ .spec.source.targetRevision }}"
         path: "{{ .spec.source.path }}"
 
-        {{- if .spec.source.kustomize.images }}
+        {{- if .spec.source.kustomize }}
         kustomize:
+          {{- if .spec.source.kustomize.images }}
           images:
             {{- range .spec.source.kustomize.images }}
             - name: "{{ .name }}"
               newName: "{{ .newName }}"
               newTag: "{{ .newTag }}"
             {{- end }}
+          {{- end }}
         {{- end }}
 
       destination:
