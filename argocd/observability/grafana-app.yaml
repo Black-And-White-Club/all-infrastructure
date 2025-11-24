@@ -1,18 +1,27 @@
-name: grafana
-app:
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
   name: grafana
-  # Ensures Helm release name stays stable across overlays or replacement app variants
-  releaseName: grafana
-  helmRepo: https://grafana.github.io/helm-charts
-  chart: grafana
-  chartVersion: 10.0.0
-  # Use the local overlay so Grafana runs on a node-local PV. The overlay should
-  # be self-sufficient (contains any overrides needed); if you need the base
-  # file as well, set a combined values file or restore the base entry.
-  valueFiles: charts/grafana/values-local.yaml
-  namespace: observability
-  ssa: Prune=true,PrunePropagationPolicy=foreground
-  syncWave: "5"
-  repoName: grafana
-  repoUrl: https://grafana.github.io/helm-charts
-  showChart: grafana/grafana
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  project: observability
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: grafana
+    targetRevision: 10.0.0
+    helm:
+      valueFiles:
+        - charts/grafana/values-local.yaml
+      releaseName: grafana
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - PrunePropagationPolicy=foreground
+      - ServerSideApply=true
