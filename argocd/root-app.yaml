@@ -12,19 +12,19 @@ spec:
     path: argocd
     directory:
       recurse: true
-      include:
-        - platform/*.yaml
-        - projects/*.yaml
-        - apps/*.yaml
-        - observability/*.yaml
-        - cluster-resources/*.yaml
-      exclude:
-        - root-app.yaml
-        - "**/kustomization.yaml"
-        - "**/kustomization.yml"
-        - "**/Kustomization"
-        - README.md
-        - image-updaters/**
+      include: |
+        platform/*.yaml
+        projects/*.yaml
+        apps/*.yaml
+        observability/*.yaml
+        cluster-resources/*.yaml
+      exclude: |
+        root-app.yaml
+        "**/kustomization.yaml"
+        "**/kustomization.yml"
+        "**/Kustomization"
+        README.md
+        image-updaters/**
 
   destination:
     server: https://kubernetes.default.svc
