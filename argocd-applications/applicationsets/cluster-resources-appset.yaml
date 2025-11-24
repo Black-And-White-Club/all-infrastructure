@@ -22,7 +22,7 @@ spec:
             prune: "true"
   template:
     metadata:
-      name: "{{ .path.basenameNormalized }}"
+      name: 'cluster-{{ trimSuffix ".yaml" .path.filename }}'
       annotations:
         # Default to low-number waves for cluster resources; per-element
         # 'wave' value is applied to each generated app
