@@ -1,18 +1,37 @@
-Kustomize conventions for this repository
+# Kustomize conventions for this repository
 
-Guiding principles:
+Each app in `kustomize/` now follows a **base + production overlay** layout so the same manifests can be referenced by multiple environments in the future while keeping the production build explicit for Argo CD.
 
-- Keep Kustomize directories simple: one directory per app, no overlays.
-- Do NOT set `namespace:` in `kustomization.yaml`. ArgoCD `Application.destination.namespace` controls the target namespace.
-- Use `configMapGenerator` freely; Kustomize will rewrite references in resources included in the same kustomization.
-- Add SealedSecrets (already sealed) as raw YAML under the app `kustomize/<app>/` and include them in `resources:` — do not attempt to use `secretGenerator` for sealed secrets.
-- Keep `images:` in `kustomization.yaml` so ArgoCD Image Updater can write back tags when using the kustomize write-back strategy.
+```
+├── resume-backend/
+│   ├── base/
+│   │   ├── kustomization.yaml
+│   │   ├── deployment.yaml
+│   │   └── service.yaml
+│   └── overlays/
+│       └── production/
+│           └── kustomization.yaml (resources: ["../../base"])
+├── frolf-backend/
+│   └── …
+└── …
+```
 
-How to add a new app:
+## Base kustomization rules
 
-1. Create `kustomize/<app>/` with your resource YAMLs (Deployment, Service, ConfigMaps, SealedSecrets).
-2. Add a `kustomization.yaml` listing the resources and an `images:` block for the images.
-3. Add an `apps/<app>-app.yaml` ArgoCD Application that points to `kustomize/<app>`.
+- Keep the actual `Deployment`, `Service`, `StatefulSet`, `ConfigMap`, `SealedSecret`, and supporting YAMLs inside the `base/` directory alongside a single `kustomization.yaml`.
+- The `base/kustomization.yaml` is where you declare `resources:`, `images:`, `labels:`, and any `configMapGenerator` blocks. This is the document Argo CD Image Updater mutates, so keep the image names there.
+- **Do not set `namespace:` in the base kustomization.** The namespace comes from the Argo CD `Application.destination` so the same base can deploy anywhere.
+- Any sealed secrets you need should live in the base `resources:` list. Do not try to use `secretGenerator` for sealed secrets; they must remain literal YAML so that kubeseal can validate them.
 
-Note about ConfigMaps:
-Kustomize `configMapGenerator` appends a hash to generated ConfigMap names to force pod restarts on config changes. Do not hardcode the hashed name in your Deployment; as long as the Deployment is included as a `resource:` in the same `kustomization.yaml`, Kustomize will update the Deployment to reference the generated name.
+## Production overlays
+
+- Every Argo CD app currently points at `kustomize/<app>/overlays/production`. The production overlay simply references `../../base` and can be extended later if the environment requires extra config.
+- Keep overlays thin: reference the base, add patches only when you need to override fields for that environment, and avoid duplicating `resources` lists.
+
+## ConfigMapGenerator gotcha
+
+- Kustomize appends a hash to generated ConfigMap names. Do **not** hardcode the hashed name in your workload YAML; include the generator in the same base kustomization so Kustomize rewrites the reference automatically.
+
+## Summary
+
+- Build the canonical manifest inside the base directory, keep overlays small, and always deploy the `production` overlay via Argo CD. This keeps the repository organized while leaving room for new overlays later.

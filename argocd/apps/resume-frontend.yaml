@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: resume-frontend
+  namespace: argocd
+spec:
+  project: apps
+  source:
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    targetRevision: main
+    path: kustomize/resume-frontend/overlays/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: resume-app

@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  description: User applications
+
+  sourceRepos:
+    - 'https://github.com/Black-And-White-Club/all-infrastructure.git'
+    - 'https://charts.bitnami.com/bitnami'
+    - 'https://nats-io.github.io/k8s/helm/charts/'
+
+  destinations:
+    - namespace: 'resume-app'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'resume-db'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'frolf-bot'
+      server: 'https://kubernetes.default.svc'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

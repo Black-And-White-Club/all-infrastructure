@@ -1,122 +1,54 @@
 # all-infrastructure (shared platform skeleton)
 
-This repository is the shared platform/infra repo that will hold everything required to provision and operate the Kubernetes clusters and platform services that multiple projects can consume.
+This repository is the shared platform/infra repo that provisions/kicks off the Kubernetes clusters, platform services, and GitOps automation that underpin every project in this organization.
 
-Purpose
+## Purpose
 
-- Provision cloud resources and VMs for clusters (Terraform modules)
-- Provide bootstrap / configuration playbooks (Ansible)
-- Install core platform services (ArgoCD, ingress, cert-manager)
-- Host cluster-level resources (namespaces, storage classes, PVs)
-- Install and manage the observability stack (Prometheus, Grafana, Loki, Tempo, Alloy)
-- Install cluster-level operators (sealed-secrets controller if centralized)
-  Postgres instances are managed by per-app Helm charts by default.
+- Provision cloud networking, compute, and storage via `terraform/`.
+- Bootstrap/minutely configure clusters, install ArgoCD, and manage certificates/secrets via `ansible/` + Helm.
+- Store the shared Kubernetes manifests that every tenant consumes (namespaces, storage classes, CRDs, secrets).
+- Host the GitOps control plane under `argocd/`: the root `Application` plus platform, observability, and app definitions.
+- Keep per-app Kustomize bases + lightweight overlays in `kustomize/` so Image Updater + ArgoCD can work together.
 
-Repository layout (skeleton)
+## Repository layout
 
-- `terraform/` — shared Terraform modules and example environment configs
-  - `modules/compute/`
-  - `modules/identity-users/`
-  - `modules/load-balancer/`
-- `ansible/` — playbooks to bootstrap and configure clusters (control plane + nodes)
-- `cluster-resources/` — Namespaces, StorageClasses, PV templates, cluster RBAC
-- `argocd-applications/` — platform-level ArgoCD `Application`/`ApplicationSet` manifests
-- `manifests/` — per-application, raw Kubernetes manifests previously hosted in app-specific infra repos (move app manifests here for consolidated GitOps)
-- `observability/` — Helm values and small examples for Prometheus/Grafana/Loki/Tempo/Alloy
-- `operators/` — operator install values/CR examples (sealed-secrets)
-- `MIGRATION.md` — guidance and commands for moving files from the project repos
+- `terraform/` — reusable modules + example environment configs for networking, compute, and database storage.
+- `ansible/` — bootstrap playbooks (install ArgoCD, configure storage, apply GitOps manifests).
+- `cluster-resources/` — raw YAML for namespaces, storage classes, PVC templates, and other cluster-scoped resources.
+- `argocd/` — master GitOps layout; includes `root-app.yaml`, `projects/`, `cluster-resources/`, `platform/`, `observability/`, `apps/`, and helper manifests.
+- `charts/` — Helm values/overrides for ArgoCD, image-updaters, monitoring, etc.
+- `kustomize/` — per-application Kustomize bases plus `overlays/production` that ArgoCD points to.
+- `deprecated/` — relocated/deleted content such as the old `multi-source-apps` directory.
+- `docs/`, `MIGRATION*.md` — reference material for migrations, patterns, and workflows.
 
-Quick notes
+## Getting started
 
-- This repo is intended to be the single source of truth for shared platform resources. Project repositories (e.g. `frolf-bot-infrastructure` and `resume-infrastructure`) should keep application charts, per-project ArgoCD ApplicationSets, and app-specific secrets/configs.
-- For monitoring, the recommended approach is one shared Prometheus + Grafana stack that scrapes all namespaces; use folders/teams and dashboard tenancy to isolate views.
-- Install ArgoCD in this repo (via Helm) and let it reconcile ApplicationSets stored in the project repos.
+1. Provision the infrastructure you need (VCN/subnets/VMs) by running the Terraform configurations in `terraform/`.
+2. Run `ansible/playbooks/bootstrap-argocd.yml` (set `KUBECONFIG` or pass `-e kubeconfig_path=...`) to install ArgoCD via Helm and apply `argocd/root-app.yaml` plus the consolidated project definitions.
+3. The root Application automatically includes `argocd/platform/`, `argocd/observability/`, `argocd/apps/`, `argocd/cluster-resources/`, and `argocd/projects/`. Watch it with `kubectl -n argocd get applications | grep root` or via the ArgoCD UI.
+4. Make future changes by editing the relevant YAML under `kustomize/`, `argocd/apps/`, or `argocd/platform/`, then commit/push; ArgoCD will reconcile them through the root app.
 
-Getting started (very high-level)
+## GitOps orchestration
 
-1. Create or select a dev environment configuration in `terraform/` and provision the cloud bits (VCN/Networking/VMs).
-2. Run ansible playbooks in `ansible/` to bootstrap the cluster (kubeadm / kubeadm-like flow or other bootstrap tooling).
-3. Install ArgoCD (Helm values are in `charts/` or `argocd/`) and register cluster.
-4. Apply `argocd-applications/platform-*` to deploy cluster-resources and observability.
-5. Point project repos' ApplicationSets at ArgoCD to deploy apps.
+`argocd/root-app.yaml` is the master Application (app-of-apps) that recursively syncs the platform, observability, apps, projects, and cluster-resources directories. Each child Application is scoped to a project (platform, observability, apps) so RBAC stays simple while still reconciling everything under `argocd/`.
 
-If you want help with any of the steps above (creating module implementations, writing a specific helm `values.yaml`, or crafting `git subtree` commands to preserve history) open an issue or ask for the next step.
+If you need to resync everything, re-apply `argocd/root-app.yaml` or use the ArgoCD UI/CLI to refresh the `root` Application. The Ansible bootstrap playbook already applies the latest version after ArgoCD is installed.
 
-Moving an app into `all-infrastructure`:
+## Managing applications
 
-1. Create a `manifests/<app-name>/` folder and copy K8s manifests and any `kustomization.yaml` files.
-2. Create or update a small descriptor in `argocd-applications/apps-descriptors/` which the `apps-appset` will use to generate the ArgoCD Application. The descriptor approach is the recommended and canonical pattern for the Lich King flow.
-3. Optionally add a `sealed-secrets/<app>-*.yaml` to `cluster-resources/sealed-secrets/` and update any image-updater configs to use `repo-all-infrastructure`.
+To add a new workload:
 
-Make sure to coordinate with app teams for the final step: deleting old infra from the app repo to avoid drift.
+1. Create `kustomize/<app>/base/kustomization.yaml` with all of the resources (`Deployment`, `Service`, `ConfigMap`, `SealedSecret`, etc.). Do **not** set `namespace` there; the ArgoCD `Application.destination` sets that.
+2. Add `kustomize/<app>/overlays/production/kustomization.yaml` that simply references `../../base`. Keep overlays thin and only add patches when necessary.
+3. Create an ArgoCD `Application` manifest under `argocd/apps/<app>.yaml` that targets the production overlay and sets `project: apps`.
+4. Commit the new manifests; the root app will pick them up and deploy them automatically.
 
-Approach B: The Lich King Pattern (recommended)
+The repository currently controls Grafana under `argocd/observability/grafana-app.yaml`. Additional observability charts (Tempo, Alloy, Loki, Mimir) can be added later under the same directory.
 
-This repository supports a Lich King pattern to control AppSets and sync behavior. In short:
+## Maintenance notes
 
-- `the-lich-king` is an Application that creates only ApplicationSets (found in `argocd-applications/`).
-- ApplicationSets are each configured with a category-level sync policy (cluster resources, infra, observability, secrets, apps).
-  -- App descriptors in `argocd-applications/apps-descriptors/` are used by `apps-appset` and generated Applications are manual by default; they may opt-in to automated sync via `syncPolicy` (safety for workloads). Full Application manifests that previously lived in `argocd-applications/apps/` were migrated to descriptors and archived under `argocd-applications/apps-archived/`.
+- The `deprecated/` directory collects old layouts such as `multi-source-apps/` so you can reference the previous setup without cluttering the main tree.
+- If you ever need to tear down ArgoCD and start fresh, `ansible/playbooks/nuke-argocd.yml` still removes the installation; re-running the bootstrap playbook re-applies the root Application and projects.
+- The `prune-argocd-apps.yml` playbook is legacy and will not fully clean up the new root-app layout, so prefer manual operations (delete the ArgoCD Application under `argocd/apps/` and commit) when removing workloads.
 
-If you experience corrupted ArgoCD state or a lot of stuck operations, the `ansible/playbooks/nuke-argocd.yml` playbook provides a documented, repeatable way to remove ArgoCD and re-bootstrap it with `ansible/playbooks/bootstrap-argocd.yml`. Use with extreme care — it will erase ArgoCD state and must be followed by a re-install if you intend to continue GitOps with this repo.
-
-If you want to keep the ArgoCD installation but remove all generated Applications and re-run the bootstrap to pick up corrected manifests (safer than nuke):
-
-1. Scale down the ApplicationSet controller (prevents re-creating Applications while you clean up):
-
-```bash
-kubectl -n argocd scale deployment argocd-applicationset-controller --replicas=0
-kubectl -n argocd scale statefulset argocd-application-controller --replicas=0
-```
-
-2. Optionally run the Ansible helper to prune all non-core applications (it will keep `the-lich-king` and `sealed-secrets`):
-
-```bash
-ansible-playbook ansible/playbooks/prune-argocd-apps.yml
-```
-
-3. Fix repository errors (for example, invalid YAML in `cluster-resources/cronjobs/`), commit and push to Git.
-
-4. Re-enable the Application controllers and sync Lich King to re-create AppSets and Applications:
-
-````bash
-kubectl -n argocd scale deployment argocd-applicationset-controller --replicas=1
-kubectl -n argocd scale statefulset argocd-application-controller --replicas=1
-If you're targeting a remote kubeconfig, either export KUBECONFIG in your shell or pass kubeconfig_path to the Ansible playbook:
-
-```bash
-# Option A: Export env var (recommended when running on a control plane host)
-export KUBECONFIG=~/.kube/config-oci
-kubectl -n argocd scale deployment argocd-applicationset-controller --replicas=1
-kubectl -n argocd scale statefulset argocd-application-controller --replicas=1
-
-# Option B: pass kubeconfig_path to Ansible (explicit)
-ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/prune-argocd-apps.yml -e kubeconfig_path=~/.kube/config-oci
-```
-
-Note: playbooks default to running without sudo. If you must run privileged tasks (for example, creating directories that require root on the control-plane host or running sudo commands), add `-e use_sudo=true` and pass `-K` to get the sudo password prompt:
-
-```bash
-ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/prune-argocd-apps.yml -e kubeconfig_path=~/.kube/config-oci -e use_sudo=true -K
-```
-
-Tip: If you prefer to use the ArgoCD CLI (you're already logged in on your workstation), you can use it for manual verification and sync instead of running the playbook checks:
-
-```bash
-# list apps
-argocd app list
-
-# sync the Lich King to (re)create AppSets
-argocd app sync the-lich-king
-
-# terminate in-flight operations
-argocd app terminate-op <app-name>
-```
-
-argocd app sync the-lich-king
-
-```
-
-After this, apps should re-create from corrected AppSets and manifest files under `all-infrastructure`. If you find that some apps automatically re-apply and you don't want that, set `spec.syncPolicy.automated.enabled=false` on the Application CR or annotate it with `argocd.argoproj.io/skip-reconcile: "true"`.
-```
-````
+If you need help with a specific platform component or getting a new app onto the GitOps conveyor, open an issue or ping the platform team with the desired repo/name.

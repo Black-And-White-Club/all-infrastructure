@@ -1,8 +1,5 @@
 ---
-# BOOTSTRAP ARGOCD + LICH KING ONLY
-# Usage: ansible-playbook ansible/playbooks/bootstrap-argocd-only.yml
-
-- name: Bootstrap ArgoCD + Lich King (no Terraform)
+- name: Bootstrap ArgoCD + root application (no Terraform)
   hosts: localhost
   connection: local
   gather_facts: false
@@ -11,44 +8,36 @@
     kubeconfig_path: "{{ lookup('env','HOME') }}/.kube/config-oci"
     argocd_namespace: argocd
 
-    # Repo + files
-    lich_king_file: "{{ playbook_dir }}/../../argocd-applications/the-lich-king/the-lich-king.yaml"
-    # CRITICAL: Required to break the Chicken-Egg loop
-    platform_project_file: "{{ playbook_dir }}/../../cluster-resources/projects/platform-project.yaml"
     argocd_values: "{{ playbook_dir }}/../../charts/argo-cd/values.yaml"
+    root_app_file: "{{ playbook_dir }}/../../argocd/root-app.yaml"
+    project_files:
+      - "{{ playbook_dir }}/../../argocd/projects/platform-project.yaml"
+      - "{{ playbook_dir }}/../../argocd/projects/observability-project.yaml"
+      - "{{ playbook_dir }}/../../argocd/projects/apps-project.yaml"
 
   environment:
     KUBECONFIG: "{{ kubeconfig_path }}"
 
   tasks:
-    ###########################################################################
-    # PHASE 0: VALIDATION
-    ###########################################################################
     - name: Display bootstrap plan
       debug:
         msg:
           - "========================================"
-          - "BOOTSTRAP ARGOCD + LICH KING"
+          - "BOOTSTRAP ARGOCD + ROOT APPLICATION"
           - "========================================"
           - "This will:"
-          - "  1. Install ArgoCD"
-          - "  2. Bootstrap 'platform' Project (Manual)"
-          - "  3. Apply Lich King (root orchestrator)"
-          - "  4. Wait for ApplicationSets & Apps"
+          - "  1. Install ArgoCD (Helm)"
+          - "  2. Apply project definitions (platform / observability / apps)"
+          - "  3. Apply argocd/root-app.yaml"
+          - "  4. Let the root app reconcile clusters + applications"
 
     - name: Verify required files exist
       stat:
         path: "{{ item }}"
-      register: file_check
-      failed_when: not file_check.stat.exists
-      loop:
-        - "{{ lich_king_file }}"
-        - "{{ platform_project_file }}"
-        - "{{ argocd_values }}"
+      register: required_files
+      failed_when: not required_files.stat.exists
+      loop: "{{ project_files + [root_app_file, argocd_values] }}"
 
-    ###########################################################################
-    # PHASE 1: CHECK CLUSTER
-    ###########################################################################
     - name: Ensure kubeconfig exists
       stat:
         path: "{{ kubeconfig_path }}"
@@ -63,9 +52,6 @@
       until: cluster_info.rc == 0
       changed_when: false
 
-    ###########################################################################
-    # PHASE 2: INSTALL ARGOCD
-    ###########################################################################
     - name: Check if ArgoCD is already installed
       command: kubectl -n {{ argocd_namespace }} get deployment argocd-server
       register: argocd_check
@@ -96,72 +82,24 @@
       when: helm_upgrade is succeeded or argocd_check.rc == 0
       changed_when: false
 
-    ###########################################################################
-    # PHASE 2.5: BOOTSTRAP PROJECT (CRITICAL FIX)
-    ###########################################################################
-    - name: Bootstrap Platform Project
-      command: kubectl apply -f {{ platform_project_file }}
-      register: project_apply
+    - name: Apply ArgoCD projects
+      command: kubectl apply -f "{{ item }}"
+      loop: "{{ project_files }}"
+      register: project_results
 
-    - name: Display Project Status
-      debug:
-        msg: "Platform project applied. Lich King can now reference 'project: platform'."
+    - name: Apply root application
+      command: kubectl apply -f "{{ root_app_file }}"
+      register: root_apply
 
-    ###########################################################################
-    # PHASE 3: APPLY LICH KING
-    ###########################################################################
-    - name: Apply Lich King
-      command: kubectl apply -f {{ lich_king_file }}
-      register: lich_king_apply
-
-    - name: Display Lich King apply status
-      debug:
-        msg: "{{ lich_king_apply.stdout_lines }}"
-
-    ###########################################################################
-    # PHASE 4: WAIT FOR SYNC
-    ###########################################################################
-    # We added a check here to verify Lich King status before waiting
-    - name: Check Lich King Status
-      command: kubectl get app the-lich-king -n {{ argocd_namespace }} -o jsonpath='{.status.health.status}'
-      register: lk_health
-      retries: 5
-      delay: 2
-      ignore_errors: true
-
-    - name: Debug Lich King Health
-      debug:
-        msg: "Lich King Health: {{ lk_health.stdout }}"
-
-    - name: Wait for ApplicationSets
-      shell: kubectl get applicationsets -n {{ argocd_namespace }} --no-headers | wc -l
-      register: appset_count
+    - name: Wait for root application to sync
+      command: kubectl wait --for=condition=Synced --timeout=5s application/root -n {{ argocd_namespace }}
+      register: root_sync
       retries: 30
-      delay: 10
-      until: appset_count.stdout|int > 0
-      changed_when: false
-
-    - name: Show ApplicationSets
-      command: kubectl get applicationsets -n {{ argocd_namespace }}
-      register: appsets
-      changed_when: false
-
-    - name: Display ApplicationSets
-      debug:
-        msg: "{{ appsets.stdout_lines }}"
-
-    - name: Wait for Applications (Infrastructure to bootstrap)
-      shell: kubectl get applications -n {{ argocd_namespace }} --no-headers | wc -l
-      register: apps_count
-      retries: 60
       delay: 5
-      until: apps_count.stdout|int > 0
+      until: root_sync.rc == 0
       changed_when: false
 
-    ###########################################################################
-    # PHASE 5: FINAL STATUS
-    ###########################################################################
-    - name: List final applications
+    - name: List ArgoCD applications
       command: kubectl get applications -n {{ argocd_namespace }}
       register: apps_final
       changed_when: false
@@ -173,10 +111,7 @@
           - "BOOTSTRAP COMPLETE!"
           - "========================================"
           - "ArgoCD Installed & Running"
-          - "Platform Project Bootstrapped"
-          - "Lich King Applied"
-          - "ApplicationSets Created"
-          - ""
-          - "Applications:"
+          - "Projects applied: {{ project_files | length }}"
+          - "Root application deployed"
+          - "Applications in {{ argocd_namespace }}:"
           - "{{ apps_final.stdout }}"
-          - ""

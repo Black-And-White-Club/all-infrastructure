@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app: resume-frontend
+      managed-by: lich-king
+
+images:
+  - name: resume-frontend
+    newName: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend
+    newTag: 94ab36a

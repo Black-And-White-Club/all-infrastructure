@@ -1,3 +1,0 @@
-### DEPRECATED: Grafana app moved to `observability/` and is now managed by `observability-appset`.
-### This file is kept for historical reasons; duplication can cause ArgoCD to create duplicate Applications.
-### Consider removing this file entirely or using only one ApplicationSet.
