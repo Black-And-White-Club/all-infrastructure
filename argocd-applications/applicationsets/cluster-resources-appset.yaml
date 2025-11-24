@@ -16,6 +16,10 @@ spec:
             path: cluster-resources
             wave: "2"
             prune: "true"
+          - name: projects
+            path: cluster-resources/projects
+            wave: "2"
+            prune: "true"
           - name: networkpolicies
             path: cluster-resources/networkpolicies
             wave: "3"
