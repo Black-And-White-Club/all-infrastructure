@@ -11,18 +11,7 @@ spec:
   source:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
-    path: cluster-resources
-    directory:
-      exclude: |
-        namespaces.yaml
-        namespaces/**
-        storage-class-oci.yaml
-        storage-class-local.yaml
-        pv-grafana.yaml
-        pvc-grafana.yaml
-        pv-resume-postgres-local.yaml
-        pvc-resume-postgres-claim.yaml
-        sealed-secrets/**
+    path: cluster-resources/platform
   destination:
     server: https://kubernetes.default.svc
     namespace: default
