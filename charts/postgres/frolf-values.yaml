@@ -1,0 +1,21 @@
+# Frolf-bot Postgres configuration
+global:
+  postgresql:
+    auth:
+      existingSecret: frolf-postgres-secret
+      secretKeys:
+        adminPasswordKey: postgres-password
+        userPasswordKey: password
+
+primary:
+  persistence:
+    enabled: true
+    storageClass: oci-block-storage
+    size: 50Gi
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 500m
