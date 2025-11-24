@@ -17,6 +17,11 @@ spec:
         namespaces.yaml
         namespaces/**
         storage-class-oci.yaml
+        storage-class-local.yaml
+        pv-grafana.yaml
+        pvc-grafana.yaml
+        pv-resume-postgres-local.yaml
+        pvc-resume-postgres-claim.yaml
         sealed-secrets/**
   destination:
     server: https://kubernetes.default.svc
