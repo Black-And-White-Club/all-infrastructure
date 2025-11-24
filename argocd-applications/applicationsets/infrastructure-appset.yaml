@@ -13,6 +13,7 @@ spec:
         # manually-managed Application manifests (like sealed-secrets-manifests.yaml).
         files:
           - path: "argocd-applications/platform/[0-9]*.yaml"
+          - path: "argocd-applications/platform/sealed-secrets-manifests.yaml"
   template:
     metadata:
       name: '{{ trimSuffix ".yaml" .path.filename }}'
