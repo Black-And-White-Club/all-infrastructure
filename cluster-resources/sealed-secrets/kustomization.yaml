@@ -6,9 +6,6 @@ kind: Kustomization
 resources:
   - ocir-secret-argocd-sealed.yaml
   - ocir-secret-resume-sealed.yaml
-  - objectstore-creds-sealed-secret-template.yaml
-  - resume-backend-postgres-sealed-secret-template.yaml
-  - resume-backend-postgres-resume-app-sealed-secret-template.yaml
   - sealed-repo-all-infrastructure.yaml
   - sealed-repo-resume-infrastructure.yaml
   - sealed-resume-backend-postgresql.yaml

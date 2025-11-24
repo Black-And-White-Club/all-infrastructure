@@ -7,14 +7,17 @@ metadata:
     argocd.argoproj.io/sync-wave: "5"
 spec:
   project: observability
-  source:
-    repoURL: https://grafana.github.io/helm-charts
-    chart: grafana
-    targetRevision: 10.0.0
-    helm:
-      valueFiles:
-        - charts/grafana/values-local.yaml
-      releaseName: grafana
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: grafana
+      targetRevision: 10.0.0
+      helm:
+        releaseName: grafana
+        valueFiles:
+          - charts/grafana/values-local.yaml
+    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+      targetRevision: main
+      path: charts/grafana
   destination:
     server: https://kubernetes.default.svc
     namespace: observability
