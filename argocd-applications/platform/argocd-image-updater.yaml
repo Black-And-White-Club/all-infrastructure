@@ -21,6 +21,7 @@ spec:
     - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
       targetRevision: main
       path: charts/argocd-image-updater
+      ref: values
 
   destination:
     server: https://kubernetes.default.svc
