@@ -27,13 +27,16 @@ spec:
         repoURL: "{{ .spec.source.repoURL }}"
         targetRevision: "{{ .spec.source.targetRevision }}"
         path: "{{ .spec.source.path }}"
+
+        {{- if .spec.source.kustomize.images }}
         kustomize:
           images:
-      {{- range .spec.source.kustomize.images }}
+            {{- range .spec.source.kustomize.images }}
             - name: "{{ .name }}"
               newName: "{{ .newName }}"
               newTag: "{{ .newTag }}"
-      {{- end }}
+            {{- end }}
+        {{- end }}
 
       destination:
         server: "{{ .spec.destination.server }}"
