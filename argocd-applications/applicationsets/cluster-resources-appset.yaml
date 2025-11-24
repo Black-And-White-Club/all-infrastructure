@@ -54,6 +54,3 @@ spec:
           kind: Application
           jsonPointers:
             - /spec/syncPolicy
-      preservedFields:
-        annotations:
-          - argocd.argoproj.io/skip-reconcile
