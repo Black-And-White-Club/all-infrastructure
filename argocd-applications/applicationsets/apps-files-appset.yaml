@@ -15,7 +15,7 @@ spec:
 
   template:
     metadata:
-      name: "{{ .path.basenameNormalized }}"
+      name: "{{ default .path.basenameNormalized .metadata.name }}"
       labels:
         category: application
         managed-by: lich-king
