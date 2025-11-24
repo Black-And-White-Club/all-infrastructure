@@ -13,8 +13,8 @@ spec:
     path: argocd
     directory:
       recurse: true
-      include: "{platform,observability,apps,cluster-resources,projects}/**/*.yaml"
-      exclude: "{root-app.yaml,image-updaters/**,README.md}"
+      include: '{platform,observability,apps,cluster-resources,projects}/**/*.yaml'
+      exclude: '{root-app.yaml,image-updaters/**,README.md}'
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
