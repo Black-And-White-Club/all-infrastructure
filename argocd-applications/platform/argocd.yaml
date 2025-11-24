@@ -19,6 +19,7 @@ spec:
     - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
       targetRevision: main
       path: charts/argo-cd
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
