@@ -28,18 +28,6 @@ spec:
         targetRevision: "{{ .spec.source.targetRevision }}"
         path: "{{ .spec.source.path }}"
 
-        {{- if .spec.source.kustomize }}
-        kustomize:
-          {{- if .spec.source.kustomize.images }}
-          images:
-            {{- range .spec.source.kustomize.images }}
-            - name: "{{ .name }}"
-              newName: "{{ .newName }}"
-              newTag: "{{ .newTag }}"
-            {{- end }}
-          {{- end }}
-        {{- end }}
-
       destination:
         server: "{{ .spec.destination.server }}"
         namespace: "{{ .spec.destination.namespace }}"
