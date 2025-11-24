@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-namespaces
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    targetRevision: main
+    # Points to the directory containing ALL namespace YAMLs
+    path: cluster-resources/namespaces
+    directory:
+      recurse: false
+  destination:
+    server: https://kubernetes.default.svc
+    # Namespaces are cluster-level resources, so destination namespace is less relevant,
+    # but 'default' is standard.
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
