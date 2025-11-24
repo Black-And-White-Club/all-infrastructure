@@ -18,7 +18,7 @@ spec:
           - $values/charts/argo-cd/values.yaml
     - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
       targetRevision: main
-      ref: values
+      path: charts/argo-cd
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
