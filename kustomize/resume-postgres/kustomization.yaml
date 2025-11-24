@@ -1,8 +1,21 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: resume-db
+
+resources:
+  - statefulset.yaml
+  - service.yaml
+
+configMapGenerator:
+  - name: postgres-config
+    literals:
+      - POSTGRES_DB=resume_db
+      - POSTGRES_USER=resume_user
 
 labels:
-- includeSelectors: true
-  pairs:
-    managed-by: lich-king
+  - includeSelectors: true
+    pairs:
+      app: resume-postgres
+      component: database
+      managed-by: lich-king

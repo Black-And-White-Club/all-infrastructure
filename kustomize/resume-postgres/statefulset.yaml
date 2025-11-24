@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: resume-postgres
+  namespace: resume-db
+spec:
+  serviceName: resume-backend-postgresql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resume-postgres
+  template:
+    metadata:
+      labels:
+        app: resume-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: resume-backend-postgresql
+                  key: postgresql-password
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      terminationGracePeriodSeconds: 30
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: local-storage
+        resources:
+          requests:
+            storage: 8Gi
