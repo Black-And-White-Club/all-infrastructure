@@ -22,7 +22,10 @@ spec:
             prune: "true"
   template:
     metadata:
-      name: 'cluster-{{ trimSuffix ".yaml" .path.filename }}'
+      # Use the element 'name' from the list generator; the previous
+      # expression assumed .path was an object with a filename field,
+      # which is not true for this list generator (it is a string).
+      name: "cluster-{{ .name }}"
       annotations:
         # Default to low-number waves for cluster resources; per-element
         # 'wave' value is applied to each generated app
@@ -32,7 +35,9 @@ spec:
       source:
         repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
         targetRevision: main
-        path: "{{ .path.path }}"
+        # The generator provides 'path' as a simple string for each
+        # element in this list generator, so reference it directly.
+        path: "{{ .path }}"
       destination:
         server: https://kubernetes.default.svc
       syncPolicy:
