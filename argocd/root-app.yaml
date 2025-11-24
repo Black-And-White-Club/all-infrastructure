@@ -6,15 +6,15 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
+  project: platform
   source:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
     targetRevision: main
     path: argocd
     directory:
       recurse: true
-      include: '{platform,observability,apps,cluster-resources,projects}/**/*.yaml'
-      exclude: '{root-app.yaml,image-updaters/**,README.md}'
+      include: "{platform,observability,apps,cluster-resources,projects}/**/*.yaml"
+      exclude: "{root-app.yaml,image-updaters/**,README.md}"
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
