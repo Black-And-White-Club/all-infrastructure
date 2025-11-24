@@ -26,7 +26,6 @@ spec:
           recurse: false
       destination:
         server: https://kubernetes.default.svc
-        namespace: default
       syncPolicy:
         automated:
           prune: true
