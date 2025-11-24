@@ -29,9 +29,13 @@ spec:
         path: "{{ .spec.source.path }}"
         kustomize:
           images:
-            - name: "{{ .spec.source.kustomize.images.0.name }}"
-              newName: "{{ .spec.source.kustomize.images.0.newName }}"
-              newTag: "{{ .spec.source.kustomize.images.0.newTag }}"
+            {{- if .spec.source.kustomize.images }}
+            {{- range $i, $img := .spec.source.kustomize.images }}
+            - name: "{{ $img.name }}"
+              newName: "{{ $img.newName }}"
+              newTag: "{{ $img.newTag }}"
+            {{- end }}
+            {{- end }}
 
       destination:
         server: "{{ .spec.destination.server }}"
