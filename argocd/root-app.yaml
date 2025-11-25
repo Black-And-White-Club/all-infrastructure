@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: root
+  name: the-lich-king
   namespace: argocd
 spec:
   project: platform
