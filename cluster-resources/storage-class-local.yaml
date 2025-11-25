@@ -6,6 +6,6 @@ provisioner: kubernetes.io/no-provisioner
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: false
 reclaimPolicy: Retain
-# Note: This StorageClass uses static PV provisioning (no-provisioner).
+# Note: This StorageClass is for static local PV provisioning.
 # PVs must be pre-created manually. PVs that use local-storage will be
 # node-affinitized and not portable across nodes.
