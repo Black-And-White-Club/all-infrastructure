@@ -13,20 +13,8 @@ spec:
     targetRevision: 4.14.0
     helm:
       releaseName: nginx-ingress
-      values: |
-        controller:
-          service:
-            type: LoadBalancer
-            externalTrafficPolicy: Local
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 100m
-              memory: 256Mi
-          metrics:
-            enabled: false
+      valueFiles:
+        - $values/charts/nginx-ingress/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: ingress-nginx
