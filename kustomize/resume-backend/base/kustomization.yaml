@@ -14,4 +14,4 @@ labels:
 images:
   - name: resume-backend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend
-    newTag: prod
+    newTag: b06c023
