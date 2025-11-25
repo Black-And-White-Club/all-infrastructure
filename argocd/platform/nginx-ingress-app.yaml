@@ -7,14 +7,18 @@ metadata:
     argocd.argoproj.io/sync-wave: "10"
 spec:
   project: platform
-  source:
-    repoURL: https://kubernetes.github.io/ingress-nginx
-    chart: ingress-nginx
-    targetRevision: 4.14.0
-    helm:
-      releaseName: nginx-ingress
-      valueFiles:
-        - $values/charts/nginx-ingress/values.yaml
+  sources:
+    - repoURL: https://kubernetes.github.io/ingress-nginx
+      chart: ingress-nginx
+      targetRevision: 4.14.0
+      helm:
+        releaseName: nginx-ingress
+        valueFiles:
+          - $values/charts/nginx-ingress/values.yaml
+    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+      targetRevision: main
+      path: charts/nginx-ingress
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: ingress-nginx
