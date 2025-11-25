@@ -8,3 +8,4 @@ resources:
   - resume-backend.yaml
   - resume-frontend.yaml
   - resume-postgres.yaml
+  - resume-app-ingress.yaml
