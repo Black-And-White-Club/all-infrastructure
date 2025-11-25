@@ -33,11 +33,11 @@ spec:
                   key: DATABASE_URL
           resources:
             requests:
+              memory: "128Mi"
+              cpu: "10m"
+            limits:
               memory: "256Mi"
               cpu: "50m"
-            limits:
-              memory: "512Mi"
-              cpu: "250m"
           livenessProbe:
             httpGet:
               path: /healthz
