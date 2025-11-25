@@ -18,15 +18,11 @@ primary:
     # For the small resume backend we use a Node-local PV (local-storage) to avoid
     # consuming the tenancy's OCI Always Free block volume quota. If you prefer
     # to use OCI block storage, set storageClassName: oci-block-storage instead.
-    storageClass: local-storage
-    # Some Helm charts accept storageClassName instead of storageClass. We set both
-    # to ensure the underlying StatefulSet's volumeClaimTemplates get the correct
-    # storageClassName field for dynamic provisioning.
     storageClassName: local-storage
     size: 2Gi
-    # The chart will auto-create a PVC that binds to the resume-postgres-local-pv
-    # PersistentVolume. Do not use existingClaim so the chart can manage the PVC lifecycle.
-    volumeName: resume-postgres-local-pv
+    # Pre-created PVC that binds to resume-postgres-local-pv PersistentVolume.
+    # The PVC must exist in the resume-db namespace before Postgres starts.
+    existingClaim: resume-backend-0
   resources:
     requests:
       cpu: 50m
