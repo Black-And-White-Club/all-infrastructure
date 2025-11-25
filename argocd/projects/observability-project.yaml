@@ -7,12 +7,17 @@ spec:
   description: Shared observability stack
 
   sourceRepos:
-    - '*'
+    - "*"
 
   destinations:
-    - namespace: 'observability'
-      server: 'https://kubernetes.default.svc'
+    - namespace: "observability"
+      server: "https://kubernetes.default.svc"
 
   namespaceResourceWhitelist:
-    - group: '*'
-      kind: '*'
+    - group: "*"
+      kind: "*"
+  clusterResourceWhitelist:
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
