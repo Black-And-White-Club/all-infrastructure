@@ -25,18 +25,13 @@ primary:
     existingClaim: resume-backend-0
   resources:
     requests:
-      cpu: 50m
-      memory: 256Mi
+      cpu: 25m
+      memory: 128Mi
     limits:
-      cpu: 250m
-      memory: 512Mi
+      cpu: 100m
+      memory: 256Mi
 metrics:
-  # Postgres exporter sidecar - enabled means the exported metrics are available
-  # on the Postgres exporter process (default port 9187) and can be scraped by Alloy.
-  # We do not deploy Prometheus ServiceMonitor here: Alloy will scrape directly and remote_write to Mimir.
-  enabled: true
+  # Disable metrics sidecar for development environments with limited resources
+  enabled: false
   serviceMonitor:
-    # We do not deploy Prometheus in this environment; disable ServiceMonitor to avoid ServiceMonitor CRD creation.
     enabled: false
-    interval: 3m
-    scrapeTimeout: 10s
