@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app: resume-backend
+        app.kubernetes.io/instance: resume-backend
     spec:
       imagePullSecrets:
         - name: ocir-secret
