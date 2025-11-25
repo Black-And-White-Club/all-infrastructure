@@ -28,7 +28,7 @@ primary:
     # create a PersistentVolumeClaim that binds to it. Configure the chart to
     # use the existing claim so Helm/SS template does not attempt to dynamically
     # provision a new PVC.
-    existingClaim: data-resume-backend-0
+    existingClaim: data-resume-postgres-0
   resources:
     requests:
       cpu: 50m

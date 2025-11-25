@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: data-resume-backend-0
+  name: data-resume-postgres-0
   namespace: resume-db
   labels:
     app.kubernetes.io/name: postgresql
-    app.kubernetes.io/instance: resume-postgres
+    app.kubernetes.io/instance: postgres-resume-postgres
 spec:
   accessModes:
     - ReadWriteOnce
