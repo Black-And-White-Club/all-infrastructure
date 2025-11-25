@@ -24,11 +24,9 @@ primary:
     # storageClassName field for dynamic provisioning.
     storageClassName: local-storage
     size: 2Gi
-    # We have a node-local static PV available (resume-db-local-pv) and will
-    # create a PersistentVolumeClaim that binds to it. Configure the chart to
-    # use the existing claim so Helm/SS template does not attempt to dynamically
-    # provision a new PVC.
-    existingClaim: data-resume-postgres-0
+    # The chart will auto-create a PVC that binds to the resume-postgres-local-pv
+    # PersistentVolume. Do not use existingClaim so the chart can manage the PVC lifecycle.
+    volumeName: resume-postgres-local-pv
   resources:
     requests:
       cpu: 50m
