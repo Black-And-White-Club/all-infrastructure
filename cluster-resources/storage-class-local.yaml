@@ -2,10 +2,10 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: local-storage
-provisioner: rancher.io/local-path
+provisioner: kubernetes.io/no-provisioner
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: false
 reclaimPolicy: Retain
-# Note: This StorageClass uses the local-path provisioner which must be installed
-# on the cluster (for example via a helm chart or as a system add-on). PVs that
-# use local-storage will be node-affinitized and not portable across nodes.
+# Note: This StorageClass uses static PV provisioning (no-provisioner).
+# PVs must be pre-created manually. PVs that use local-storage will be
+# node-affinitized and not portable across nodes.
