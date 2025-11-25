@@ -22,10 +22,8 @@ spec:
           enabled: true
           storageClassName: local-storage
           size: 2Gi
-          # Bind to a pre-provisioned PVC if needed. Provide existingClaim matching a PVC in the observability namespace
-          # or provide a volumeName to match a static PersistentVolume. For dynamic provisioning with local-path,
-          # omitting these will allow the chart to create the PVC automatically.
-          existingClaim: grafana-pvc
+          # Let the chart auto-create the PVC. It will bind to the grafana-pv PersistentVolume
+          # that is pre-provisioned in cluster-resources.
           volumeName: grafana-pv
         # Keep datasources and other config as in default values.yaml
 
