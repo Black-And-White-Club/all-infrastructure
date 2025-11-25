@@ -7,3 +7,4 @@ resources:
   - cert-manager.yaml
   - namespace-manager.yaml
   - oci-csi-driver.yaml
+  - nginx-ingress-app.yaml
