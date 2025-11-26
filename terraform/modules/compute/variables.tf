@@ -66,6 +66,12 @@ variable "backend_http_port" {
   default     = 30645
 }
 
+variable "backend_https_port" {
+  type        = number
+  description = "NodePort where the HTTPS traffic should be forwarded (LB -> ingress)"
+  default     = 30443
+}
+
 variable "vm_count" {
   description = "Number of VMs to create"
   type        = number

@@ -173,3 +173,21 @@ variable "user_email_domain" {
   type        = string
   default     = "gmail.com"
 }
+
+variable "resume_certificate_ocid" {
+  description = "OCID of the OCI certificate (from Certificates service) to use for HTTPS termination on the load balancer"
+  type        = string
+  default     = ""
+}
+
+variable "resume_certificate_file_path" {
+  description = "Path to the certificate PEM file (for importing cert-manager cert to OCI). e.g., /tmp/cert.pem"
+  type        = string
+  default     = ""
+}
+
+variable "resume_certificate_key_path" {
+  description = "Path to the private key PEM file (for importing cert-manager cert to OCI). e.g., /tmp/key.pem"
+  type        = string
+  default     = ""
+}

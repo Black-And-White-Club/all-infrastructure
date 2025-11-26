@@ -40,6 +40,10 @@ spec:
             - secretName: grafana-tls
               hosts:
                 - grafana.jaromero.cloud
+        grafana.ini:
+          auth.anonymous:
+            enabled: true
+            org_role: Viewer
   destination:
     server: https://kubernetes.default.svc
     namespace: observability
