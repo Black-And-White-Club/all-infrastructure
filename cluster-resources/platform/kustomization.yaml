@@ -5,4 +5,3 @@ resources:
   - ../crds
   - ../cronjobs
   - ../csi
-  - cert-manager-issuers.yaml
