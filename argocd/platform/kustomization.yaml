@@ -5,6 +5,7 @@ resources:
   - argocd-image-updater.yaml
   - argocd-image-updater-crds.yaml
   - cert-manager.yaml
+  - cert-manager-issuers.yaml
   - namespace-manager.yaml
   - oci-csi-driver.yaml
   - nginx-ingress-app.yaml
