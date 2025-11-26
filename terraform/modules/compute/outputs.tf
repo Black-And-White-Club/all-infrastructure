@@ -8,6 +8,11 @@ output "public_ips" {
   value       = [for ip in oci_core_public_ip.reserved_ip : ip.ip_address]
 }
 
+output "private_ips" {
+  description = "List of private IPs for the compute instances"
+  value       = [for vm in oci_core_instance.vm : vm.private_ip]
+}
+
 output "vcn_id" {
   description = "OCID of the VCN created"
   value       = oci_core_vcn.vcn.id

@@ -151,6 +151,7 @@ module "compute" {
   disk_attach_to              = local.computed_disk_attach_map
   enable_resume_db_auto_mount = false
   resume_db_mount_point       = "/mnt/data/resume-db"
+  backend_https_port          = 30443
 }
 
 # Optional remote setup: ensure /mnt/data/resume-db directory exists and is owned appropriately
@@ -209,6 +210,21 @@ module "object_storage" {
   }
 
   depends_on = [oci_identity_policy.terraform_policy]
+}
+
+module "resume_load_balancer" {
+  source = "./modules/load-balancer"
+
+  compartment_ocid      = var.compartment_ocid
+  subnet_ids            = [module.compute.subnet_id]
+  backend_ip_addresses  = module.compute.private_ips
+  name_prefix           = "resume-ingress"
+  backend_http_port     = 30080
+  backend_https_port    = 30443
+  http_health_protocol  = "HTTP"
+  http_health_path      = "/healthz"
+  enable_https_listener = true
+  certificate_ocid      = var.resume_certificate_ocid
 }
 
 /* resume_db_block_storage and locals moved up above compute to avoid forward reference and duplication */

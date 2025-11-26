@@ -17,3 +17,13 @@ output "resume_repo_url" {
   description = "OCIR repo URL for resume"
   value       = "${data.oci_objectstorage_namespace.namespace.namespace}.ocir.io/resume"
 }
+
+output "resume_load_balancer_id" {
+  description = "OCID of the resume nginx load balancer"
+  value       = module.resume_load_balancer.load_balancer_id
+}
+
+output "resume_load_balancer_ip_addresses" {
+  description = "Public IP addresses for the OCI load balancer"
+  value       = module.resume_load_balancer.load_balancer_ip_addresses
+}
