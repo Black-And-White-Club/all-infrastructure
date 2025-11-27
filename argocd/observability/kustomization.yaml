@@ -4,6 +4,5 @@ resources:
   - grafana-app.yaml
   - grafana-ingress.yaml
   - loki-app.yaml
-  - mimir-app.yaml
   - tempo-app.yaml
   - alloy-app.yaml
