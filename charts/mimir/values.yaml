@@ -68,6 +68,8 @@ mimir-distributed:
     replicas: 1
     zoneAwareReplication:
       enabled: false
+    persistentVolume:
+      enabled: false
     resources:
       requests:
         cpu: 20m
@@ -120,6 +122,8 @@ mimir-distributed:
   ##############################################
   compactor:
     replicas: 1
+    persistentVolume:
+      enabled: false
     resources:
       requests:
         cpu: 10m
@@ -133,6 +137,10 @@ mimir-distributed:
   ##############################################
   storeGateway:
     replicas: 1
+    zoneAwareReplication:
+      enabled: false
+    persistentVolume:
+      enabled: false
     resources:
       requests:
         cpu: 15m
