@@ -63,16 +63,11 @@ mimir-distributed:
   queryScheduler:
     enabled: false
 
-  ##############################################
-  # INGESTER (single replica, no zones, Deployment instead of StatefulSet)
-  ##############################################
   ingester:
     replicas: 1
     statefulSet:
       enabled: false
     persistence:
-      enabled: false
-    zoneAwareReplication:
       enabled: false
     resources:
       requests:
@@ -136,14 +131,9 @@ mimir-distributed:
         cpu: 100m
         memory: 256Mi
 
-  ##############################################
-  # STORE GATEWAY (single replica, no zones)
-  ##############################################
   storeGateway:
     replicas: 1
     persistence:
-      enabled: false
-    zoneAwareReplication:
       enabled: false
     resources:
       requests:
