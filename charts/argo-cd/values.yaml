@@ -86,3 +86,4 @@ redis-ha:
 # Limits:   ~1.4 CPU, ~1.54 GB RAM
 # Requests: ~0.375 CPU, ~0.896 GB RAM
 # Balanced for VM.Standard.E2.1 (1 OCPU, 8GB RAM) with headroom for applications
+
