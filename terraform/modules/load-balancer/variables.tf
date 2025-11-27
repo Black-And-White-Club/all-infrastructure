@@ -26,14 +26,14 @@ variable "load_balancer_max_bandwidth" {
   default     = 100
 }
 
-variable "backend_ip_addresses" {
-  description = "List of backend private IP addresses representing the nodes"
+variable "ssl_certificate_ids" {
+  description = "List of OCI certificate OCIDs to attach to the HTTPS listener"
   type        = list(string)
   default     = []
 }
 
-variable "ssl_certificate_ids" {
-  description = "List of OCI certificate OCIDs to attach to the HTTPS listener"
+variable "backend_ip_addresses" {
+  description = "List of backend compute instance private IP addresses for the load balancer"
   type        = list(string)
   default     = []
 }
@@ -52,30 +52,24 @@ variable "backend_http_port" {
 
 variable "backend_https_port" {
   type        = number
-  description = "Port on backend instances to receive HTTPS (NodePort) from LB"
+  description = "Port on backend instances to receive HTTPS (NodePort) from LB - used for TLS passthrough mode"
   default     = 443
 }
 
 variable "http_health_path" {
   type        = string
-  description = "HTTP health check path for the HTTP backend set"
+  description = "HTTP health check path"
   default     = "/healthz"
-}
-
-variable "http_health_protocol" {
-  type        = string
-  description = "Protocol used for the HTTP backend health check (HTTP or TCP)"
-  default     = "TCP"
 }
 
 variable "enable_https_listener" {
   type        = bool
-  description = "Whether to create an HTTPS listener with TLS termination"
+  description = "Whether to create an HTTPS listener (port 443)"
   default     = true
 }
 
 variable "certificate_ocid" {
   type        = string
-  description = "OCID of the OCI certificate to use for HTTPS listener (from Certificates service)"
+  description = "OCID of the OCI certificate for TLS termination at LB. If empty, uses TLS passthrough (nginx handles TLS)"
   default     = ""
 }

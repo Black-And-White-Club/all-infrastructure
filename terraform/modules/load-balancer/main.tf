@@ -1,12 +1,11 @@
 locals {
-  backend_ips = length(var.backend_ip_addresses) > 0 ? { for ip in var.backend_ip_addresses : ip => ip } : {}
-}
+  # Use numeric indices as keys (known at plan time), IP addresses as values (can be unknown)
+  backend_targets = { for idx, ip in var.backend_ip_addresses : tostring(idx) => ip }
+  certificate_ids = length(var.ssl_certificate_ids) > 0 ? var.ssl_certificate_ids : (var.certificate_ocid != "" ? [var.certificate_ocid] : [])
 
-# Data source to look up certificate by OCID (if provided)
-data "oci_certificates_management_certificate" "lookup" {
-  count = var.certificate_ocid != "" ? 1 : 0
-
-  certificate_id = var.certificate_ocid
+  # Determine if we should use TLS termination at LB (requires cert) or TCP passthrough
+  use_tls_termination = var.enable_https_listener && length(local.certificate_ids) > 0
+  use_tls_passthrough = var.enable_https_listener && !local.use_tls_termination
 }
 
 resource "oci_load_balancer_load_balancer" "lb" {
@@ -20,48 +19,59 @@ resource "oci_load_balancer_load_balancer" "lb" {
   }
 }
 
+# HTTP backend set - used for:
+# - HTTP listener (port 80)
+# - HTTPS listener with TLS termination (LB decrypts, sends HTTP to backend)
 resource "oci_load_balancer_backend_set" "http" {
   load_balancer_id = oci_load_balancer_load_balancer.lb.id
   name             = "http-backend-set"
   policy           = "ROUND_ROBIN"
 
   health_checker {
-    protocol = var.http_health_protocol
+    protocol = "HTTP"
     port     = var.backend_http_port
-    url_path = var.http_health_protocol == "HTTP" ? var.http_health_path : null
+    url_path = var.http_health_path
   }
 }
 
-resource "oci_load_balancer_backend_set" "tcp" {
-  count            = var.enable_https_listener ? 1 : 0
+# TCP/TLS passthrough backend set - only for when nginx-ingress handles TLS (cert-manager)
+resource "oci_load_balancer_backend_set" "tcp_passthrough" {
+  count            = local.use_tls_passthrough ? 1 : 0
   load_balancer_id = oci_load_balancer_load_balancer.lb.id
-  name             = "tcp-backend-set"
+  name             = "tcp-passthrough-backend-set"
   policy           = "ROUND_ROBIN"
 
   health_checker {
-    protocol = "TCP"
-    port     = var.backend_https_port
+    # TCP health check - simple connection test, increased timeout for TLS
+    protocol          = "TCP"
+    port              = var.backend_https_port
+    timeout_in_millis = 10000 # 10 seconds for TLS handshake
+    interval_ms       = 30000 # Check every 30 seconds
+    retries           = 3     # Allow 3 retries before marking unhealthy
   }
 }
 
+# HTTP backends - always created
 resource "oci_load_balancer_backend" "http" {
-  for_each = local.backend_ips
+  for_each = local.backend_targets
 
   load_balancer_id = oci_load_balancer_load_balancer.lb.id
   backendset_name  = oci_load_balancer_backend_set.http.name
-  ip_address       = each.key
+  ip_address       = each.value
   port             = var.backend_http_port
 }
 
-resource "oci_load_balancer_backend" "tcp" {
-  for_each = var.enable_https_listener ? local.backend_ips : {}
+# TCP passthrough backends - only for TLS passthrough mode
+resource "oci_load_balancer_backend" "tcp_passthrough" {
+  for_each = local.use_tls_passthrough ? local.backend_targets : {}
 
   load_balancer_id = oci_load_balancer_load_balancer.lb.id
-  backendset_name  = oci_load_balancer_backend_set.tcp[0].name
-  ip_address       = each.key
+  backendset_name  = oci_load_balancer_backend_set.tcp_passthrough[0].name
+  ip_address       = each.value
   port             = var.backend_https_port
 }
 
+# HTTP listener (port 80)
 resource "oci_load_balancer_listener" "http" {
   load_balancer_id         = oci_load_balancer_load_balancer.lb.id
   name                     = "http-listener"
@@ -70,17 +80,30 @@ resource "oci_load_balancer_listener" "http" {
   protocol                 = "HTTP"
 }
 
-resource "oci_load_balancer_listener" "https" {
-  count = var.enable_https_listener ? 1 : 0
+# HTTPS listener with TLS termination at LB
+# Routes to HTTP backend since LB already decrypted the traffic
+resource "oci_load_balancer_listener" "https_terminated" {
+  count = local.use_tls_termination ? 1 : 0
 
   load_balancer_id         = oci_load_balancer_load_balancer.lb.id
   name                     = "https-listener"
-  default_backend_set_name = oci_load_balancer_backend_set.tcp[0].name
+  default_backend_set_name = oci_load_balancer_backend_set.http.name # Same backend as HTTP!
   port                     = 443
-  protocol                 = "HTTPS"
+  protocol                 = "HTTP"
 
   ssl_configuration {
-    certificate_ids = [var.certificate_ocid]
-    protocols       = ["TLSv1.2", "TLSv1.3"]
+    certificate_ids         = local.certificate_ids
+    verify_peer_certificate = false
   }
+}
+
+# HTTPS listener with TLS passthrough (let nginx/ingress handle TLS with cert-manager)
+resource "oci_load_balancer_listener" "https_passthrough" {
+  count = local.use_tls_passthrough ? 1 : 0
+
+  load_balancer_id         = oci_load_balancer_load_balancer.lb.id
+  name                     = "https-listener"
+  default_backend_set_name = oci_load_balancer_backend_set.tcp_passthrough[0].name
+  port                     = 443
+  protocol                 = "TCP"
 }

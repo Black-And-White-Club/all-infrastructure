@@ -215,13 +215,14 @@ module "object_storage" {
 module "resume_load_balancer" {
   source = "./modules/load-balancer"
 
-  compartment_ocid      = var.compartment_ocid
-  subnet_ids            = [module.compute.subnet_id]
-  backend_ip_addresses  = module.compute.private_ips
+  compartment_ocid = var.compartment_ocid
+  subnet_ids       = [module.compute.subnet_id]
+  # Only route traffic to worker node(s), not control plane
+  # vm_names = ["k8s-control-plane", "k8s-worker"] → index 1 is worker
+  backend_ip_addresses  = [module.compute.private_ips[1]]
   name_prefix           = "resume-ingress"
   backend_http_port     = 30080
   backend_https_port    = 30443
-  http_health_protocol  = "HTTP"
   http_health_path      = "/healthz"
   enable_https_listener = true
   certificate_ocid      = var.resume_certificate_ocid

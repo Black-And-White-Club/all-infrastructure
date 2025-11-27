@@ -1,6 +1,8 @@
 # Grafana values - Shared visualization for resume and frolf-bot
-# Resume uses Prometheus (simple metrics)
-# Frolf-bot uses Mimir (metrics), Loki (logs), Tempo (traces)
+# Metrics: Mimir (replaces Prometheus)
+# Logs: Loki
+# Traces: Tempo
+# Collection: Alloy
 
 resources:
   requests:
@@ -23,48 +25,73 @@ persistence:
 # For development only, leave empty to use Grafana's auto-generated password
 adminPassword: ""
 
-# Datasource configuration for both apps
+# Datasource configuration
 datasources:
   datasources.yaml:
     apiVersion: 1
     datasources:
-      # Resume datasources (point to central Mimir query frontend)
-      - name: Resume Mimir
+      # Metrics datasource - Mimir (Prometheus-compatible)
+      - name: Mimir
         type: prometheus
         url: http://mimir-query-frontend.observability.svc.cluster.local:8080
         access: proxy
-        isDefault: false
-        editable: true
-        jsonData:
-          timeInterval: 30s
-
-      # Frolf-bot datasources
-      - name: Frolf Mimir
-        type: prometheus
-        url: http://mimir-query-frontend.observability.svc.cluster.local:8080
-        access: proxy
-        isDefault: true # Default to frolf metrics
+        isDefault: true
         editable: true
         jsonData:
           timeInterval: 15s
+          exemplarTraceIdDestinations:
+            - name: TraceID
+              url: http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Tempo%22,%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22expr%22:%22$${__value.raw}%22%7D%5D
 
-      - name: Frolf Loki
+      # Logs datasource - Loki
+      - name: Loki
         type: loki
-        url: http://loki-gateway.frolf-bot.svc.cluster.local
+        url: http://loki-gateway.observability.svc.cluster.local
         access: proxy
         editable: true
+        jsonData:
+          derivedFields:
+            - name: TraceID
+              matcherRegex: 'trace[_id]*=([^\s]*)'
+              url: http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Tempo%22,%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22expr%22:%22$${__value.raw}%22%7D%5D
 
-      - name: Frolf Tempo
+      # Traces datasource - Tempo
+      - name: Tempo
         type: tempo
-        url: http://tempo.frolf-bot.svc.cluster.local:3100
+        url: http://tempo.observability.svc.cluster.local:3100
         access: proxy
         editable: true
+        jsonData:
+          tracesToLogs:
+            datasourceUid: loki
+            mappedTags:
+              - key: service.name
+                value: service
+              - key: pod.name
+                value: pod
+              - key: namespace
+                value: namespace
+          tracesToMetrics:
+            datasourceUid: mimir
+            spanStartTimeShift: 1s
+            spanEndTimeShift: 100ms
+          searchEnabled: true
+          serviceMap:
+            datasourceUid: mimir
 
 # Default dashboard folders
 dashboardProviders:
   dashboardproviders.yaml:
     apiVersion: 1
     providers:
+      - name: "observability"
+        orgId: 1
+        folder: "Observability"
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/observability
       - name: "resume"
         orgId: 1
         folder: "Resume"

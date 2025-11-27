@@ -1,0 +1,92 @@
+# Mimir - Prometheus-compatible metrics storage
+# Multi-tenant, scalable metrics backend
+# Used by frolf-bot for long-term metrics retention
+# Stores blocks in OCI Object Storage
+
+mimir-distributed:
+  global:
+    dnsSDDomain: observability.svc.cluster.local
+
+  minio:
+    enabled: false
+
+  # Storage backend - OCI Object Storage
+  mimir:
+    config:
+      storage:
+        s3:
+          bucket_name: mimir-shared-bucket
+          endpoint: id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com
+          access_key_id: $MIMIR_OCI_ACCESS_KEY
+          secret_access_key: $MIMIR_OCI_SECRET_KEY
+          insecure: false
+          s3ForcePathStyle: true
+
+  prometheus:
+    enabled: false
+
+  # Ingester configuration - receives metrics from Alloy/Prometheus
+  ingester:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  # Distributor - routes metrics to ingesters
+  distributor:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+  # Query frontend - caches and parallelizes queries
+  queryFrontend:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+  # Querier - handles metric queries
+  querier:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  # Compactor - compresses and deduplicates blocks
+  compactor:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+  # Store gateway - indexes and retrieves metric blocks
+  storeGateway:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi

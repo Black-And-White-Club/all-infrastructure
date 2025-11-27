@@ -9,3 +9,7 @@ resources:
   - namespace-manager.yaml
   - oci-csi-driver.yaml
   - nginx-ingress-app.yaml
+  - mimir-app.yaml
+  - loki-app.yaml
+  - tempo-app.yaml
+  - alloy-app.yaml
