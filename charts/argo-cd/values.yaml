@@ -24,10 +24,10 @@ server:
 controller:
   resources:
     limits:
-      cpu: 600m
+      cpu: 500m
       memory: 1Gi
     requests:
-      cpu: 300m
+      cpu: 150m
       memory: 512Mi
 
   # Single replica for small cluster
