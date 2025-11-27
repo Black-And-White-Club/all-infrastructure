@@ -1,31 +1,80 @@
+# Mimir - lightweight single-replica config for small workloads
+# Disables HA/enterprise features to minimize resource usage
+
 mimir-distributed:
   global:
     dnsSDDomain: observability.svc.cluster.local
 
+  # Disable built-in MinIO (using OCI Object Storage)
   minio:
     enabled: false
 
-  mimir:
-    config:
-      storage:
-        s3:
-          bucket_name: mimir-shared-bucket
-          endpoint: id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com
-          access_key_id: $MIMIR_OCI_ACCESS_KEY
-          secret_access_key: $MIMIR_OCI_SECRET_KEY
-          insecure: false
-          s3ForcePathStyle: true
+  # Disable built-in Kafka (not needed for small deployments)
+  kafka:
+    enabled: false
 
+  mimir:
+    structuredConfig:
+      common:
+        storage:
+          backend: s3
+          s3:
+            bucket_name: mimir-shared-bucket
+            endpoint: id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com
+            access_key_id: ${MIMIR_OCI_ACCESS_KEY}
+            secret_access_key: ${MIMIR_OCI_SECRET_KEY}
+            insecure: false
+            s3_force_path_style: true
+      # Single-replica: no replication needed
+      ingester:
+        ring:
+          replication_factor: 1
+      store_gateway:
+        sharding_ring:
+          replication_factor: 1
+      compactor:
+        sharding_ring:
+          replication_factor: 1
+
+  # Disable Prometheus sub-chart
   prometheus:
     enabled: false
 
   ##############################################
-  # INGESTER
+  # DISABLED COMPONENTS (not needed for small setups)
+  ##############################################
+  alertmanager:
+    enabled: false
+
+  ruler:
+    enabled: false
+
+  overridesExporter:
+    enabled: false
+
+  gateway:
+    enabled: false
+
+  rolloutOperator:
+    enabled: false
+
+  queryScheduler:
+    enabled: false
+
+  ##############################################
+  # INGESTER (single replica, no zone sharding)
   ##############################################
   ingester:
-    lifecycler:
-      ring:
-        replication_factor: 1
+    replicas: 1
+    zoneAwareReplication:
+      enabled: false
+    resources:
+      requests:
+        cpu: 20m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 512Mi
 
   ##############################################
   # DISTRIBUTOR
