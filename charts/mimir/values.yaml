@@ -25,13 +25,15 @@ mimir-distributed:
             secret_access_key: ${MIMIR_OCI_SECRET_KEY}
             insecure: false
             s3_force_path_style: true
-      # Single-replica: no replication needed
+      # Single-replica: no replication or zone awareness
       ingester:
         ring:
           replication_factor: 1
+          zone_awareness_enabled: false
       store_gateway:
         sharding_ring:
           replication_factor: 1
+          zone_awareness_enabled: false
       compactor:
         sharding_ring:
           replication_factor: 1
@@ -62,11 +64,12 @@ mimir-distributed:
     enabled: false
 
   ##############################################
-  # INGESTER (single replica, no zones)
+  # INGESTER (single replica, no zones, Deployment instead of StatefulSet)
   ##############################################
   ingester:
     replicas: 1
-    kind: Deployment
+    statefulSet:
+      enabled: false
     persistence:
       enabled: false
     zoneAwareReplication:
@@ -123,7 +126,7 @@ mimir-distributed:
   ##############################################
   compactor:
     replicas: 1
-    persistence:
+    persistentVolume:
       enabled: false
     resources:
       requests:
