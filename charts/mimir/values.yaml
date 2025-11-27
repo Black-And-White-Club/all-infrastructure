@@ -1,5 +1,5 @@
 # Mimir - lightweight single-replica config for small workloads
-# Disables HA/enterprise features to minimize resource usage
+# Disables HA/enterprise features and zone-aware replication for single-node deployments
 
 mimir-distributed:
   global:
@@ -62,13 +62,14 @@ mimir-distributed:
     enabled: false
 
   ##############################################
-  # INGESTER (single replica, no zone sharding)
+  # INGESTER (single replica, no zones)
   ##############################################
   ingester:
     replicas: 1
-    zoneAwareReplication:
+    kind: Deployment
+    persistence:
       enabled: false
-    persistentVolume:
+    zoneAwareReplication:
       enabled: false
     resources:
       requests:
@@ -118,11 +119,11 @@ mimir-distributed:
         memory: 512Mi
 
   ##############################################
-  # COMPACTOR
+  # COMPACTOR (single replica, no zones)
   ##############################################
   compactor:
     replicas: 1
-    persistentVolume:
+    persistence:
       enabled: false
     resources:
       requests:
@@ -133,13 +134,13 @@ mimir-distributed:
         memory: 256Mi
 
   ##############################################
-  # STORE GATEWAY
+  # STORE GATEWAY (single replica, no zones)
   ##############################################
   storeGateway:
     replicas: 1
-    zoneAwareReplication:
+    persistence:
       enabled: false
-    persistentVolume:
+    zoneAwareReplication:
       enabled: false
     resources:
       requests:
