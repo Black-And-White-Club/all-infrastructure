@@ -63,7 +63,7 @@ variable "resume_db_mount_point" {
 variable "backend_http_port" {
   type        = number
   description = "Port used by the ingress/nodeport that the external LB will target"
-  default     = 30645
+  default     = 30080
 }
 
 variable "backend_https_port" {

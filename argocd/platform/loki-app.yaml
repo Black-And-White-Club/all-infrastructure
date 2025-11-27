@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: platform
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: loki-distributed
+      targetRevision: 0.79.1
+      helm:
+        releaseName: loki
+        valueFiles:
+          - $values/charts/loki/values.yaml
+    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+      targetRevision: main
+      path: charts/loki
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

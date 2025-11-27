@@ -1,0 +1,174 @@
+# Alloy - Telemetry collector and pipeline orchestrator
+# Replaces Prometheus for metric collection
+# Collects logs, metrics, and traces from all sources
+# Routes to Mimir (metrics), Loki (logs), and Tempo (traces)
+
+# Cluster role for pod discovery and scraping
+serviceAccount:
+  create: true
+  name: alloy
+
+# Alloy collector configuration
+config: |
+  logging {
+    level  = "info"
+    format = "json"
+  }
+
+  // Prometheus scrape configs for metrics collection
+  prometheus.scrape "kubernetes_pods" {
+    targets = discovery.kubernetes.pods.targets
+    scrape_interval = "15s"
+    job_name = "kubernetes-pods"
+    forward_to = [prometheus.relabel.kubernetes_pods.receiver]
+  }
+
+  prometheus.scrape "kubernetes_nodes" {
+    targets = discovery.kubernetes.nodes.targets
+    scrape_interval = "15s"
+    job_name = "kubernetes-nodes"
+    forward_to = [prometheus.relabel.kubernetes_nodes.receiver]
+  }
+
+  // Kubernetes service discovery
+  discovery.kubernetes "pods" {
+    role = "pod"
+  }
+
+  discovery.kubernetes "nodes" {
+    role = "node"
+  }
+
+  // Relabeling for Kubernetes metadata
+  prometheus.relabel "kubernetes_pods" {
+    forward_to = [prometheus.remote_write.mimir.receiver]
+    rule {
+      source_labels = ["__meta_kubernetes_pod_name"]
+      target_label = "pod"
+    }
+    rule {
+      source_labels = ["__meta_kubernetes_namespace"]
+      target_label = "namespace"
+    }
+    rule {
+      source_labels = ["__meta_kubernetes_pod_container_name"]
+      target_label = "container"
+    }
+  }
+
+  prometheus.relabel "kubernetes_nodes" {
+    forward_to = [prometheus.remote_write.mimir.receiver]
+    rule {
+      source_labels = ["__meta_kubernetes_node_name"]
+      target_label = "node"
+    }
+  }
+
+  // Send metrics to Mimir
+  prometheus.remote_write "mimir" {
+    endpoint = "http://mimir-distributor.observability:8001/api/prom/push"
+    client {
+      tls {
+        insecure_skip_verify = true
+      }
+    }
+  }
+
+  // Kubernetes log collection
+  loki.source.kubernetes "pods" {
+    targets = discovery.kubernetes.pods.targets
+    forward_to = [loki.relabel.kubernetes_logs.receiver]
+  }
+
+  // Log relabeling for metadata
+  loki.relabel "kubernetes_logs" {
+    forward_to = [loki.write.loki.receiver]
+    rule {
+      source_labels = ["__meta_kubernetes_pod_name"]
+      target_label = "pod"
+    }
+    rule {
+      source_labels = ["__meta_kubernetes_namespace"]
+      target_label = "namespace"
+    }
+    rule {
+      source_labels = ["__meta_kubernetes_pod_container_name"]
+      target_label = "container"
+    }
+  }
+
+  // Send logs to Loki
+  loki.write "loki" {
+    endpoint {
+      url = "http://loki-gateway.observability/loki/api/v1/push"
+    }
+    tenant_id = "fake"
+  }
+
+  // OTLP gRPC receiver for application traces
+  otelcol.receiver.otlp "default" {
+    grpc {
+      endpoint = "0.0.0.0:4317"
+    }
+    http {
+      endpoint = "0.0.0.0:4318"
+    }
+    output {
+      traces = [otelcol.processor.attributes.default.input]
+    }
+  }
+
+  // Trace attributes processing
+  otelcol.processor.attributes "default" {
+    action {
+      key    = "cluster.name"
+      value  = "kubernetes"
+      action = "upsert"
+    }
+    output {
+      traces = [otelcol.exporter.otlp.tempo.input]
+    }
+  }
+
+  // Export traces to Tempo
+  otelcol.exporter.otlp "tempo" {
+    client {
+      endpoint = "tempo.observability:4317"
+      tls {
+        insecure = true
+      }
+    }
+  }
+
+# Alloy DaemonSet configuration
+daemonset:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  tolerations:
+    - operator: Exists
+
+# Alloy StatefulSet configuration (optional, for centralized collection)
+statefulset:
+  enabled: false
+
+# Service configuration
+service:
+  type: ClusterIP
+  ports:
+    # OTLP gRPC
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    # OTLP HTTP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP

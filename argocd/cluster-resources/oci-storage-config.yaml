@@ -1,0 +1,2 @@
+# This file has been removed - bucket names are hardcoded in Helm values
+# OCI credentials are managed via sealed-secrets in sealed-oci-object-storage-creds.yaml

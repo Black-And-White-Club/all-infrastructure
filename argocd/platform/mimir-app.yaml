@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mimir
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: platform
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: mimir-distributed
+      targetRevision: 5.4.0
+      helm:
+        releaseName: mimir
+        valueFiles:
+          - $values/charts/mimir/values.yaml
+    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+      targetRevision: main
+      path: charts/mimir
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
