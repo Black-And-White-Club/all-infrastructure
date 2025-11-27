@@ -36,8 +36,6 @@ tempo:
         access_key: $TEMPO_OCI_ACCESS_KEY
         secret_key: $TEMPO_OCI_SECRET_KEY
         insecure: false
-        path: /
-        s3ForcePathStyle: true
       wal:
         path: /var/tempo/wal
 
