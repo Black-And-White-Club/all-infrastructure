@@ -16,7 +16,7 @@ spec:
     - host: grafana.jaromero.cloud
       http:
         paths:
-          - path: /
+          - path: /grafana
             pathType: Prefix
             backend:
               service:
