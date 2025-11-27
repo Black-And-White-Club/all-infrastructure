@@ -1,8 +1,3 @@
-# Mimir - Prometheus-compatible metrics storage
-# Multi-tenant, scalable metrics backend
-# Used by frolf-bot for long-term metrics retention
-# Stores blocks in OCI Object Storage
-
 mimir-distributed:
   global:
     dnsSDDomain: observability.svc.cluster.local
@@ -10,7 +5,6 @@ mimir-distributed:
   minio:
     enabled: false
 
-  # Storage backend - OCI Object Storage
   mimir:
     config:
       storage:
@@ -25,68 +19,75 @@ mimir-distributed:
   prometheus:
     enabled: false
 
-  # Ingester configuration - receives metrics from Alloy/Prometheus
+  ##############################################
+  # INGESTER
+  ##############################################
   ingester:
-    replicas: 1
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
+    lifecycler:
+      ring:
+        replication_factor: 1
 
-  # Distributor - routes metrics to ingesters
+  ##############################################
+  # DISTRIBUTOR
+  ##############################################
   distributor:
     replicas: 1
     resources:
       requests:
-        cpu: 50m
+        cpu: 10m
         memory: 64Mi
       limits:
-        cpu: 200m
+        cpu: 100m
         memory: 256Mi
 
-  # Query frontend - caches and parallelizes queries
+  ##############################################
+  # QUERY FRONTEND
+  ##############################################
   queryFrontend:
     replicas: 1
     resources:
       requests:
-        cpu: 50m
+        cpu: 15m
         memory: 64Mi
       limits:
-        cpu: 200m
+        cpu: 150m
         memory: 256Mi
 
-  # Querier - handles metric queries
+  ##############################################
+  # QUERIER
+  ##############################################
   querier:
     replicas: 1
     resources:
       requests:
-        cpu: 100m
+        cpu: 25m
         memory: 128Mi
       limits:
-        cpu: 500m
+        cpu: 200m
         memory: 512Mi
 
-  # Compactor - compresses and deduplicates blocks
+  ##############################################
+  # COMPACTOR
+  ##############################################
   compactor:
     replicas: 1
     resources:
       requests:
-        cpu: 50m
+        cpu: 10m
         memory: 64Mi
       limits:
-        cpu: 200m
+        cpu: 100m
         memory: 256Mi
 
-  # Store gateway - indexes and retrieves metric blocks
+  ##############################################
+  # STORE GATEWAY
+  ##############################################
   storeGateway:
     replicas: 1
     resources:
       requests:
-        cpu: 50m
+        cpu: 15m
         memory: 64Mi
       limits:
-        cpu: 200m
+        cpu: 150m
         memory: 256Mi
