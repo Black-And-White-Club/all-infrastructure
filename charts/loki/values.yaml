@@ -11,6 +11,10 @@ global:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
+  # Expand environment variables inside Loki's generated config so injected
+  # secrets (OCI object storage credentials) are resolved at runtime.
+  extraArgs:
+    - -config.expand-env=true
 
 deploymentMode: SimpleScalable
 
@@ -33,6 +37,7 @@ loki:
 
   # Storage configuration for OCI Object Storage (S3-compatible)
   # Using us-ashburn-1 (home region) to avoid S3 signature issues with cross-region access
+  # Credentials are injected from objectstore-creds secret via extraEnv
   storage:
     type: s3
     bucketNames:
@@ -46,6 +51,8 @@ loki:
       secretAccessKey: ${LOKI_OCI_SECRET_KEY}
       s3ForcePathStyle: true
       insecure: false
+      # SigV4 signature required for OCI S3-compatible
+      signature_version: v4
 
   schemaConfig:
     configs:
@@ -78,6 +85,8 @@ write:
     limits:
       cpu: 200m
       memory: 256Mi
+  persistence:
+    storageClass: oci-block-storage
 
 read:
   replicas: 1
@@ -98,3 +107,11 @@ backend:
     limits:
       cpu: 500m
       memory: 512Mi
+  persistence:
+    storageClass: oci-block-storage
+
+resultsCache:
+  enabled: false
+
+chunksCache:
+  enabled: false
