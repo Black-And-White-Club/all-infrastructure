@@ -90,7 +90,7 @@ write:
         type: DirectoryOrCreate
   extraVolumeMounts:
     - name: loki-wal
-      mountPath: /var/loki
+      mountPath: /var/loki/write
 
 read:
   replicas: 1
@@ -124,7 +124,7 @@ backend:
         type: DirectoryOrCreate
   extraVolumeMounts:
     - name: loki-backend
-      mountPath: /var/loki
+      mountPath: /var/loki/backend
 
 resultsCache:
   enabled: false
