@@ -4,6 +4,9 @@
 mimir-distributed:
   global:
     dnsSDDomain: observability.svc.cluster.local
+    extraEnvFrom:
+      - secretRef:
+          name: objectstore-creds
 
   # Disable built-in MinIO (using OCI Object Storage)
   minio:
@@ -20,7 +23,7 @@ mimir-distributed:
           backend: s3
           s3:
             bucket_name: mimir-shared-bucket
-            endpoint: id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com
+            endpoint: id2uwn5pyixh.compat.objectstorage.us-ashburn-1.oraclecloud.com
             access_key_id: ${MIMIR_OCI_ACCESS_KEY}
             secret_access_key: ${MIMIR_OCI_SECRET_KEY}
             insecure: false

@@ -3,6 +3,11 @@
 # Query via Grafana with trace IDs or service filters
 # Stores trace blocks in OCI Object Storage
 
+global:
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
+
 tempo:
   replicas: 1
 
@@ -32,10 +37,11 @@ tempo:
       backend: s3
       s3:
         bucket: tempo-shared-bucket
-        endpoint: id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com
-        access_key: $TEMPO_OCI_ACCESS_KEY
-        secret_key: $TEMPO_OCI_SECRET_KEY
+        endpoint: id2uwn5pyixh.compat.objectstorage.us-ashburn-1.oraclecloud.com
+        access_key: ${TEMPO_OCI_ACCESS_KEY}
+        secret_key: ${TEMPO_OCI_SECRET_KEY}
         insecure: false
+        forcepathstyle: true
       wal:
         path: /var/tempo/wal
 
@@ -48,6 +54,4 @@ tempo:
       memory: 512Mi
 
   persistence:
-    enabled: true
-    storageClassName: oci-block-storage
-    size: 10Gi
+    enabled: false

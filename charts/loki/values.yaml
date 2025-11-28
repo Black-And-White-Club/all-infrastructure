@@ -86,7 +86,7 @@ write:
       cpu: 200m
       memory: 256Mi
   persistence:
-    storageClass: oci-block-storage
+    enabled: false
 
 read:
   replicas: 1
@@ -108,7 +108,7 @@ backend:
       cpu: 500m
       memory: 512Mi
   persistence:
-    storageClass: oci-block-storage
+    enabled: false
 
 resultsCache:
   enabled: false
