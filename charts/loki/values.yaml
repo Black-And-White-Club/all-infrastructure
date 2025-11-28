@@ -82,7 +82,9 @@ write:
       cpu: 200m
       memory: 256Mi
   persistence:
-    enabled: false # Disable PVC
+    enabled: false
+    size: 0
+    storageClassName: ""
   # Use worker node's boot disk
   extraVolumes:
     - name: loki-wal
@@ -116,7 +118,9 @@ backend:
       cpu: 500m
       memory: 512Mi
   persistence:
-    enabled: false # Disable PVC
+    enabled: false
+    size: 0
+    storageClassName: ""
   # Use worker node's boot disk
   extraVolumes:
     - name: loki-backend
