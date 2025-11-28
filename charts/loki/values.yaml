@@ -11,7 +11,7 @@ global:
 deploymentMode: SimpleScalable
 
 loki:
-  config:
+  config: |
     auth_enabled: false
     chunk_store_config:
       chunk_cache_config:
@@ -25,12 +25,11 @@ loki:
       chunk_idle_period: 3m
       max_chunk_age: 1h
       chunk_retain_period: 1m
-  storage:
-    type: s3
-    s3:
-      s3: "s3://${MIMIR_OCI_ACCESS_KEY}:${MIMIR_OCI_SECRET_KEY}@id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com/loki-shared-bucket"
-      s3ForcePathStyle: true
-      insecure: false
+    storage_config:
+      s3:
+        s3: "s3://${MIMIR_OCI_ACCESS_KEY}:${MIMIR_OCI_SECRET_KEY}@id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com/loki-shared-bucket"
+        s3ForcePathStyle: true
+        insecure: false
 
 gateway:
   replicas: 1
