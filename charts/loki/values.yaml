@@ -32,6 +32,7 @@ loki:
     chunk_retain_period: 1m
 
   # Storage configuration for OCI Object Storage (S3-compatible)
+  # Using us-ashburn-1 (home region) to avoid S3 signature issues with cross-region access
   storage:
     type: s3
     bucketNames:
@@ -39,8 +40,8 @@ loki:
       ruler: loki-shared-bucket
       admin: loki-shared-bucket
     s3:
-      endpoint: id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com
-      region: us-phoenix-1
+      endpoint: id2uwn5pyixh.compat.objectstorage.us-ashburn-1.oraclecloud.com
+      region: us-ashburn-1
       accessKeyId: ${LOKI_OCI_ACCESS_KEY}
       secretAccessKey: ${LOKI_OCI_SECRET_KEY}
       s3ForcePathStyle: true
