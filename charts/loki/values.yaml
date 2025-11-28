@@ -7,6 +7,10 @@ global:
   clusterDomain: cluster.local
   dnsService: coredns
   dnsNamespace: kube-system
+  # Inject S3 credentials from secret for all Loki components
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
 
 deploymentMode: SimpleScalable
 
