@@ -16,6 +16,7 @@ loki:
   commonConfig:
     path_prefix: /var/loki
     replication_factor: 1
+    retention_shared_store: s3
 
   storage:
     type: s3
@@ -51,6 +52,8 @@ loki:
   compactor:
     retention_enabled: true
     retention_delete_delay: 2h
+    shared_store: s3
+    delete_request_store: s3
 
   ingester:
     chunk_idle_period: 3m
