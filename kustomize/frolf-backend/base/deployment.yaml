@@ -13,7 +13,7 @@ spec:
         app: frolf-bot-backend
     spec:
       imagePullSecrets:
-        - name: gcp-artifact-registry
+        - name: ocirsecret
       initContainers:
         - name: wait-for-postgres
           image: busybox:1.35
@@ -21,7 +21,7 @@ spec:
           args:
             - |
               echo "Waiting for PostgreSQL to be ready..."
-              until nc -z postgres-frolf-postgresql.frolf-bot.svc.cluster.local 5432; do
+              until nc -z frolf-postgres-postgresql.frolf-bot.svc.cluster.local 5432; do
                 echo "PostgreSQL is not ready yet. Waiting 5 seconds..."
                 sleep 5
               done
@@ -35,7 +35,8 @@ spec:
               echo "NATS is ready!"
       containers:
         - name: backend
-          image: frolf-bot
+          image: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
             - containerPort: 6060
