@@ -3,6 +3,15 @@
 # Query via Grafana with LogQL
 # Stores chunks and index in OCI Object Storage
 
+global:
+  clusterDomain: cluster.local
+  dnsService: coredns
+  dnsNamespace: kube-system
+
+gateway:
+  nginxConfig:
+    resolver: coredns.kube-system.svc.cluster.local valid=30s;
+
 loki-distributed:
   loki:
     enabled: true
@@ -23,7 +32,7 @@ loki-distributed:
       # Storage backend - OCI Object Storage
       storage_config:
         s3:
-          s3: s3://MIMIR_OCI_ACCESS_KEY:MIMIR_OCI_SECRET_KEY@id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com/loki-shared-bucket
+          s3: "s3://${MIMIR_OCI_ACCESS_KEY}:${MIMIR_OCI_SECRET_KEY}@id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com/loki-shared-bucket"
           s3ForcePathStyle: true
           insecure: false
 
