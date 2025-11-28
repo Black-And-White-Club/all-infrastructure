@@ -9,8 +9,8 @@ spec:
   project: platform
   sources:
     - repoURL: https://grafana.github.io/helm-charts
-      chart: loki-distributed
-      targetRevision: 0.80.6
+      chart: loki
+      targetRevision: 6.46.0
       helm:
         releaseName: loki
         valueFiles:
