@@ -35,7 +35,7 @@ loki-distributed:
     replicas: 1
     resources:
       requests:
-        cpu: 100m
+        cpu: 25m
         memory: 128Mi
       limits:
         cpu: 500m
@@ -68,7 +68,7 @@ loki-distributed:
     replicas: 1
     resources:
       requests:
-        cpu: 100m
+        cpu: 25m
         memory: 128Mi
       limits:
         cpu: 500m
