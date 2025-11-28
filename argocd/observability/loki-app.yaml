@@ -18,7 +18,7 @@ spec:
     - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
       targetRevision: main
       path: charts/loki
-      ref: values
+      ref: main
   destination:
     server: https://kubernetes.default.svc
     namespace: observability
