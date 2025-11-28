@@ -7,31 +7,18 @@ metadata:
     argocd.argoproj.io/sync-wave: "5"
 spec:
   project: observability
-  source:
-    repoURL: https://grafana.github.io/helm-charts
-    chart: grafana
-    targetRevision: 10.2.0
-    helm:
-      releaseName: grafana
-      values: |
-        ## Grafana overlay for local node storage
-        ## Use this overlay for clusters that use a node-local storage class (local-storage or local-path)
-        ## Update storageClassName to match your local storage provisioner and size to your needs.
-
-        persistence:
-          enabled: true
-          storageClassName: local-storage
-          size: 2Gi
-          # Let the chart auto-create the PVC. It will bind to the grafana-pv PersistentVolume
-          # that is pre-provisioned in cluster-resources.
-          volumeName: grafana-pv
-
-        ingress:
-          enabled: false
-        grafana.ini:
-          auth.anonymous:
-            enabled: true
-            org_role: Viewer
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: grafana
+      targetRevision: 10.2.0
+      helm:
+        releaseName: grafana
+        valueFiles:
+          - $values/charts/grafana/values.yaml
+    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+      targetRevision: main
+      path: charts/grafana
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: observability
