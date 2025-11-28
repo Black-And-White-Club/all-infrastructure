@@ -15,7 +15,8 @@ spec:
         releaseName: loki
         valueFiles:
           - $values/charts/loki/values.yaml
-    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+    - name: values
+      repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
       targetRevision: main
       path: charts/loki
       ref: main
