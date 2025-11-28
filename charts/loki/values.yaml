@@ -7,6 +7,9 @@ global:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
+  extraEnv:
+    - name: AWS_REGION
+      value: us-ashburn-1
 
 deploymentMode: SimpleScalable
 
