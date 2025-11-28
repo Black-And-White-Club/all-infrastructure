@@ -13,10 +13,11 @@ spec:
         app: frolf-bot-discord
     spec:
       imagePullSecrets:
-        - name: gcp-artifact-registry
+        - name: ocirsecret
       containers:
         - name: discord
-          image: discord-frolf-bot
+          image: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8081
             - containerPort: 6060
