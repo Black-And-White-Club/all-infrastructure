@@ -7,19 +7,6 @@ global:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
-  extraEnv:
-    - name: AWS_REGION
-      value: us-ashburn-1
-    - name: AWS_ACCESS_KEY_ID
-      valueFrom:
-        secretKeyRef:
-          name: objectstore-creds
-          key: LOKI_OCI_ACCESS_KEY
-    - name: AWS_SECRET_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: objectstore-creds
-          key: LOKI_OCI_SECRET_KEY
 
 deploymentMode: SimpleScalable
 
@@ -39,8 +26,8 @@ loki:
     s3:
       endpoint: id2uwn5pyixh.compat.objectstorage.us-ashburn-1.oraclecloud.com
       region: us-ashburn-1
-      accessKeyId: ${AWS_ACCESS_KEY_ID}
-      secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
+      accessKeyId: ${LOKI_OCI_ACCESS_KEY}
+      secretAccessKey: ${LOKI_OCI_SECRET_KEY}
       s3ForcePathStyle: true
       insecure: false
 
@@ -98,19 +85,6 @@ write:
     enabled: true
     size: 1Gi
     storageClass: local-storage
-  extraEnv:
-    - name: AWS_REGION
-      value: us-ashburn-1
-    - name: AWS_ACCESS_KEY_ID
-      valueFrom:
-        secretKeyRef:
-          name: objectstore-creds
-          key: LOKI_OCI_ACCESS_KEY
-    - name: AWS_SECRET_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: objectstore-creds
-          key: LOKI_OCI_SECRET_KEY
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
@@ -133,19 +107,6 @@ read:
     limits:
       cpu: 200m
       memory: 256Mi
-  extraEnv:
-    - name: AWS_REGION
-      value: us-ashburn-1
-    - name: AWS_ACCESS_KEY_ID
-      valueFrom:
-        secretKeyRef:
-          name: objectstore-creds
-          key: LOKI_OCI_ACCESS_KEY
-    - name: AWS_SECRET_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: objectstore-creds
-          key: LOKI_OCI_SECRET_KEY
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
@@ -166,19 +127,6 @@ backend:
     enabled: true
     size: 1Gi
     storageClass: local-storage
-  extraEnv:
-    - name: AWS_REGION
-      value: us-ashburn-1
-    - name: AWS_ACCESS_KEY_ID
-      valueFrom:
-        secretKeyRef:
-          name: objectstore-creds
-          key: LOKI_OCI_ACCESS_KEY
-    - name: AWS_SECRET_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: objectstore-creds
-          key: LOKI_OCI_SECRET_KEY
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
