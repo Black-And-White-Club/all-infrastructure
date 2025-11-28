@@ -1,43 +1,22 @@
-# Loki - Log aggregation and indexing
-# Stores logs from all services and pods
-# Query via Grafana with LogQL
-# Stores chunks and index in OCI Object Storage
+# charts/loki/values.yaml - USES WORKER NODE BOOT DISK
 
 global:
   clusterDomain: cluster.local
   dnsService: coredns
   dnsNamespace: kube-system
-  # Inject S3 credentials from secret for all Loki components
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
-  # Expand environment variables inside Loki's generated config so injected
-  # secrets (OCI object storage credentials) are resolved at runtime.
-  extraArgs:
-    - -config.expand-env=true
 
 deploymentMode: SimpleScalable
 
 loki:
   auth_enabled: false
 
-  # Use the chart's templated config with structured overrides
   commonConfig:
     path_prefix: /var/loki
     replication_factor: 1
 
-  limits_config:
-    reject_old_samples: true
-    reject_old_samples_max_age: 168h
-
-  ingester:
-    chunk_idle_period: 3m
-    max_chunk_age: 1h
-    chunk_retain_period: 1m
-
-  # Storage configuration for OCI Object Storage (S3-compatible)
-  # Using us-ashburn-1 (home region) to avoid S3 signature issues with cross-region access
-  # Credentials are injected from objectstore-creds secret via extraEnv
   storage:
     type: s3
     bucketNames:
@@ -51,8 +30,6 @@ loki:
       secretAccessKey: ${LOKI_OCI_SECRET_KEY}
       s3ForcePathStyle: true
       insecure: false
-      # SigV4 signature required for OCI S3-compatible
-      signature_version: v4
 
   schemaConfig:
     configs:
@@ -64,40 +41,70 @@ loki:
           prefix: index_
           period: 24h
 
+  limits_config:
+    retention_period: 720h
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+    ingestion_rate_mb: 4
+    ingestion_burst_size_mb: 6
+
+  compactor:
+    retention_enabled: true
+    retention_delete_delay: 2h
+
+  ingester:
+    chunk_idle_period: 3m
+    max_chunk_age: 1h
+    chunk_retain_period: 1m
+
 gateway:
   replicas: 1
+  enabled: true
   nginxConfig:
     resolver: "coredns.kube-system.svc.cluster.local"
   resources:
     requests:
-      cpu: 50m
+      cpu: 25m
       memory: 64Mi
     limits:
       cpu: 200m
-      memory: 256Mi
+      memory: 128Mi
 
+# Write - Use hostPath on worker node boot disk
 write:
   replicas: 1
   resources:
     requests:
       cpu: 50m
-      memory: 64Mi
+      memory: 128Mi
     limits:
       cpu: 200m
       memory: 256Mi
   persistence:
-    enabled: false
+    enabled: false # Disable PVC
+  # Use worker node's boot disk
+  extraVolumes:
+    - name: loki-wal
+      hostPath:
+        path: /mnt/loki-data/write
+        type: DirectoryOrCreate
+  extraVolumeMounts:
+    - name: loki-wal
+      mountPath: /var/loki
 
 read:
   replicas: 1
   resources:
     requests:
       cpu: 50m
-      memory: 64Mi
+      memory: 128Mi
     limits:
       cpu: 200m
       memory: 256Mi
+  persistence:
+    enabled: false
 
+# Backend - Use hostPath on worker node boot disk
 backend:
   replicas: 1
   resources:
@@ -108,10 +115,26 @@ backend:
       cpu: 500m
       memory: 512Mi
   persistence:
-    enabled: false
+    enabled: false # Disable PVC
+  # Use worker node's boot disk
+  extraVolumes:
+    - name: loki-backend
+      hostPath:
+        path: /mnt/loki-data/backend
+        type: DirectoryOrCreate
+  extraVolumeMounts:
+    - name: loki-backend
+      mountPath: /var/loki
 
 resultsCache:
   enabled: false
 
 chunksCache:
+  enabled: false
+
+monitoring:
+  lokiCanary:
+    enabled: false
+
+test:
   enabled: false
