@@ -84,7 +84,7 @@ write:
   persistence:
     enabled: true
     size: 1Gi
-    storageClassName: local-storage
+    storageClass: local-storage
   # Use worker node's boot disk
   extraVolumes:
     - name: loki-wal
@@ -120,7 +120,7 @@ backend:
   persistence:
     enabled: true
     size: 1Gi
-    storageClassName: local-storage
+    storageClass: local-storage
   # Use worker node's boot disk
   extraVolumes:
     - name: loki-backend
