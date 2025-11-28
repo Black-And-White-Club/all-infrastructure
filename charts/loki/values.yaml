@@ -39,12 +39,13 @@ loki:
       ruler: loki-shared-bucket
       admin: loki-shared-bucket
     s3:
-      endpoint: id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com
+      endpoint: https://id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com
       region: us-phoenix-1
       accessKeyId: ${LOKI_OCI_ACCESS_KEY}
       secretAccessKey: ${LOKI_OCI_SECRET_KEY}
       s3ForcePathStyle: true
       insecure: false
+      signatureVersion: s3v4
 
   schemaConfig:
     configs:
