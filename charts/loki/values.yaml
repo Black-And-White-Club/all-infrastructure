@@ -30,6 +30,15 @@ loki:
         s3: "s3://${MIMIR_OCI_ACCESS_KEY}:${MIMIR_OCI_SECRET_KEY}@id2uwn5pyixh.compat.objectstorage.us-phoenix-1.oraclecloud.com/loki-shared-bucket"
         s3ForcePathStyle: true
         insecure: false
+  schemaConfig:
+    configs:
+      - from: 2024-10-15
+        store: boltdb-shipper
+        object_store: s3
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
 
 gateway:
   replicas: 1
