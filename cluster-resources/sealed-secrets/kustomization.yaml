@@ -5,6 +5,7 @@ kind: Kustomization
 # can manage them with one Application (sealed-secrets-manifests).
 resources:
   - ocir-secret-argocd-sealed.yaml
+  - ocir-secret-frolf-sealed.yaml
   - ocir-secret-resume-sealed.yaml
   - sealed-repo-all-infrastructure.yaml
   - sealed-repo-resume-infrastructure.yaml
