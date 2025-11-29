@@ -36,3 +36,4 @@ override.tf.json
 .terraformrc
 terraform.rc
 *.tfvars.bak
+cluster-resources/sealed-secrets/generate-ocir-sealed-secret.sh

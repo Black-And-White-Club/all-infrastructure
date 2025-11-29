@@ -4,6 +4,33 @@ This directory should contain SealedSecrets for any OCI credentials used by
 in-cluster services (OCI CSI driver, object storage uploads, etc.). Do NOT
 commit unsealed (plaintext) secrets to Git.
 
+## Generating OCIR pull secrets for the frolf workloads
+
+Use the `generate-ocir-sealed-secret.sh` helper to produce sealed secrets for
+`ocir-secret` without hardcoding credentials directly in the repository.
+
+```bash
+# Set your OCIR authentication values in the environment. The script prefers
+# OCIR_USERNAME and OCIR_AUTH_TOKEN (or OCIR_PASSWORD) but also accepts
+# overrides via --username and --password.
+export OCIR_USERNAME="<ocir username>"
+export OCIR_AUTH_TOKEN="<auth token>"
+
+# The script defaults the registry to us-ashburn-1.ocir.io but you can set
+# OCIR_REGISTRY or pass --registry if you need a different region.
+
+# Build sealed secrets for the namespaces that need the pull secret.
+./generate-ocir-sealed-secret.sh --namespace resume-app \
+  --output ocir-secret-resume-sealed.yaml
+./generate-ocir-sealed-secret.sh --namespace argocd \
+  --output ocir-secret-argocd-sealed.yaml
+```
+
+Both commands write sealed secret YAML that is safe to commit in
+`all-infrastructure/cluster-resources/sealed-secrets`. After adding them to
+git, ArgoCD will sync and create the real `ocir-secret` objects in the
+requested namespaces on the next deploy.
+
 To create a SealedSecret for object storage uploads (used by backups or other jobs/controllers):
 
 1. Create a local Kubernetes Secret (dry-run) with your values:
