@@ -1,0 +1,25 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: oci-bv
+provisioner: blockvolume.csi.oraclecloud.com
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  # Adjust vpusPerGB for performance tier:
+  # 0 = Lower Cost, 10 = Balanced, 20 = Higher Performance
+  vpusPerGB: "10"
+---
+# Alias for existing references to oci-block-storage
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: oci-block-storage
+provisioner: blockvolume.csi.oraclecloud.com
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  vpusPerGB: "10"

@@ -243,3 +243,21 @@ output "instance_public_ips" {
   description = "Public IPs of the compute instances"
   value       = module.compute.public_ips
 }
+
+# Instance Principals for OCI CSI Driver
+# This creates a dynamic group and policies so the CSI driver can
+# provision block volumes without needing API keys in secrets.
+module "csi_instance_principals" {
+  source = "./modules/csi-instance-principals"
+
+  tenancy_ocid     = var.tenancy_ocid
+  compartment_ocid = var.compartment_ocid
+
+  # You can make the matching rule more specific if needed, e.g.:
+  # matching_rule = "Any {instance.id = 'ocid1.instance...', instance.id = 'ocid1.instance...'}"
+}
+
+output "csi_dynamic_group_name" {
+  description = "Name of the dynamic group for CSI driver"
+  value       = module.csi_instance_principals.dynamic_group_name
+}
