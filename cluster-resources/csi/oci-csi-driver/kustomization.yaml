@@ -4,6 +4,8 @@ kind: Kustomization
 # OCI CSI Driver v1.33.0
 # Pulls official manifests from Oracle's GitHub releases
 # Docs: https://github.com/oracle/oci-cloud-controller-manager/blob/master/container-storage-interface.md
+#
+# NOTE: StorageClass (oci-block-storage) is managed by cluster-storage app
 
 resources:
   # RBAC for CSI node driver
@@ -12,7 +14,5 @@ resources:
   - https://github.com/oracle/oci-cloud-controller-manager/releases/download/v1.33.0/oci-csi-controller-driver.yaml
   # CSI node driver (daemonset)
   - https://github.com/oracle/oci-cloud-controller-manager/releases/download/v1.33.0/oci-csi-node-driver.yaml
-  # Local storage class definition
-  - storage-class.yaml
   # Instance Principals config (no API keys needed)
   - instance-principals-config.yaml
