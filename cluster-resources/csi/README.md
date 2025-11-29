@@ -1,41 +1,81 @@
-# OCI CSI driver (GitOps managed)
+# OCI CSI Driver (GitOps managed)
 
-This directory contains manifests and examples for installing the Oracle Cloud Infrastructure (OCI) Block Storage CSI driver via GitOps (ArgoCD). The driver is required for the `oci-block-storage` StorageClass to provision volumes automatically.
+This directory contains manifests for installing the Oracle Cloud Infrastructure (OCI) Block Storage CSI driver via GitOps (ArgoCD). The driver is required for the `oci-block-storage` StorageClass to provision volumes automatically.
 
-## Overview
+## Current Version
 
-- Do not commit secrets into the repository. Use Sealed Secrets or SOPS for credentials used by the driver.
-- Install the CSI driver components (Controller and Node components) as a Helm release or manifest set.
-- Add a small ArgoCD Application in `argocd-applications/` to manage the lifecycle.
+**v1.33.0** - pulled directly from Oracle's official GitHub releases.
 
-## What to add here
+- GitHub: https://github.com/oracle/oci-cloud-controller-manager
+- CSI Docs: https://github.com/oracle/oci-cloud-controller-manager/blob/master/container-storage-interface.md
 
-- `oci-csi-values.yaml` — Helm values referencing a `SealedSecret` holding OCI credentials.
-- `oci-csi-manifests/` — If you prefer to include raw manifests.
-- `README.md` — This file explains how to deploy and the required secrets.
+## Structure
 
-Quick install (manual, not GitOps) as an example:
-
-```bash
-# Add and update the Helm repo (example repo, verify the correct OCI one):
-helm repo add oci-csi-driver https://oracle.github.io/oci-csi-driver/charts
-helm repo update
-
-# Install the driver (example values file path and release name; this is manual only):
-helm install oci-csi-driver oci-csi-driver/oci-block-csi-driver \
-  --namespace kube-system \
-  --create-namespace \
-  -f values.yaml
+```
+oci-csi-driver/
+├── kustomization.yaml   # References remote YAMLs from Oracle + local storage class
+└── storage-class.yaml   # oci-bv and oci-block-storage StorageClasses
 ```
 
-## GitOps approach
+## Prerequisites
 
-1. Add manifests/helm chart values in this directory.
-2. Add an ArgoCD Application that references this directory (see `argocd-applications/platform/99-oci-csi-driver.yaml` example).
-3. Add the OCI secret as a SealedSecret in `cluster-resources/sealed-secrets/` so ArgoCD can create it in `kube-system`.
+Before the CSI driver can provision volumes, you need to create an OCI credentials secret:
 
-## Note on credentials
+```bash
+# Create provider config file (see manifests/provider-config-example.yaml in the OCI repo)
+cat > /tmp/oci-volume-provisioner-config.yaml <<EOF
+auth:
+  region: us-ashburn-1
+  tenancy: ocid1.tenancy.oc1..xxxxx
+  user: ocid1.user.oc1..xxxxx
+  key: |
+    -----BEGIN RSA PRIVATE KEY-----
+    ...your OCI API private key...
+    -----END RSA PRIVATE KEY-----
+  fingerprint: xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
+  # Optional: passphrase if your key is encrypted
+compartment: ocid1.compartment.oc1..xxxxx
+EOF
 
-The driver requires an OCI principal with sufficient permissions to create block volumes (overview of permissions and example policies will vary by tenancy setup). Use a SealedSecret to store credentials and avoid committing them to Git.
+# Create the secret (dry-run for sealing)
+kubectl create secret generic oci-volume-provisioner \
+  -n kube-system \
+  --from-file=config.yaml=/tmp/oci-volume-provisioner-config.yaml \
+  --dry-run=client -o yaml > /tmp/oci-volume-provisioner-secret.yaml
 
-See also: `MIGRATION-OCI.md` and the documentation for your OCI CSI driver for exact helm chart names/values.
+# Seal it
+kubeseal --controller-namespace kube-system --controller-name sealed-secrets \
+  --format=yaml < /tmp/oci-volume-provisioner-secret.yaml \
+  > cluster-resources/sealed-secrets/oci-volume-provisioner-sealed.yaml
+
+# Clean up plaintext
+rm /tmp/oci-volume-provisioner-config.yaml /tmp/oci-volume-provisioner-secret.yaml
+```
+
+Add `oci-volume-provisioner-sealed.yaml` to the sealed-secrets kustomization.yaml and commit.
+
+## ArgoCD Application
+
+The driver is deployed via `argocd/platform/oci-csi-driver.yaml` which references this directory.
+
+## Upgrading
+
+To upgrade to a newer version:
+
+1. Check releases: https://github.com/oracle/oci-cloud-controller-manager/releases
+2. Update the version in `oci-csi-driver/kustomization.yaml`
+3. Commit and let ArgoCD sync
+
+## Troubleshooting
+
+Check CSI pods are running:
+
+```bash
+kubectl -n kube-system get po | grep csi-oci
+```
+
+Check PVC events if volumes aren't provisioning:
+
+```bash
+kubectl describe pvc <pvc-name> -n <namespace>
+```
