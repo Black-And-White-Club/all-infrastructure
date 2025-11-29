@@ -7,3 +7,8 @@ reclaimPolicy: Retain
 volumeBindingMode: WaitForFirstConsumer
 parameters:
   type: "oci"
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: topology.kubernetes.io/zone
+        values:
+          - US-ASHBURN-AD-1
