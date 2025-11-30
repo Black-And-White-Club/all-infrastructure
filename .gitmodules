@@ -1,0 +1,6 @@
+[submodule "ansible/external/kubespray"]
+	path = ansible/external/kubespray
+	url = https://github.com/kubernetes-sigs/kubespray.git
+[submodule "external/kubespray"]
+	path = external/kubespray
+	url = https://github.com/kubernetes-sigs/kubespray.git
