@@ -28,7 +28,19 @@ variable "image_id" {
 variable "shape" {
   description = "OCI instance shape"
   type        = string
-  default     = "VM.Standard.E2.1"
+  default     = "VM.Standard.A1.Flex"
+}
+
+variable "shape_config" {
+  description = "Shape configuration for flexible shapes"
+  type = object({
+    ocpus         = number
+    memory_in_gbs = number
+  })
+  default = {
+    ocpus         = 2
+    memory_in_gbs = 12
+  }
 }
 
 variable "ssh_public_key" {
@@ -36,6 +48,12 @@ variable "ssh_public_key" {
   type        = string
 }
 
+
+variable "boot_volume_size_in_gbs" {
+  description = "Size of the boot volume attached to each instance"
+  type        = number
+  default     = 50
+}
 variable "disk_ocids" {
   description = "Map of disk identifiers -> OCI volume OCIDs to attach to instances"
   type        = map(string)

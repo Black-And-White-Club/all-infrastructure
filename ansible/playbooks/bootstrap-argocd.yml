@@ -92,7 +92,7 @@
       register: root_apply
 
     - name: Wait for root application to sync
-      command: kubectl wait --for=condition=Synced --timeout=5s application/root -n {{ argocd_namespace }}
+      command: kubectl wait --for=condition=Synced --timeout=5s application/the-lich-king -n {{ argocd_namespace }}
       register: root_sync
       retries: 30
       delay: 5

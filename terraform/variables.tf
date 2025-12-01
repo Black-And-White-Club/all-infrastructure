@@ -58,9 +58,35 @@ variable "availability_domain" {
   type        = string
 }
 
-variable "image_id" {
-  description = "OCID of the OCI image to use for instances"
+variable "shape" {
+  description = "OCI instance shape"
   type        = string
+  default     = "VM.Standard.A1.Flex"
+}
+
+variable "shape_config" {
+  description = "Shape configuration for flexible ARM shapes"
+  type = object({
+    ocpus         = number
+    memory_in_gbs = number
+  })
+  default = {
+    ocpus         = 2
+    memory_in_gbs = 12
+  }
+}
+
+variable "boot_volume_size_in_gbs" {
+  description = "Boot volume size for compute instances (minimum 50GB)"
+  type        = number
+  default     = 50
+}
+
+variable "image_id" {
+  description = "OCI image OCID - Use Oracle Linux 8 ARM64"
+  type        = string
+  # You'll need to get the ARM64 image OCID for your region
+  # See instructions below
 }
 
 variable "ssh_public_key" {

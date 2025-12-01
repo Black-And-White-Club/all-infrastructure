@@ -11,14 +11,23 @@ resource "oci_core_instance" "vm" {
   shape               = var.shape
   display_name        = var.vm_names[count.index]
 
+  dynamic "shape_config" {
+    for_each = length(regexall("Flex$", var.shape)) > 0 ? [1] : []
+    content {
+      ocpus         = var.shape_config.ocpus
+      memory_in_gbs = var.shape_config.memory_in_gbs
+    }
+  }
+
   create_vnic_details {
     subnet_id        = oci_core_subnet.public.id
     assign_public_ip = false
   }
 
   source_details {
-    source_type = "image"
-    source_id   = var.image_id
+    source_type             = "image"
+    source_id               = var.image_id
+    boot_volume_size_in_gbs = var.boot_volume_size_in_gbs
   }
 
   metadata = merge(

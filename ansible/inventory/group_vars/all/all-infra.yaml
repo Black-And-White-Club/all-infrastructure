@@ -1,10 +1,8 @@
----
 # Kubernetes version
-kube_version: 1.34.1
+kube_version: "v1.31.4"
 
 # Network plugin
-kube_network_plugin: cilium
-cilium_version: 1.18.2
+kube_network_plugin: flannel
 
 # Enable Helm
 helm_enabled: true
@@ -19,5 +17,5 @@ container_manager: containerd
 download_run_once: true
 download_localhost: false
 
-# Enable ping check for access_ip since using private IPs within VCN
+# Enable ping check for access_ip
 ping_access_ip: true

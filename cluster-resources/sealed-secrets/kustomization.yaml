@@ -11,3 +11,5 @@ resources:
   - sealed-repo-resume-infrastructure.yaml
   - sealed-resume-backend-postgresql.yaml
   - sealed-resume-backend-postgresql-app.yaml
+  - sealed-objectstore-creds.yaml
+  - sealed-oci-object-storage-creds.yaml

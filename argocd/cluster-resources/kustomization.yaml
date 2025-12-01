@@ -4,4 +4,3 @@ resources:
   - network-policies.yaml
   - sealed-secrets.yaml
   - storage.yaml
-  - sealed-oci-object-storage-creds.yaml

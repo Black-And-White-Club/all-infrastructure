@@ -130,15 +130,18 @@ locals {
 module "compute" {
   source = "./modules/compute"
 
-  compartment_ocid      = var.compartment_ocid
-  availability_domain   = var.availability_domain
-  image_id              = var.image_id
-  ssh_public_key        = var.ssh_public_key
-  vm_count              = var.vm_count
-  vm_names              = var.vm_names
-  assign_reserved_ips   = var.assign_reserved_ips
-  allowed_k8s_api_cidrs = var.allowed_k8s_api_cidrs
-  allowed_ssh_cidrs     = var.allowed_ssh_cidrs
+  compartment_ocid        = var.compartment_ocid
+  availability_domain     = var.availability_domain
+  shape                   = var.shape
+  image_id                = var.image_id
+  shape_config            = var.shape_config
+  ssh_public_key          = var.ssh_public_key
+  vm_count                = var.vm_count
+  vm_names                = var.vm_names
+  assign_reserved_ips     = var.assign_reserved_ips
+  allowed_k8s_api_cidrs   = var.allowed_k8s_api_cidrs
+  allowed_ssh_cidrs       = var.allowed_ssh_cidrs
+  boot_volume_size_in_gbs = var.boot_volume_size_in_gbs
 
   depends_on = [
     oci_identity_policy.terraform_policy,
