@@ -7,11 +7,19 @@ global:
         adminPasswordKey: postgres-password
         userPasswordKey: password
 
+image:
+  registry: docker.io
+  repository: library/postgres
+  tag: "17"
+
+postgresqlDataDir: /var/lib/postgresql/data
+
 primary:
   persistence:
     enabled: true
     storageClass: oci-block-storage
     size: 50Gi
+    mountPath: /var/lib/postgresql
   resources:
     requests:
       memory: 512Mi
@@ -19,3 +27,10 @@ primary:
     limits:
       memory: 1Gi
       cpu: 500m
+  containerSecurityContext:
+    runAsUser: 999
+    runAsGroup: 999
+    runAsNonRoot: true
+    readOnlyRootFilesystem: false
+  podSecurityContext:
+    fsGroup: 999
