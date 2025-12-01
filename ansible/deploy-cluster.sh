@@ -2,7 +2,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-KUBESPRAY_DIR="$SCRIPT_DIR/../external/kubespray"
+KUBESPRAY_DIR="${KUBESPRAY_DIR:-$SCRIPT_DIR/../external/kubespray}"
 
 echo "Deploying Kubernetes cluster using Kubespray..."
 cd "$KUBESPRAY_DIR"
