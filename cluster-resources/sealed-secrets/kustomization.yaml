@@ -4,13 +4,14 @@ kind: Kustomization
 # Bundle all sealed-secret manifests into a single Kustomize unit so ArgoCD
 # can manage them with one Application (sealed-secrets-manifests).
 resources:
-  - ocir-secret-argocd-sealed.yaml
-  - ocir-secret-frolf-sealed.yaml
-  - ocir-secret-resume-sealed.yaml
-  - sealed-repo-all-infrastructure.yaml
-  - sealed-repo-resume-infrastructure.yaml
-  - sealed-resume-backend-postgresql.yaml
-  - sealed-resume-backend-postgresql-app.yaml
-  - sealed-objectstore-creds.yaml
-  - sealed-oci-object-storage-creds.yaml
-  - oci-csi-creds-sealed.yaml
+- ocir-secret-argocd-sealed.yaml
+- ocir-secret-frolf-sealed.yaml
+- ocir-secret-resume-sealed.yaml
+- sealed-repo-all-infrastructure.yaml
+- sealed-repo-resume-infrastructure.yaml
+- sealed-resume-backend-postgresql.yaml
+- sealed-resume-backend-postgresql-app.yaml
+- sealed-objectstore-creds.yaml
+- sealed-oci-object-storage-creds.yaml
+- oci-csi-creds-sealed.yaml
+- sealed-frolf-postgres-secret.yaml
