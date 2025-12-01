@@ -28,7 +28,7 @@ spec:
               echo "PostgreSQL is ready!"
 
               echo "Waiting for NATS to be ready..."
-              until nc -z nats.frolf-bot.svc.cluster.local 4222; do
+              until nc -z frolf-nats.frolf-bot.svc.cluster.local 4222; do
                 echo "NATS is not ready yet. Waiting 5 seconds..."
                 sleep 5
               done

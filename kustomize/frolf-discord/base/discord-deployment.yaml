@@ -35,7 +35,7 @@ spec:
             - name: BACKEND_URL
               value: "http://frolf-bot-backend.frolf-bot.svc.cluster.local"
             - name: NATS_URL
-              value: "nats://nats.frolf-bot.svc.cluster.local:4222"
+              value: "nats://frolf-nats.frolf-bot.svc.cluster.local:4222"
             - name: LOG_LEVEL
               value: "debug"
             - name: ENV
