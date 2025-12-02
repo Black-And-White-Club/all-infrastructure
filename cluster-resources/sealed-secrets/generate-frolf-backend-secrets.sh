@@ -13,7 +13,7 @@ DB_HOST="frolf-postgres-postgresql.frolf-bot.svc.cluster.local"
 DB_PORT="5432"
 DB_USER="postgres"
 DB_PASSWORD="postgres"
-DB_NAME="tcr-bot"
+DB_NAME="frolf_bot"
 NATS_URL="nats://frolf-nats.frolf-bot.svc.cluster.local:4222"
 
 # Construct connection strings
