@@ -1,32 +1,28 @@
+# NATS Values for nats-io/nats chart
 config:
+  cluster:
+    enabled: false
   jetstream:
     enabled: true
-    domain: frolf
-    max_memory_store: 1G
-    max_file_store: 5G
-    store_dir: /data
-
-# Minimal NATS values
-# Shared NATS server for event-driven communication
-nats:
-  jetstream:
-    enabled: true
-    memStorage:
+    fileStore:
       enabled: true
-      size: 1Gi
-    fileStorage:
-      enabled: true
-      size: 5Gi
-      storageClassName: oci-block-storage
+      dir: /data
+      pvc:
+        enabled: true
+        size: 10Gi
+        storageClassName: "oci-block-storage"
+  nats:
+    port: 4222
 
-cluster:
-  enabled: false
-  replicas: 1
+# Resource limits for the NATS pod
+container:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
 
-resources:
-  requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
+service:
+  type: ClusterIP
