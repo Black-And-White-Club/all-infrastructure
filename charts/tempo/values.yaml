@@ -3,7 +3,7 @@
 # Query via Grafana with trace IDs or service filters
 # Stores trace blocks in OCI Object Storage
 
-# Global settings for all components
+# Global settings for all components - extraEnvFrom injects secrets as env vars
 global:
   extraEnvFrom:
     - secretRef:
@@ -20,6 +20,9 @@ traces:
 # Distributor receives traces and forwards to ingesters
 distributor:
   replicas: 1
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
   resources:
     requests:
       cpu: 25m
@@ -31,6 +34,9 @@ distributor:
 # Ingester writes traces to storage
 ingester:
   replicas: 1
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
   config:
     replication_factor: 1
   persistence:
@@ -46,6 +52,9 @@ ingester:
 # Compactor handles block compaction and retention
 compactor:
   replicas: 1
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
   config:
     compaction:
       block_retention: 48h
@@ -63,6 +72,9 @@ compactor:
 # Querier handles trace queries
 querier:
   replicas: 1
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
   resources:
     requests:
       cpu: 25m
@@ -74,6 +86,9 @@ querier:
 # Query frontend handles query scheduling
 queryFrontend:
   replicas: 1
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
   resources:
     requests:
       cpu: 25m
@@ -89,6 +104,7 @@ storage:
     s3:
       bucket: tempo-shared-bucket
       endpoint: id2uwn5pyixh.compat.objectstorage.us-ashburn-1.oraclecloud.com
+      region: us-ashburn-1
       access_key: ${TEMPO_OCI_ACCESS_KEY}
       secret_key: ${TEMPO_OCI_SECRET_KEY}
       insecure: false
