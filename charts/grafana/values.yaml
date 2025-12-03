@@ -13,9 +13,10 @@ resources:
     memory: 512Mi
 
 persistence:
-  enabled: false
-  storageClassName: oci-block-storage
-  size: 5Gi
+  enabled: true
+  storageClassName: local-storage
+  volumeName: grafana-pv
+  size: 2Gi
 
 # Admin password - MUST be set via sealed secret before production deployment
 # DO NOT set directly here for production. Use a secure mechanism (sealed secret or values override).
@@ -24,6 +25,11 @@ persistence:
 #   kubeseal --controller-name sealed-secrets --controller-namespace kube-system -o yaml
 # For development only, leave empty to use Grafana's auto-generated password
 adminPassword: ""
+
+admin:
+  existingSecret: grafana-admin-secret
+  userKey: admin-user
+  passwordKey: admin-password
 
 # Datasource configuration
 datasources:
@@ -108,3 +114,18 @@ dashboardProviders:
         editable: true
         options:
           path: /var/lib/grafana/dashboards/frolf-bot
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - grafana.jaromero.cloud
+  path: /grafana
+  pathType: Prefix
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - grafana.jaromero.cloud
