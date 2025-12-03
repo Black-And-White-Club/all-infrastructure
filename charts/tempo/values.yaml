@@ -129,6 +129,9 @@ storage:
 memcached:
   enabled: true
   replicas: 1
+  extraArgs:
+    - -m 64
+    - -c 1024
   resources:
     requests:
       cpu: 10m
