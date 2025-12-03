@@ -135,6 +135,7 @@ module "compute" {
   shape                   = var.shape
   image_id                = var.image_id
   shape_config            = var.shape_config
+  shape_configs           = var.shape_configs
   ssh_public_key          = var.ssh_public_key
   vm_count                = var.vm_count
   vm_names                = var.vm_names

@@ -26,7 +26,6 @@ mimir:
           access_key_id: ${MIMIR_OCI_ACCESS_KEY}
           secret_access_key: ${MIMIR_OCI_SECRET_KEY}
           insecure: false
-          s3_force_path_style: true
     # Disable ingest storage (Kafka) - use direct ingestion instead
     ingest_storage:
       enabled: false
