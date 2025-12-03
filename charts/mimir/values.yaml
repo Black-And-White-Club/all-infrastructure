@@ -73,9 +73,6 @@ ingester:
     enabled: false
   persistentVolume:
     enabled: false
-  extraEnvFrom:
-    - secretRef:
-        name: objectstore-creds
   extraArgs:
     config.expand-env: "true"
   resources:
@@ -91,9 +88,6 @@ ingester:
 ##############################################
 distributor:
   replicas: 1
-  extraEnvFrom:
-    - secretRef:
-        name: objectstore-creds
   extraArgs:
     config.expand-env: "true"
   resources:
@@ -109,9 +103,6 @@ distributor:
 ##############################################
 query_frontend:
   replicas: 1
-  extraEnvFrom:
-    - secretRef:
-        name: objectstore-creds
   extraArgs:
     config.expand-env: "true"
   resources:
@@ -127,9 +118,6 @@ query_frontend:
 ##############################################
 querier:
   replicas: 1
-  extraEnvFrom:
-    - secretRef:
-        name: objectstore-creds
   extraArgs:
     config.expand-env: "true"
   resources:
@@ -147,9 +135,6 @@ compactor:
   replicas: 1
   persistentVolume:
     enabled: false
-  extraEnvFrom:
-    - secretRef:
-        name: objectstore-creds
   extraArgs:
     config.expand-env: "true"
   resources:
@@ -169,9 +154,6 @@ store_gateway:
     enabled: false
   persistentVolume:
     enabled: false
-  extraEnvFrom:
-    - secretRef:
-        name: objectstore-creds
   extraArgs:
     config.expand-env: "true"
   resources:
