@@ -43,10 +43,10 @@ mimir:
         replication_factor: 1
         zone_awareness_enabled: false
     # Disable query-scheduler - queriers connect directly to query-frontend
-    # When scheduler_address is empty on both frontend and frontend_worker,
-    # queriers will connect directly to query-frontend via its gRPC address
+    # When scheduler_address is empty, frontend.address must be set so queriers know where to connect
     frontend:
       scheduler_address: ""
+      address: "mimir-query-frontend-headless.observability.svc:9095"
     frontend_worker:
       scheduler_address: ""
 
