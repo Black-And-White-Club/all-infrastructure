@@ -12,6 +12,18 @@ resources:
     cpu: 500m
     memory: 512Mi
 
+# Security context - run as grafana user (472)
+securityContext:
+  runAsUser: 472
+  runAsGroup: 472
+  fsGroup: 472
+
+# Init container to fix volume permissions
+initChownData:
+  enabled: true
+  runAsUser: 0
+  runAsNonRoot: false
+
 persistence:
   enabled: true
   storageClassName: local-storage
