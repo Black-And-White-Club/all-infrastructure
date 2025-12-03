@@ -30,7 +30,9 @@ mimir:
     ingest_storage:
       enabled: false
     # Single-replica: no replication or zone awareness
+    # push_grpc_method_enabled must be true when ingest_storage is disabled
     ingester:
+      push_grpc_method_enabled: true
       ring:
         replication_factor: 1
         zone_awareness_enabled: false
