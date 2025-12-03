@@ -1,151 +1,185 @@
 # Mimir - lightweight single-replica config for small workloads
 # Disables HA/enterprise features and zone-aware replication for single-node deployments
 
-mimir-distributed:
-  global:
-    dnsSDDomain: observability.svc.cluster.local
-    extraEnvFrom:
-      - secretRef:
-          name: objectstore-creds
+global:
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
 
-  # Disable built-in MinIO (using OCI Object Storage)
-  minio:
-    enabled: false
+# Disable built-in MinIO (using OCI Object Storage)
+minio:
+  enabled: false
 
-  # Disable built-in Kafka (not needed for small deployments)
-  kafka:
-    enabled: false
+# Disable built-in Kafka (not needed for small deployments)
+kafka:
+  enabled: false
 
-  mimir:
-    structuredConfig:
-      common:
-        storage:
-          backend: s3
-          s3:
-            bucket_name: mimir-shared-bucket
-            endpoint: id2uwn5pyixh.compat.objectstorage.us-ashburn-1.oraclecloud.com
-            access_key_id: ${MIMIR_OCI_ACCESS_KEY}
-            secret_access_key: ${MIMIR_OCI_SECRET_KEY}
-            insecure: false
-            s3_force_path_style: true
-      # Disable ingest storage (Kafka) - use direct ingestion instead
-      ingest_storage:
-        enabled: false
-      # Single-replica: no replication or zone awareness
-      ingester:
-        push_grpc_method_enabled: true
-        ring:
-          replication_factor: 1
-          zone_awareness_enabled: false
-      store_gateway:
-        sharding_ring:
-          replication_factor: 1
-          zone_awareness_enabled: false
-      compactor:
-        sharding_ring:
-          replication_factor: 1
-
-  # Disable Prometheus sub-chart
-  prometheus:
-    enabled: false
-
-  ##############################################
-  # DISABLED COMPONENTS (not needed for small setups)
-  ##############################################
-  alertmanager:
-    enabled: false
-
-  ruler:
-    enabled: false
-
-  overridesExporter:
-    enabled: false
-
-  gateway:
-    enabled: false
-
-  rolloutOperator:
-    enabled: false
-
-  queryScheduler:
-    enabled: false
-
-  ingester:
-    replicas: 1
-    statefulSet:
+mimir:
+  structuredConfig:
+    common:
+      storage:
+        backend: s3
+        s3:
+          bucket_name: mimir-shared-bucket
+          endpoint: id2uwn5pyixh.compat.objectstorage.us-ashburn-1.oraclecloud.com
+          region: us-ashburn-1
+          access_key_id: ${MIMIR_OCI_ACCESS_KEY}
+          secret_access_key: ${MIMIR_OCI_SECRET_KEY}
+          insecure: false
+          s3_force_path_style: true
+    # Disable ingest storage (Kafka) - use direct ingestion instead
+    ingest_storage:
       enabled: false
-    persistence:
-      enabled: false
-    resources:
-      requests:
-        cpu: 20m
-        memory: 128Mi
-      limits:
-        cpu: 200m
-        memory: 512Mi
+    # Single-replica: no replication or zone awareness
+    ingester:
+      ring:
+        replication_factor: 1
+        zone_awareness_enabled: false
+    store_gateway:
+      sharding_ring:
+        replication_factor: 1
+        zone_awareness_enabled: false
+    compactor:
+      sharding_ring:
+        replication_factor: 1
 
-  ##############################################
-  # DISTRIBUTOR
-  ##############################################
-  distributor:
-    replicas: 1
-    resources:
-      requests:
-        cpu: 10m
-        memory: 64Mi
-      limits:
-        cpu: 100m
-        memory: 256Mi
+##############################################
+# DISABLED COMPONENTS (not needed for small setups)
+##############################################
+alertmanager:
+  enabled: false
 
-  ##############################################
-  # QUERY FRONTEND
-  ##############################################
-  queryFrontend:
-    replicas: 1
-    resources:
-      requests:
-        cpu: 15m
-        memory: 64Mi
-      limits:
-        cpu: 150m
-        memory: 256Mi
+ruler:
+  enabled: false
 
-  ##############################################
-  # QUERIER
-  ##############################################
-  querier:
-    replicas: 1
-    resources:
-      requests:
-        cpu: 25m
-        memory: 128Mi
-      limits:
-        cpu: 200m
-        memory: 512Mi
+overrides_exporter:
+  enabled: false
 
-  ##############################################
-  # COMPACTOR (single replica, no zones)
-  ##############################################
-  compactor:
-    replicas: 1
-    persistentVolume:
-      enabled: false
-    resources:
-      requests:
-        cpu: 10m
-        memory: 64Mi
-      limits:
-        cpu: 100m
-        memory: 256Mi
+gateway:
+  enabled: false
 
-  storeGateway:
-    replicas: 1
-    persistence:
-      enabled: false
-    resources:
-      requests:
-        cpu: 15m
-        memory: 64Mi
-      limits:
-        cpu: 150m
-        memory: 256Mi
+rollout_operator:
+  enabled: false
+
+query_scheduler:
+  enabled: false
+
+##############################################
+# INGESTER - single replica, no zones
+##############################################
+ingester:
+  replicas: 1
+  zoneAwareReplication:
+    enabled: false
+  persistentVolume:
+    enabled: false
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
+  resources:
+    requests:
+      cpu: 20m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+
+##############################################
+# DISTRIBUTOR
+##############################################
+distributor:
+  replicas: 1
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 256Mi
+
+##############################################
+# QUERY FRONTEND
+##############################################
+query_frontend:
+  replicas: 1
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
+  resources:
+    requests:
+      cpu: 15m
+      memory: 64Mi
+    limits:
+      cpu: 150m
+      memory: 256Mi
+
+##############################################
+# QUERIER
+##############################################
+querier:
+  replicas: 1
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+
+##############################################
+# COMPACTOR (single replica)
+##############################################
+compactor:
+  replicas: 1
+  persistentVolume:
+    enabled: false
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 256Mi
+
+##############################################
+# STORE GATEWAY (single replica, no zones)
+##############################################
+store_gateway:
+  replicas: 1
+  zoneAwareReplication:
+    enabled: false
+  persistentVolume:
+    enabled: false
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
+  resources:
+    requests:
+      cpu: 15m
+      memory: 64Mi
+    limits:
+      cpu: 150m
+      memory: 256Mi
