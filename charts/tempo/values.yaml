@@ -1,50 +1,40 @@
-# Tempo - Distributed tracing backend
+# Tempo Distributed - Distributed tracing backend
 # Stores distributed traces from all services
 # Query via Grafana with trace IDs or service filters
 # Stores trace blocks in OCI Object Storage
 
+# Global settings for all components
 global:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
 
-tempo:
+# Enable OTLP trace ingestion (gRPC on 4317, HTTP on 4318)
+traces:
+  otlp:
+    grpc:
+      enabled: true
+    http:
+      enabled: true
+
+# Distributor receives traces and forwards to ingesters
+distributor:
   replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
 
+# Ingester writes traces to storage
+ingester:
+  replicas: 1
   config:
-    global:
-      metrics_generator_collection_interval: 15s
-      metrics_generator_enabled: true
-      metrics_generator_processors:
-        - batch
-        - memory_limiter
-        - attributes
-        - span
-        - service-graphs
-
-  ingester:
-    max_block_duration: 5m
-
-  compactor:
-    compaction:
-      block_retention: 48h
-      compacted_block_retention: 10m
-      compaction_window: 1h
-      max_block_bytes: 107374182400
-
-  storage:
-    trace:
-      backend: s3
-      s3:
-        bucket: tempo-shared-bucket
-        endpoint: id2uwn5pyixh.compat.objectstorage.us-ashburn-1.oraclecloud.com
-        access_key: ${TEMPO_OCI_ACCESS_KEY}
-        secret_key: ${TEMPO_OCI_SECRET_KEY}
-        insecure: false
-        forcepathstyle: true
-      wal:
-        path: /var/tempo/wal
-
+    replication_factor: 1
+  persistence:
+    enabled: false
   resources:
     requests:
       cpu: 25m
@@ -53,5 +43,67 @@ tempo:
       cpu: 500m
       memory: 512Mi
 
-  persistence:
-    enabled: false
+# Compactor handles block compaction and retention
+compactor:
+  replicas: 1
+  config:
+    compaction:
+      block_retention: 48h
+      compacted_block_retention: 10m
+      compaction_window: 1h
+      max_block_bytes: 107374182400
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Querier handles trace queries
+querier:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Query frontend handles query scheduling
+queryFrontend:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Storage configuration - OCI Object Storage via S3 API
+storage:
+  trace:
+    backend: s3
+    s3:
+      bucket: tempo-shared-bucket
+      endpoint: id2uwn5pyixh.compat.objectstorage.us-ashburn-1.oraclecloud.com
+      access_key: ${TEMPO_OCI_ACCESS_KEY}
+      secret_key: ${TEMPO_OCI_SECRET_KEY}
+      insecure: false
+      forcepathstyle: true
+    wal:
+      path: /var/tempo/wal
+
+# Memcached for caching
+memcached:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
