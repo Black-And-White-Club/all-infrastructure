@@ -16,3 +16,4 @@ resources:
   - oci-csi-creds-sealed.yaml
   - sealed-frolf-postgres-secret.yaml
   - sealed-backend-secrets.yaml
+  - sealed-discord-secrets.yaml
