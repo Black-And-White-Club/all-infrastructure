@@ -3,5 +3,6 @@ kind: Kustomization
 resources:
   - grafana-app.yaml
   - loki-app.yaml
+  - mimir-app.yaml
   - tempo-app.yaml
   - alloy-app.yaml
