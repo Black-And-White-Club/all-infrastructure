@@ -47,7 +47,7 @@ spec:
             - name: LOKI_URL
               value: "http://loki.observability.svc.cluster.local:3100"
             - name: METRICS_ADDRESS
-              value: "tempo.observability.svc.cluster.local:4317"
+              value: "alloy.observability.svc.cluster.local:4317"
             - name: METRICS_ENABLED
               value: "true"
             - name: OTEL_METRICS_EXPORTER
@@ -59,9 +59,9 @@ spec:
             - name: OTEL_SDK_DISABLED
               value: "false"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://tempo.observability.svc.cluster.local:4317"
+              value: "http://alloy.observability.svc.cluster.local:4317"
             - name: TEMPO_ENDPOINT
-              value: "tempo.observability.svc.cluster.local:4317"
+              value: "alloy.observability.svc.cluster.local:4317"
             - name: TEMPO_INSECURE
               value: "true"
             - name: TEMPO_SAMPLE_RATE
