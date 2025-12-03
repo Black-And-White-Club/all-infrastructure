@@ -70,6 +70,7 @@ rollout_operator:
 query_scheduler:
   enabled: true
   replicas: 1
+  revisionHistoryLimit: 1
   resources:
     requests:
       cpu: 10m
@@ -83,6 +84,7 @@ query_scheduler:
 ##############################################
 ingester:
   replicas: 1
+  revisionHistoryLimit: 1
   zoneAwareReplication:
     enabled: false
   persistentVolume:
@@ -102,6 +104,7 @@ ingester:
 ##############################################
 distributor:
   replicas: 1
+  revisionHistoryLimit: 1
   extraArgs:
     config.expand-env: "true"
   resources:
@@ -117,6 +120,7 @@ distributor:
 ##############################################
 query_frontend:
   replicas: 1
+  revisionHistoryLimit: 1
   extraArgs:
     config.expand-env: "true"
   resources:
@@ -132,6 +136,7 @@ query_frontend:
 ##############################################
 querier:
   replicas: 1
+  revisionHistoryLimit: 1
   extraArgs:
     config.expand-env: "true"
   resources:
@@ -147,6 +152,7 @@ querier:
 ##############################################
 compactor:
   replicas: 1
+  revisionHistoryLimit: 1
   persistentVolume:
     enabled: false
   extraArgs:
@@ -164,6 +170,7 @@ compactor:
 ##############################################
 store_gateway:
   replicas: 1
+  revisionHistoryLimit: 1
   zoneAwareReplication:
     enabled: false
   persistentVolume:
