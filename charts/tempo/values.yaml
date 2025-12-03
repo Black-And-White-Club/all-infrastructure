@@ -133,3 +133,42 @@ memcached:
     limits:
       cpu: 100m
       memory: 128Mi
+
+# Metrics generator - generates RED metrics from traces for TraceQL metrics queries
+metricsGenerator:
+  enabled: true
+  replicas: 1
+  extraEnvFrom:
+    - secretRef:
+        name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
+  config:
+    registry:
+      external_labels:
+        source: tempo
+        cluster: oci-k8s
+    processor:
+      service_graphs:
+        dimensions:
+          - service.namespace
+          - http.method
+          - http.status_code
+      span_metrics:
+        dimensions:
+          - service.namespace
+          - http.method
+          - http.status_code
+          - http.route
+    storage:
+      path: /var/tempo/wal
+      # Remote write to Mimir for metrics storage
+      remote_write:
+        - url: http://mimir-distributor.observability.svc:8080/api/v1/push
+  resources:
+    requests:
+      cpu: 15m
+      memory: 64Mi
+    limits:
+      cpu: 150m
+      memory: 256Mi
