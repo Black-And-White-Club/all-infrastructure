@@ -3,14 +3,8 @@
 # Query via Grafana with trace IDs or service filters
 # Stores trace blocks in OCI Object Storage
 
-# Global settings for all components - extraEnvFrom injects secrets as env vars
-global:
-  extraEnvFrom:
-    - secretRef:
-        name: objectstore-creds
-  # Enable env var expansion in config (required for ${VAR} substitution)
-  extraArgs:
-    - -config.expand-env=true
+# Note: Don't use global.extraArgs/extraEnvFrom - they bleed into memcached
+# Instead, set them per-component below
 
 # Enable OTLP trace ingestion (gRPC on 4317, HTTP on 4318)
 traces:
@@ -129,9 +123,9 @@ storage:
 memcached:
   enabled: true
   replicas: 1
-  extraArgs:
-    - -m 64
-    - -c 1024
+  # Clear any inherited values from global - memcached doesn't need these
+  extraEnvFrom: []
+  extraArgs: []
   resources:
     requests:
       cpu: 10m
