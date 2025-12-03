@@ -32,7 +32,7 @@ variable "shape" {
 }
 
 variable "shape_config" {
-  description = "Shape configuration for flexible shapes"
+  description = "Default shape configuration for flexible shapes (used if shape_configs not specified)"
   type = object({
     ocpus         = number
     memory_in_gbs = number
@@ -41,6 +41,15 @@ variable "shape_config" {
     ocpus         = 2
     memory_in_gbs = 12
   }
+}
+
+variable "shape_configs" {
+  description = "Per-VM shape configurations. Map of VM index to shape config. Falls back to shape_config if not specified."
+  type = map(object({
+    ocpus         = number
+    memory_in_gbs = number
+  }))
+  default = {}
 }
 
 variable "ssh_public_key" {

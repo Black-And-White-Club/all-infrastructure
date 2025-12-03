@@ -14,8 +14,8 @@ resource "oci_core_instance" "vm" {
   dynamic "shape_config" {
     for_each = length(regexall("Flex$", var.shape)) > 0 ? [1] : []
     content {
-      ocpus         = var.shape_config.ocpus
-      memory_in_gbs = var.shape_config.memory_in_gbs
+      ocpus         = lookup(var.shape_configs, count.index, var.shape_config).ocpus
+      memory_in_gbs = lookup(var.shape_configs, count.index, var.shape_config).memory_in_gbs
     }
   }
 

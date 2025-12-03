@@ -76,6 +76,15 @@ variable "shape_config" {
   }
 }
 
+variable "shape_configs" {
+  description = "Per-VM shape configurations. Map of VM index to shape config. Falls back to shape_config if not specified."
+  type = map(object({
+    ocpus         = number
+    memory_in_gbs = number
+  }))
+  default = {}
+}
+
 variable "boot_volume_size_in_gbs" {
   description = "Boot volume size for compute instances (minimum 50GB)"
   type        = number
