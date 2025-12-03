@@ -3,13 +3,8 @@
 # Collects logs, metrics, and traces from all sources
 # Routes to Mimir (metrics), Loki (logs), and Tempo (traces)
 
-# Cluster role for pod discovery and scraping
-serviceAccount:
-  create: true
-  name: alloy
-
-# Alloy collector configuration
-config: |
+# Additional Alloy-specific settings
+alloy:
   extraPorts:
     - name: otlp-grpc
       port: 4317
@@ -19,6 +14,14 @@ config: |
       port: 4318
       targetPort: 4318
       protocol: TCP
+
+# Cluster role for pod discovery and scraping
+serviceAccount:
+  create: true
+  name: alloy
+
+# Alloy collector configuration
+config: |
   logging {
     level  = "info"
     format = "json"
@@ -166,18 +169,3 @@ daemonset:
 # Alloy StatefulSet configuration (optional, for centralized collection)
 statefulset:
   enabled: false
-
-# Service configuration
-service:
-  type: ClusterIP
-  ports:
-    # OTLP gRPC
-    - name: otlp-grpc
-      port: 4317
-      targetPort: 4317
-      protocol: TCP
-    # OTLP HTTP
-    - name: otlp-http
-      port: 4318
-      targetPort: 4318
-      protocol: TCP
