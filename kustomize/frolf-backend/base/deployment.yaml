@@ -92,27 +92,27 @@ spec:
             - name: AUTO_MIGRATE
               value: "true"
             - name: METRICS_ADDRESS
-              value: "tempo.observability.svc.cluster.local:4317"
+              value: "alloy.observability.svc.cluster.local:4317"
             - name: METRICS_ENABLED
-              value: "false"
+              value: "true"
             - name: LOKI_URL
               value: "http://loki.observability.svc.cluster.local:3100"
             - name: TEMPO_ENDPOINT
-              value: "tempo.observability.svc.cluster.local:4317"
+              value: "alloy.observability.svc.cluster.local:4317"
             - name: TEMPO_INSECURE
               value: "true"
             - name: TEMPO_SAMPLE_RATE
               value: "0"
             - name: OTEL_METRICS_EXPORTER
-              value: "none"
+              value: "otlp"
             - name: OTEL_TRACES_EXPORTER
-              value: "none"
+              value: "otlp"
             - name: OTEL_LOGS_EXPORTER
-              value: "none"
+              value: "otlp"
             - name: OTEL_SDK_DISABLED
-              value: "true"
+              value: "false"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: ""
+              value: "http://alloy.observability.svc.cluster.local:4317"
             - name: PPROF_ENABLED
               value: "true"
             - name: PPROF_ADDR
