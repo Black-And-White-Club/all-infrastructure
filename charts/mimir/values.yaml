@@ -42,11 +42,11 @@ mimir:
       sharding_ring:
         replication_factor: 1
         zone_awareness_enabled: false
-    # Use DNS-based service discovery for query-scheduler
+    # Query-scheduler address for frontend and queriers
     frontend:
-      scheduler_address: "dns:///mimir-query-scheduler-headless.observability.svc:9095"
+      scheduler_address: "mimir-query-scheduler-headless.observability.svc:9095"
     frontend_worker:
-      scheduler_address: "dns:///mimir-query-scheduler-headless.observability.svc:9095"
+      scheduler_address: "mimir-query-scheduler-headless.observability.svc:9095"
 
 ##############################################
 # DISABLED COMPONENTS (not needed for small setups)
