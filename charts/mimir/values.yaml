@@ -38,9 +38,6 @@ mimir:
       sharding_ring:
         replication_factor: 1
         zone_awareness_enabled: false
-    compactor:
-      sharding_ring:
-        replication_factor: 1
 
 ##############################################
 # DISABLED COMPONENTS (not needed for small setups)
