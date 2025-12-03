@@ -42,13 +42,11 @@ mimir:
       sharding_ring:
         replication_factor: 1
         zone_awareness_enabled: false
-    # Disable query-scheduler - queriers connect directly to query-frontend
-    # When scheduler_address is empty, frontend.address must be set so queriers know where to connect
+    # Use DNS-based service discovery for query-scheduler
     frontend:
-      scheduler_address: ""
-      address: "mimir-query-frontend-headless.observability.svc:9095"
+      scheduler_address: "dns:///mimir-query-scheduler-headless.observability.svc:9095"
     frontend_worker:
-      scheduler_address: ""
+      scheduler_address: "dns:///mimir-query-scheduler-headless.observability.svc:9095"
 
 ##############################################
 # DISABLED COMPONENTS (not needed for small setups)
@@ -68,8 +66,17 @@ gateway:
 rollout_operator:
   enabled: false
 
+# Query scheduler is REQUIRED in Mimir 3.0 architecture
 query_scheduler:
-  enabled: false
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 50m
+      memory: 128Mi
 
 ##############################################
 # INGESTER - single replica, no zones
