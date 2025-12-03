@@ -18,6 +18,14 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: csi-oci-controller
+      namespace: kube-system
+      jsonPointers:
+        - /metadata/generation
+        - /metadata/annotations/deployment.kubernetes.io~1revision
   syncPolicy:
     automated:
       prune: true
