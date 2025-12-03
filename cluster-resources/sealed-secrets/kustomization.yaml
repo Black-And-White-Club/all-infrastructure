@@ -8,7 +8,6 @@ resources:
   - ocir-secret-frolf-sealed.yaml
   - ocir-secret-resume-sealed.yaml
   - sealed-repo-all-infrastructure.yaml
-  - sealed-repo-resume-infrastructure.yaml
   - sealed-resume-backend-postgresql.yaml
   - sealed-resume-backend-postgresql-app.yaml
   - sealed-objectstore-creds.yaml
