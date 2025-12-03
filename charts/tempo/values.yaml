@@ -8,6 +8,9 @@ global:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
+  # Enable env var expansion in config (required for ${VAR} substitution)
+  extraArgs:
+    - -config.expand-env=true
 
 # Enable OTLP trace ingestion (gRPC on 4317, HTTP on 4318)
 traces:
@@ -23,6 +26,8 @@ distributor:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
   resources:
     requests:
       cpu: 25m
@@ -37,6 +42,8 @@ ingester:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
   config:
     replication_factor: 1
   persistence:
@@ -55,6 +62,8 @@ compactor:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
   config:
     compaction:
       block_retention: 48h
@@ -75,6 +84,8 @@ querier:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
   resources:
     requests:
       cpu: 25m
@@ -89,6 +100,8 @@ queryFrontend:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
+  extraArgs:
+    - -config.expand-env=true
   resources:
     requests:
       cpu: 25m
