@@ -5,8 +5,6 @@ global:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
-  extraArgs:
-    - -config.expand-env=true
 
 # Disable built-in MinIO (using OCI Object Storage)
 minio:
@@ -79,7 +77,7 @@ ingester:
     - secretRef:
         name: objectstore-creds
   extraArgs:
-    - -config.expand-env=true
+    config.expand-env: "true"
   resources:
     requests:
       cpu: 20m
@@ -97,7 +95,7 @@ distributor:
     - secretRef:
         name: objectstore-creds
   extraArgs:
-    - -config.expand-env=true
+    config.expand-env: "true"
   resources:
     requests:
       cpu: 10m
@@ -115,7 +113,7 @@ query_frontend:
     - secretRef:
         name: objectstore-creds
   extraArgs:
-    - -config.expand-env=true
+    config.expand-env: "true"
   resources:
     requests:
       cpu: 15m
@@ -133,7 +131,7 @@ querier:
     - secretRef:
         name: objectstore-creds
   extraArgs:
-    - -config.expand-env=true
+    config.expand-env: "true"
   resources:
     requests:
       cpu: 25m
@@ -153,7 +151,7 @@ compactor:
     - secretRef:
         name: objectstore-creds
   extraArgs:
-    - -config.expand-env=true
+    config.expand-env: "true"
   resources:
     requests:
       cpu: 10m
@@ -175,7 +173,7 @@ store_gateway:
     - secretRef:
         name: objectstore-creds
   extraArgs:
-    - -config.expand-env=true
+    config.expand-env: "true"
   resources:
     requests:
       cpu: 15m
