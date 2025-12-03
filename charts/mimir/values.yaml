@@ -42,11 +42,12 @@ mimir:
       sharding_ring:
         replication_factor: 1
         zone_awareness_enabled: false
-    # Disable query-scheduler since we're not using it
+    # Disable query-scheduler - frontend_worker connects directly to query-frontend
     frontend:
       scheduler_address: ""
     frontend_worker:
       scheduler_address: ""
+      frontend_address: "mimir-query-frontend-headless.observability.svc:9095"
 
 ##############################################
 # DISABLED COMPONENTS (not needed for small setups)
