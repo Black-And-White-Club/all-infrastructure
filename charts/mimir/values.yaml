@@ -16,6 +16,8 @@ kafka:
 
 mimir:
   structuredConfig:
+    # Disable multi-tenancy for single-tenant deployment
+    multitenancy_enabled: false
     common:
       storage:
         backend: s3
