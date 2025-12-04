@@ -110,10 +110,10 @@ distributor:
   resources:
     requests:
       cpu: 10m
-      memory: 64Mi
+      memory: 128Mi
     limits:
       cpu: 100m
-      memory: 256Mi
+      memory: 512Mi
 
 ##############################################
 # QUERY FRONTEND
