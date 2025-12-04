@@ -5,8 +5,8 @@ resources:
   - discord-deployment.yaml
 
 images:
-  - name: discord-frolf-bot
-    newName: us-central1-docker.pkg.dev/resume-portfolio-project/frolf-bot/discord-frolf-bot
+  - name: frolf-bot-discord
+    newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
     newTag: latest
 labels:
   - includeSelectors: true

@@ -35,7 +35,7 @@ spec:
               echo "NATS is ready!"
       containers:
         - name: backend
-          image: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend:latest
+          image: frolf-bot-backend
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

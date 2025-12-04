@@ -6,8 +6,8 @@ resources:
   - service.yaml
 
 images:
-  - name: frolf-bot
-    newName: us-central1-docker.pkg.dev/resume-portfolio-project/frolf-bot/frolf-bot
+  - name: frolf-bot-backend
+    newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
     newTag: latest
 labels:
   - includeSelectors: true

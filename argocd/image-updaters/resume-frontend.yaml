@@ -1,22 +1,24 @@
 apiVersion: argocd-image-updater.argoproj.io/v1alpha1
 kind: ImageUpdater
 metadata:
-  name: resume-backend-image-updater
+  name: resume-frontend-image-updater
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "21"
 spec:
   namespace: argocd
   applicationRefs:
-    - namePattern: "resume-backend"
+    - namePattern: "resume-frontend"
       images:
-        - alias: "backend"
-          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend"
+        - alias: "frontend"
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend:latest"
           commonUpdateSettings:
-            updateStrategy: "newest-build"
+            updateStrategy: "digest"
+            allowTags: "regexp:^latest$"
+            pullSecret: "pullsecret:argocd/ocir-secret"
           manifestTargets:
             kustomize:
-              name: "resume-backend"
+              name: "resume-frontend"
   writeBackConfig:
     method: "git:secret:argocd/repo-all-infrastructure"
     gitConfig:

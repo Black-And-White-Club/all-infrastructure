@@ -16,7 +16,7 @@ spec:
         - name: ocir-secret
       containers:
         - name: discord
-          image: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord:latest
+          image: frolf-bot-discord
           imagePullPolicy: Always
           ports:
             - containerPort: 8081
