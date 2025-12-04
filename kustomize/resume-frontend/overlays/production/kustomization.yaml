@@ -6,3 +6,5 @@ images:
   - name: resume-frontend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend
     digest: sha256:6faeeb872e05b25c064b8b8dd846bf5458999a2d13314e54c4b58243fb02936c
+  - name: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend
+    digest: sha256:6faeeb872e05b25c064b8b8dd846bf5458999a2d13314e54c4b58243fb02936c
