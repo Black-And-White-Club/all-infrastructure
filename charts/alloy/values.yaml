@@ -156,7 +156,7 @@ alloy:
         }
       }
 
-      // OTLP gRPC receiver for application traces and metrics
+      // OTLP gRPC receiver for application traces, metrics, and logs
       otelcol.receiver.otlp "default" {
         grpc {
           endpoint = "0.0.0.0:4317"
@@ -167,15 +167,28 @@ alloy:
         output {
           traces  = [otelcol.processor.batch.default.input]
           metrics = [otelcol.processor.batch.default.input]
+          logs    = [otelcol.processor.batch.logs.input]
         }
       }
 
-      // Batch processor for better performance
+      // Batch processor for traces and metrics
       otelcol.processor.batch "default" {
         output {
           traces  = [otelcol.exporter.otlp.tempo.input]
           metrics = [otelcol.exporter.prometheus.mimir.input]
         }
+      }
+
+      // Batch processor for logs
+      otelcol.processor.batch "logs" {
+        output {
+          logs = [otelcol.exporter.loki.default.input]
+        }
+      }
+
+      // Export OTLP logs to Loki
+      otelcol.exporter.loki "default" {
+        forward_to = [loki.write.loki.receiver]
       }
 
       // Export traces to Tempo distributor (OTLP endpoint)
