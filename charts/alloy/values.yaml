@@ -69,42 +69,52 @@ alloy:
         }
       }
 
-      // Discover pod log files directly
-      local.file_match "pod_logs" {
-        path_targets = [{
-          __path__ = "/var/log/pods/*/*/*.log",
-        }]
+      // Discover pods for log collection
+      discovery.kubernetes "pod_logs" {
+        role = "pod"
       }
 
-      // Relabel to extract metadata from path
-      // Path format: /var/log/pods/{namespace}_{pod}_{uid}/{container}/N.log
+      // Relabel discovery targets for log file paths
       discovery.relabel "pod_logs" {
-        targets = local.file_match.pod_logs.targets
+        targets = discovery.kubernetes.pod_logs.targets
 
-        // Extract namespace, pod, uid, container from path
+        // Construct the log file path correctly: /var/log/pods/namespace_pod_uid/container/*.log
         rule {
-          source_labels = ["__path__"]
-          regex         = "/var/log/pods/(.+)_(.+)_(.+)/(.+)/.*\\.log"
-          target_label  = "namespace"
-          replacement   = "$1"
+          source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_name", "__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+          target_label  = "__path__"
+          separator     = ";"
+          regex         = "(.+);(.+);(.+);(.+)"
+          replacement   = "/var/log/pods/$1_$2_$3/$4/*.log"
         }
+
+        // Keep pod name
         rule {
-          source_labels = ["__path__"]
-          regex         = "/var/log/pods/(.+)_(.+)_(.+)/(.+)/.*\\.log"
+          source_labels = ["__meta_kubernetes_pod_name"]
           target_label  = "pod"
-          replacement   = "$2"
         }
+
+        // Keep namespace
         rule {
-          source_labels = ["__path__"]
-          regex         = "/var/log/pods/(.+)_(.+)_(.+)/(.+)/.*\\.log"
-          target_label  = "uid"
-          replacement   = "$3"
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
         }
+
+        // Keep container name
         rule {
-          source_labels = ["__path__"]
-          regex         = "/var/log/pods/(.+)_(.+)_(.+)/(.+)/.*\\.log"
+          source_labels = ["__meta_kubernetes_pod_container_name"]
           target_label  = "container"
-          replacement   = "$4"
+        }
+
+        // Keep app label
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app"]
+          target_label  = "app"
+        }
+
+        // Keep app.kubernetes.io/name label
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          target_label  = "app_name"
         }
       }
 
