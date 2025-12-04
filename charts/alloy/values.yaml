@@ -69,26 +69,88 @@ alloy:
         }
       }
 
-      // Kubernetes log collection
-      loki.source.kubernetes "pods" {
-        targets = discovery.kubernetes.pods.targets
-        forward_to = [loki.relabel.kubernetes_logs.receiver]
+      // Discover pods for log collection
+      discovery.kubernetes "pod_logs" {
+        role = "pod"
       }
 
-      // Log relabeling for metadata
-      loki.relabel "kubernetes_logs" {
-        forward_to = [loki.write.loki.receiver]
+      // Relabel discovery targets for log file paths
+      discovery.relabel "pod_logs" {
+        targets = discovery.kubernetes.pod_logs.targets
+
+        // Set log file path
+        rule {
+          source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+          target_label  = "__path__"
+          separator     = "/"
+          replacement   = "/var/log/pods/*$1/$2/*.log"
+        }
+
+        // Keep pod name
         rule {
           source_labels = ["__meta_kubernetes_pod_name"]
-          target_label = "pod"
+          target_label  = "pod"
         }
+
+        // Keep namespace
         rule {
           source_labels = ["__meta_kubernetes_namespace"]
-          target_label = "namespace"
+          target_label  = "namespace"
         }
+
+        // Keep container name
         rule {
           source_labels = ["__meta_kubernetes_pod_container_name"]
-          target_label = "container"
+          target_label  = "container"
+        }
+
+        // Keep node name
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label  = "node"
+        }
+
+        // Keep app label
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app"]
+          target_label  = "app"
+        }
+
+        // Keep app.kubernetes.io/name label
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          target_label  = "app_name"
+        }
+      }
+
+      // Collect logs from files
+      loki.source.file "pod_logs" {
+        targets    = discovery.relabel.pod_logs.output
+        forward_to = [loki.process.pod_logs.receiver]
+      }
+
+      // Process logs (parse JSON if applicable)
+      loki.process "pod_logs" {
+        forward_to = [loki.write.loki.receiver]
+
+        // Parse container log format (CRI format)
+        stage.cri {}
+
+        // Try to parse JSON logs
+        stage.json {
+          expressions = {
+            level   = "level",
+            msg     = "msg",
+            time    = "time",
+            trace_id = "trace_id",
+          }
+        }
+
+        // Add level label if parsed
+        stage.labels {
+          values = {
+            level = "",
+          }
         }
       }
 
@@ -158,8 +220,7 @@ rbac:
 
 # Service configuration to expose OTLP ports
 controller:
-  type: deployment
-  replicas: 1
+  type: daemonset
   resources:
     requests:
       cpu: 25m
@@ -167,10 +228,23 @@ controller:
     limits:
       cpu: 500m
       memory: 512Mi
-
-# Alloy DaemonSet configuration
-daemonset:
-  enabled: false
+  # Mount host log directories for log collection
+  volumes:
+    extra:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+  volumeMounts:
+    extra:
+      - name: varlog
+        mountPath: /var/log
+        readOnly: true
+      - name: varlibdockercontainers
+        mountPath: /var/lib/docker/containers
+        readOnly: true
 
 # Alloy StatefulSet configuration (optional, for centralized collection)
 statefulset:
