@@ -78,18 +78,12 @@ alloy:
       discovery.relabel "pod_logs" {
         targets = discovery.kubernetes.pod_logs.targets
 
-        // Only collect from pods on this node
-        rule {
-          source_labels = ["__meta_kubernetes_pod_node_name"]
-          regex         = env("HOSTNAME")
-          action        = "keep"
-        }
-
         // Set log file path: /var/log/pods/{namespace}_{pod}_{uid}/{container}/*.log
         rule {
           source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_name", "__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
           target_label  = "__path__"
           separator     = "/"
+          regex         = "(.+)/(.+)/(.+)/(.+)"
           replacement   = "/var/log/pods/$1_$2_$3/$4/*.log"
         }
 
