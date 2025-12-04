@@ -20,8 +20,15 @@ patches:
           - name: DISCORD_TOKEN
             valueFrom:
               secretKeyRef:
-                name: discord-bot-secrets
-                key: DISCORD_TOKEN
+                name: discord-secrets
+                key: token
+          - name: DISCORD_APP_ID
+            valueFrom:
+              secretKeyRef:
+                name: discord-secrets
+                key: app-id
+          - name: BACKEND_URL
+            value: "http://frolf-bot-backend.frolf-bot.svc.cluster.local"
           - name: NATS_URL
             value: "nats://frolf-nats.frolf-bot.svc.cluster.local:4222"
           - name: LOG_LEVEL
@@ -46,13 +53,19 @@ patches:
             value: "otlp"
           - name: OTEL_SDK_DISABLED
             value: "false"
-          - name: TEMPO_ENDPOINT
-            value: "alloy.observability.svc.cluster.local:4317"
-          - name: TEMPO_INSECURE
-            value: "true"
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: "http://alloy.observability.svc.cluster.local:4317"
           - name: OTLP_ENDPOINT
             value: "alloy.observability.svc.cluster.local:4317"
           - name: OTLP_TRANSPORT
             value: "grpc"
+          - name: TEMPO_ENDPOINT
+            value: "alloy.observability.svc.cluster.local:4317"
+          - name: TEMPO_INSECURE
+            value: "true"
+          - name: TEMPO_SAMPLE_RATE
+            value: "0"
+          - name: PPROF_ENABLED
+            value: "true"
           - name: OTLP_LOGS_ENABLED
             value: "true"
