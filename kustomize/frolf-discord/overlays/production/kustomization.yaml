@@ -1,5 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 resources:
   - ../../base
+images:
+  - name: frolf-bot-discord
+    newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
+    digest: sha256:7fa62cf0921438869d5c1e6f94ab6a51cc0590b1f6ca136fce265839400b1a41
