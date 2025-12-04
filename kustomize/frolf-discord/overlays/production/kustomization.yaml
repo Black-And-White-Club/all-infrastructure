@@ -8,3 +8,51 @@ images:
     digest: sha256:fa35c8cac83e07b2856105bef360dcf2f360f4c9026b74217b1c06c8b1fa264b
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
     digest: sha256:fa35c8cac83e07b2856105bef360dcf2f360f4c9026b74217b1c06c8b1fa264b
+
+patches:
+  - target:
+      kind: Deployment
+      name: frolf-bot-discord
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env
+        value:
+          - name: DISCORD_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: discord-bot-secrets
+                key: DISCORD_TOKEN
+          - name: NATS_URL
+            value: "nats://frolf-nats.frolf-bot.svc.cluster.local:4222"
+          - name: LOG_LEVEL
+            value: "info"
+          - name: ENV
+            value: "production"
+          - name: ENVIRONMENT
+            value: "production"
+          - name: CONFIG_FILE
+            value: ""
+          - name: LOKI_URL
+            value: "http://loki.observability.svc.cluster.local:3100"
+          - name: METRICS_ADDRESS
+            value: "alloy.observability.svc.cluster.local:4317"
+          - name: METRICS_ENABLED
+            value: "true"
+          - name: OTEL_METRICS_EXPORTER
+            value: "otlp"
+          - name: OTEL_TRACES_EXPORTER
+            value: "otlp"
+          - name: OTEL_LOGS_EXPORTER
+            value: "otlp"
+          - name: OTEL_SDK_DISABLED
+            value: "false"
+          - name: TEMPO_ENDPOINT
+            value: "alloy.observability.svc.cluster.local:4317"
+          - name: TEMPO_INSECURE
+            value: "true"
+          - name: OTLP_ENDPOINT
+            value: "alloy.observability.svc.cluster.local:4317"
+          - name: OTLP_TRANSPORT
+            value: "grpc"
+          - name: OTLP_LOGS_ENABLED
+            value: "true"
