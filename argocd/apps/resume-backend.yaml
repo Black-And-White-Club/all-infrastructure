@@ -3,11 +3,6 @@ kind: Application
 metadata:
   name: resume-backend
   namespace: argocd
-  annotations:
-    argocd-image-updater.argoproj.io/image-list: backend=us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend
-    argocd-image-updater.argoproj.io/backend.update-strategy: latest
-    argocd-image-updater.argoproj.io/backend.helm.image-name: backend
-    argocd-image-updater.argoproj.io/backend.kustomize.image-name: resume-backend
 spec:
   project: apps
   source:

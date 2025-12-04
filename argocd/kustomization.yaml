@@ -11,6 +11,9 @@ resources:
   # User apps
   - apps/
 
+  # Image Updater custom resources
+  - image-updaters/
+
   # ArgoCD Projects
   - projects/
 

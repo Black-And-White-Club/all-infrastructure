@@ -1,0 +1,19 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: resume-backend-image-updater
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "21"
+spec:
+  namespace: argocd
+  applicationRefs:
+    - namePattern: "resume-backend"
+      images:
+        - alias: "backend"
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend"
+          commonUpdateSettings:
+            updateStrategy: "newest-build"
+          manifestTargets:
+            kustomize:
+              name: "resume-backend"
