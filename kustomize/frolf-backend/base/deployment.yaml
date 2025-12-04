@@ -113,6 +113,10 @@ spec:
               value: "false"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://alloy.observability.svc.cluster.local:4317"
+            - name: OTLP_ENDPOINT
+              value: "alloy.observability.svc.cluster.local:4317"
+            - name: OTLP_TRANSPORT
+              value: "grpc"
             - name: PPROF_ENABLED
               value: "true"
             - name: PPROF_ADDR
