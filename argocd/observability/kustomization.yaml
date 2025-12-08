@@ -6,3 +6,5 @@ resources:
   - mimir-app.yaml
   - tempo-app.yaml
   - alloy-app.yaml
+  - kube-state-metrics-app.yaml
+  - node-exporter-app.yaml
