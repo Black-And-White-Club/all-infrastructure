@@ -69,6 +69,66 @@ alloy:
         }
       }
 
+      // Discover services for kube-state-metrics and node-exporter
+      discovery.kubernetes "services" {
+        role = "service"
+      }
+
+      discovery.kubernetes "endpoints" {
+        role = "endpoints"
+      }
+
+      // Scrape kube-state-metrics
+      prometheus.scrape "kube_state_metrics" {
+        targets = discovery.relabel.kube_state_metrics.output
+        scrape_interval = "30s"
+        job_name = "kube-state-metrics"
+        forward_to = [prometheus.remote_write.mimir.receiver]
+      }
+
+      discovery.relabel "kube_state_metrics" {
+        targets = discovery.kubernetes.services.targets
+
+        rule {
+          source_labels = ["__meta_kubernetes_service_name"]
+          regex = "kube-state-metrics"
+          action = "keep"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label = "namespace"
+        }
+      }
+
+      // Scrape node-exporter
+      prometheus.scrape "node_exporter" {
+        targets = discovery.relabel.node_exporter.output
+        scrape_interval = "30s"
+        job_name = "node-exporter"
+        forward_to = [prometheus.remote_write.mimir.receiver]
+      }
+
+      discovery.relabel "node_exporter" {
+        targets = discovery.kubernetes.endpoints.targets
+
+        rule {
+          source_labels = ["__meta_kubernetes_service_name"]
+          regex = "node-exporter.*"
+          action = "keep"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label = "namespace"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label = "node"
+        }
+      }
+
       // Discover pods for log collection
       discovery.kubernetes "pod_logs" {
         role = "pod"
