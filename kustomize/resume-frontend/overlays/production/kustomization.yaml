@@ -7,4 +7,4 @@ images:
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend
     digest: sha256:6376355762d3445d114c584c7a558fb6c170c2b47a0837b139b286373a9cc33d
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend
-    digest: sha256:675a7fc70591176e0960ec55009ec7f8b0d531f8a69ddbc901a93e3c6fb8d4d7
+    digest: sha256:6376355762d3445d114c584c7a558fb6c170c2b47a0837b139b286373a9cc33d
