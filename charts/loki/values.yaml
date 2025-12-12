@@ -146,9 +146,8 @@ resultsCache:
 chunksCache:
   enabled: false
 
-monitoring:
-  lokiCanary:
-    enabled: false
+lokiCanary:
+  enabled: false
 
 test:
   enabled: false
