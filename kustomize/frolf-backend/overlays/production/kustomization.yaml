@@ -5,7 +5,7 @@ resources:
 images:
   - name: frolf-bot-backend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    digest: sha256:d6814f230daf9f8fb99deb1bf8144d2090d022770f7475693b32d0696c3ad02d
+    digest: sha256:9ddb7ea718c20cafcdc5f344c41b1b4d1843883f2de0bc69befeebc157daa8b6
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
     digest: sha256:9ddb7ea718c20cafcdc5f344c41b1b4d1843883f2de0bc69befeebc157daa8b6
 patches:
