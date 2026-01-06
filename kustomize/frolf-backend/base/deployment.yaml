@@ -82,11 +82,11 @@ spec:
                   name: backend-secrets
                   key: NATS_URL
             - name: ENV
-              value: "development"
+              value: "production"
             - name: ENVIRONMENT
-              value: "development"
+              value: "production"
             - name: LOG_LEVEL
-              value: "debug"
+              value: "info"
             - name: CONFIG_FILE
               value: ""
             - name: AUTO_MIGRATE

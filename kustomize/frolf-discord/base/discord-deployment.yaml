@@ -37,11 +37,11 @@ spec:
             - name: NATS_URL
               value: "nats://frolf-nats.frolf-bot.svc.cluster.local:4222"
             - name: LOG_LEVEL
-              value: "debug"
+              value: "info"
             - name: ENV
-              value: "development"
+              value: "production"
             - name: ENVIRONMENT
-              value: "development"
+              value: "production"
             - name: CONFIG_FILE
               value: ""
             - name: LOKI_URL
