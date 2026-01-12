@@ -7,7 +7,7 @@ images:
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
     digest: sha256:b292bd1d86bb3c49cbceb76266a734991cc61522faf34161467e9a3021115712
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
-    digest: sha256:88590f81c0450449484e9e8c376ed3ddace9a3a3843f5ec0d3b7ef2071ace5d3
+    digest: sha256:57eb26709ffe44c11b021bfd426c8082b6fd10ddabf372c55e5acdb946fea20d
 patches:
   - target:
       kind: Deployment
