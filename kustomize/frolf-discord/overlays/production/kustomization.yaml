@@ -5,7 +5,7 @@ resources:
 images:
   - name: frolf-bot-discord
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
-    digest: sha256:5dc830688bf23d5f1c73fccf5b2c87d80165fd4020d28a46c9e2b0360e5d90eb
+    digest: sha256:ef1b4c76cc42ecfec00fc4ced30734984f6c16a893b456067264c8a3b46d464e
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
     digest: sha256:ef1b4c76cc42ecfec00fc4ced30734984f6c16a893b456067264c8a3b46d464e
 patches:
