@@ -4,6 +4,8 @@ global:
   clusterDomain: cluster.local
   dnsService: coredns
   dnsNamespace: kube-system
+  extraArgs:
+    - -config.expand-env=true
 
 deploymentMode: SimpleScalable
 
@@ -27,7 +29,6 @@ loki:
       secretAccessKey: ${LOKI_OCI_SECRET_KEY}
       s3ForcePathStyle: true
       insecure: false
-      disableBucketLookup: true
 
   schemaConfig:
     configs:
