@@ -4,9 +4,6 @@ global:
   clusterDomain: cluster.local
   dnsService: coredns
   dnsNamespace: kube-system
-  extraEnvFrom:
-    - secretRef:
-        name: objectstore-creds
 
 deploymentMode: SimpleScalable
 
@@ -87,8 +84,7 @@ write:
     storageClass: local-storage
   extraEnvFrom:
     - secretRef:
-        name: objectstore-creds
-  # Use worker node's boot disk
+        name: loki-objectstore-creds
   extraVolumes:
     - name: loki-wal
       hostPath:
@@ -109,7 +105,7 @@ read:
       memory: 256Mi
   extraEnvFrom:
     - secretRef:
-        name: objectstore-creds
+        name: loki-objectstore-creds
   persistence:
     enabled: false
 
@@ -129,8 +125,7 @@ backend:
     storageClass: local-storage
   extraEnvFrom:
     - secretRef:
-        name: objectstore-creds
-  # Use worker node's boot disk
+        name: loki-objectstore-creds
   extraVolumes:
     - name: loki-backend
       hostPath:
