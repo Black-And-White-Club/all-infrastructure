@@ -39,3 +39,6 @@ override.tf.json
 terraform.rc
 *.tfvars.bak
 cluster-resources/sealed-secrets/generate-ocir-sealed-secret.sh
+.claude
+CONSUMER_RELIABILITY_PROMPT.md
+WATERMILL_EVENT_REMEDIATION_PLAN.md
