@@ -85,6 +85,11 @@ write:
   extraEnvFrom:
     - secretRef:
         name: loki-objectstore-creds
+  extraEnv:
+    - name: AWS_REGION
+      value: us-ashburn-1
+    - name: AWS_DEFAULT_REGION
+      value: us-ashburn-1
   extraVolumes:
     - name: loki-wal
       hostPath:
@@ -106,6 +111,12 @@ read:
   extraEnvFrom:
     - secretRef:
         name: loki-objectstore-creds
+  extraEnv:
+    - name: AWS_REGION
+      value: us-ashburn-1
+    - name: AWS_DEFAULT_REGION
+      value: us-ashburn-1
+
   persistence:
     enabled: false
 
@@ -126,6 +137,11 @@ backend:
   extraEnvFrom:
     - secretRef:
         name: loki-objectstore-creds
+  extraEnv:
+    - name: AWS_REGION
+      value: us-ashburn-1
+    - name: AWS_DEFAULT_REGION
+      value: us-ashburn-1
   extraVolumes:
     - name: loki-backend
       hostPath:
