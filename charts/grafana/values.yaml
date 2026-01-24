@@ -98,34 +98,34 @@ datasources:
             datasourceUid: mimir
 
 # Default dashboard folders
-dashboardProviders:
-  dashboardproviders.yaml:
-    apiVersion: 1
-    providers:
-      - name: "observability"
-        orgId: 1
-        folder: "Observability"
-        type: file
-        disableDeletion: false
-        editable: true
-        options:
-          path: /var/lib/grafana/dashboards/observability
-      - name: "resume"
-        orgId: 1
-        folder: "Resume"
-        type: file
-        disableDeletion: false
-        editable: true
-        options:
-          path: /var/lib/grafana/dashboards/resume
-      - name: "frolf-bot"
-        orgId: 1
-        folder: "Frolf Bot"
-        type: file
-        disableDeletion: false
-        editable: true
-        options:
-          path: /var/lib/grafana/dashboards/frolf-bot
+# dashboardProviders:
+#   dashboardproviders.yaml:
+#     apiVersion: 1
+#     providers:
+#       - name: "observability"
+#         orgId: 1
+#         folder: "Observability"
+#         type: file
+#         disableDeletion: false
+#         editable: true
+#         options:
+#           path: /var/lib/grafana/dashboards/observability
+#       - name: "resume"
+#         orgId: 1
+#         folder: "Resume"
+#         type: file
+#         disableDeletion: false
+#         editable: true
+#         options:
+#           path: /var/lib/grafana/dashboards/resume
+#       - name: "frolf-bot"
+#         orgId: 1
+#         folder: "Frolf Bot"
+#         type: file
+#         disableDeletion: false
+#         editable: true
+#         options:
+#           path: /var/lib/grafana/dashboards/frolf-bot
 
 ingress:
   enabled: true
