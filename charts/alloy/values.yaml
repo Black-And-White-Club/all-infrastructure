@@ -209,7 +209,7 @@ alloy:
           label {
             name  = "trace_id"
             value = "{{.trace_id}}"
-          },
+          }
         }
       }
 
