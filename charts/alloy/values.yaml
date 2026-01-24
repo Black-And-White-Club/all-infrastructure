@@ -179,32 +179,37 @@ alloy:
       }
 
       // Collect logs from files
-      loki.source.file "pod_logs" {
-        targets    = discovery.relabel.pod_logs.output
-        forward_to = [loki.process.pod_logs.receiver]
-      }
-
-      // Process logs (parse JSON if applicable)
       loki.process "pod_logs" {
         forward_to = [loki.write.loki.receiver]
 
-        // Parse container log format (CRI format)
+        // Parse container log format (CRI)
         stage.cri {}
 
-        // Try to parse JSON logs
+        // Parse JSON logs from your application
         stage.json {
           expressions = {
-            body     = "body",       
-            level    = "level",      
-            trace_id = "traceid",    
+            body     = "body"
+            level    = "level"
+            trace_id = "traceid"
           }
         }
 
-        // Add level label if parsed
+        // Promote parsed fields to Loki labels
         stage.labels {
-          body     = ""
-          level    = ""
-          trace_id = ""
+          label {
+            name  = "body"
+            value = "{{.body}}"
+          }
+
+          label {
+            name  = "level"
+            value = "{{.level}}"
+          }
+
+          label {
+            name  = "trace_id"
+            value = "{{.trace_id}}"
+          }
         }
       }
 
