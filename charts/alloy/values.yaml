@@ -199,12 +199,12 @@ alloy:
           label {
             name  = "body"
             value = "{{.body}}"
-          },
+          }
 
           label {
             name  = "level"
             value = "{{.level}}"
-          },
+          }
 
           label {
             name  = "trace_id"
