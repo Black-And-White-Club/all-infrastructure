@@ -7,7 +7,7 @@ images:
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
     digest: sha256:7fa4af2b7aa880c82508251409f550b1d7e2216231e847bb708b03d8fbc45caa
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    digest: sha256:4a12a1ea259b4ab1218ef1cfc6889b9f392ce90a9da73401eaeb596a20e6c900
+    digest: sha256:7fa4af2b7aa880c82508251409f550b1d7e2216231e847bb708b03d8fbc45caa
 patches:
   - target:
       kind: Deployment
