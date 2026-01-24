@@ -202,7 +202,9 @@ alloy:
 
         // Add level label if parsed
         stage.labels {
-          values = ["body", "level", "trace_id"]
+          body     = ""
+          level    = ""
+          trace_id = ""
         }
       }
 
