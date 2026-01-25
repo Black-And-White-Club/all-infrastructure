@@ -1,238 +1,19 @@
-# Alloy - Telemetry collector and pipeline orchestrator
-# Replaces Prometheus for metric collection
-# Collects logs, metrics, and traces from all sources
-# Routes to Mimir (metrics), Loki (logs), and Tempo (traces)
+# Alloy - OTEL-first telemetry collector
+# Apps emit logs/metrics/traces via OTLP only
+# Infrastructure metrics scraped via Prometheus (kube-state-metrics, node-exporter)
 
-# Alloy configuration - must be under alloy.configMap.content for Helm chart
 alloy:
   configMap:
-    # Custom Alloy River configuration
     content: |
       logging {
         level  = "info"
         format = "json"
       }
 
-      // Prometheus scrape configs for metrics collection
-      prometheus.scrape "kubernetes_pods" {
-        targets = discovery.kubernetes.pods.targets
-        scrape_interval = "15s"
-        job_name = "kubernetes-pods"
-        forward_to = [prometheus.relabel.kubernetes_pods.receiver]
-      }
+      /////////////////////////////////////////
+      // OTLP RECEIVER - ALL APPLICATION SIGNALS
+      /////////////////////////////////////////
 
-      prometheus.scrape "kubernetes_nodes" {
-        targets = discovery.kubernetes.nodes.targets
-        scrape_interval = "15s"
-        job_name = "kubernetes-nodes"
-        forward_to = [prometheus.relabel.kubernetes_nodes.receiver]
-      }
-
-      // Kubernetes service discovery
-      discovery.kubernetes "pods" {
-        role = "pod"
-      }
-
-      discovery.kubernetes "nodes" {
-        role = "node"
-      }
-
-      // Relabeling for Kubernetes metadata
-      prometheus.relabel "kubernetes_pods" {
-        forward_to = [prometheus.remote_write.mimir.receiver]
-        rule {
-          source_labels = ["__meta_kubernetes_pod_name"]
-          target_label = "pod"
-        }
-        rule {
-          source_labels = ["__meta_kubernetes_namespace"]
-          target_label = "namespace"
-        }
-        rule {
-          source_labels = ["__meta_kubernetes_pod_container_name"]
-          target_label = "container"
-        }
-      }
-
-      prometheus.relabel "kubernetes_nodes" {
-        forward_to = [prometheus.remote_write.mimir.receiver]
-        rule {
-          source_labels = ["__meta_kubernetes_node_name"]
-          target_label = "node"
-        }
-      }
-
-      // Send metrics to Mimir
-      prometheus.remote_write "mimir" {
-        endpoint {
-          url = "http://mimir-distributor.observability.svc.cluster.local:8080/api/v1/push"
-        }
-      }
-
-      // Discover services for kube-state-metrics and node-exporter
-      discovery.kubernetes "services" {
-        role = "service"
-      }
-
-      discovery.kubernetes "endpoints" {
-        role = "endpoints"
-      }
-
-      // Scrape kube-state-metrics
-      prometheus.scrape "kube_state_metrics" {
-        targets = discovery.relabel.kube_state_metrics.output
-        scrape_interval = "30s"
-        job_name = "kube-state-metrics"
-        forward_to = [prometheus.remote_write.mimir.receiver]
-      }
-
-      discovery.relabel "kube_state_metrics" {
-        targets = discovery.kubernetes.services.targets
-
-        rule {
-          source_labels = ["__meta_kubernetes_service_name"]
-          regex = "kube-state-metrics"
-          action = "keep"
-        }
-
-        rule {
-          source_labels = ["__meta_kubernetes_namespace"]
-          target_label = "namespace"
-        }
-      }
-
-      // Scrape node-exporter
-      prometheus.scrape "node_exporter" {
-        targets = discovery.relabel.node_exporter.output
-        scrape_interval = "30s"
-        job_name = "node-exporter"
-        forward_to = [prometheus.remote_write.mimir.receiver]
-      }
-
-      discovery.relabel "node_exporter" {
-        targets = discovery.kubernetes.endpoints.targets
-
-        rule {
-          source_labels = ["__meta_kubernetes_service_name"]
-          regex = "node-exporter.*"
-          action = "keep"
-        }
-
-        rule {
-          source_labels = ["__meta_kubernetes_namespace"]
-          target_label = "namespace"
-        }
-
-        rule {
-          source_labels = ["__meta_kubernetes_pod_node_name"]
-          target_label = "node"
-        }
-      }
-
-      // Discover pods for log collection
-      discovery.kubernetes "pod_logs" {
-        role = "pod"
-      }
-
-      // Relabel discovery targets for log file paths
-      discovery.relabel "pod_logs" {
-        targets = discovery.kubernetes.pod_logs.targets
-
-        // Construct the log file path correctly: /var/log/pods/namespace_pod_uid/container/*.log
-        rule {
-          source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_name", "__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
-          target_label  = "__path__"
-          separator     = ";"
-          regex         = "(.+);(.+);(.+);(.+)"
-          replacement   = "/var/log/pods/$1_$2_$3/$4/*.log"
-        }
-
-        // Keep pod name
-        rule {
-          source_labels = ["__meta_kubernetes_pod_name"]
-          target_label  = "pod"
-        }
-
-        // Keep namespace
-        rule {
-          source_labels = ["__meta_kubernetes_namespace"]
-          target_label  = "namespace"
-        }
-
-        // Keep container name
-        rule {
-          source_labels = ["__meta_kubernetes_pod_container_name"]
-          target_label  = "container"
-        }
-
-        // Keep app label
-        rule {
-          source_labels = ["__meta_kubernetes_pod_label_app"]
-          target_label  = "app"
-        }
-
-        // Keep app.kubernetes.io/name label
-        rule {
-          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
-          target_label  = "app_name"
-        }
-      }
-
-      // Collect logs from files
-      loki.process "pod_logs" {
-        forward_to = [loki.write.loki.receiver]
-
-        stage.cri {}
-
-        // Parse main JSON payload
-        stage.json {
-          source = "log"
-          expressions = {
-            body       = "body",
-            attributes = "attributes",
-            resources  = "resources",
-          }
-        }
-
-        // Parse attributes object
-        stage.json {
-          source = "attributes"
-          expressions = {
-            message_id     = "message_id",
-            topic          = "topic",
-            correlation_id = "correlation_id",
-            operation      = "operation",
-          }
-        }
-
-        // Optional: parse resources
-        stage.json {
-          source = "resources"
-          expressions = {
-            service_name = "service.name",
-            environment  = "deployment.environment",
-          }
-        }
-
-        stage.labels {
-          values = {
-            topic        = "",
-            operation    = "",
-            service_name = "",
-            environment  = "",
-          }
-        }
-      }
-
-
-      // Send logs to Loki
-      loki.write "loki" {
-        endpoint {
-          url = "http://loki-gateway.observability.svc.cluster.local/loki/api/v1/push"
-        }
-      }
-
-      // OTLP gRPC receiver for application traces, metrics, and logs
       otelcol.receiver.otlp "default" {
         grpc {
           endpoint = "0.0.0.0:4317"
@@ -241,33 +22,70 @@ alloy:
           endpoint = "0.0.0.0:4318"
         }
         output {
-          traces  = [otelcol.processor.batch.default.input]
-          metrics = [otelcol.processor.batch.default.input]
-          logs    = [otelcol.processor.batch.logs.input]
+          logs    = [otelcol.processor.resource.default.input]
+          metrics = [otelcol.processor.resource.default.input]
+          traces  = [otelcol.processor.resource.default.input]
         }
       }
 
-      // Batch processor for traces and metrics
+      /////////////////////////////////////////
+      // RESOURCE PROCESSOR - ENRICH ALL SIGNALS
+      /////////////////////////////////////////
+
+      otelcol.processor.resource "default" {
+        attributes {
+          action = "insert"
+          key    = "k8s.cluster.name"
+          value  = "production"
+        }
+        output {
+          logs    = [otelcol.processor.attributes.logs.input]
+          metrics = [otelcol.processor.batch.default.input]
+          traces  = [otelcol.processor.batch.default.input]
+        }
+      }
+
+      /////////////////////////////////////////
+      // ATTRIBUTES PROCESSOR - LOG LABEL HINTS
+      /////////////////////////////////////////
+
+      otelcol.processor.attributes "logs" {
+        // Hint attributes for Loki label extraction (low-cardinality only)
+        action {
+          key    = "loki.attribute.labels"
+          action = "insert"
+          value  = "service.name,deployment.environment,k8s.namespace.name"
+        }
+        output {
+          logs = [otelcol.processor.batch.logs.input]
+        }
+      }
+
+      /////////////////////////////////////////
+      // BATCH PROCESSORS
+      /////////////////////////////////////////
+
       otelcol.processor.batch "default" {
+        timeout         = "5s"
+        send_batch_size = 8192
         output {
           traces  = [otelcol.exporter.otlp.tempo.input]
           metrics = [otelcol.exporter.prometheus.mimir.input]
         }
       }
 
-      // Batch processor for logs
       otelcol.processor.batch "logs" {
+        timeout         = "5s"
+        send_batch_size = 8192
         output {
           logs = [otelcol.exporter.loki.default.input]
         }
       }
 
-      // Export OTLP logs to Loki
-      otelcol.exporter.loki "default" {
-        forward_to = [loki.write.loki.receiver]
-      }
+      /////////////////////////////////////////
+      // EXPORTERS
+      /////////////////////////////////////////
 
-      // Export traces to Tempo distributor (OTLP endpoint)
       otelcol.exporter.otlp "tempo" {
         client {
           endpoint = "tempo-distributor.observability.svc.cluster.local:4317"
@@ -277,17 +95,88 @@ alloy:
         }
       }
 
-      // Export OTLP metrics to Prometheus remote write format for Mimir
+      otelcol.exporter.loki "default" {
+        forward_to = [loki.write.default.receiver]
+      }
+
       otelcol.exporter.prometheus "mimir" {
         forward_to = [prometheus.remote_write.mimir.receiver]
       }
 
-  # Mount host log directories for log collection
-  mounts:
-    varlog: true
-    dockercontainers: true
+      /////////////////////////////////////////
+      // BACKEND WRITERS
+      /////////////////////////////////////////
 
-  # Extra ports for OTLP receivers (container ports)
+      loki.write "default" {
+        endpoint {
+          url = "http://loki-gateway.observability.svc.cluster.local/loki/api/v1/push"
+        }
+      }
+
+      prometheus.remote_write "mimir" {
+        endpoint {
+          url = "http://mimir-distributor.observability.svc.cluster.local:8080/api/v1/push"
+        }
+      }
+
+      /////////////////////////////////////////
+      // INFRASTRUCTURE METRICS (NON-OTLP)
+      /////////////////////////////////////////
+
+      discovery.kubernetes "services" {
+        role = "service"
+      }
+
+      discovery.kubernetes "endpoints" {
+        role = "endpoints"
+      }
+
+      // kube-state-metrics
+      prometheus.scrape "kube_state_metrics" {
+        targets         = discovery.relabel.kube_state_metrics.output
+        scrape_interval = "30s"
+        job_name        = "kube-state-metrics"
+        forward_to      = [prometheus.remote_write.mimir.receiver]
+      }
+
+      discovery.relabel "kube_state_metrics" {
+        targets = discovery.kubernetes.services.targets
+        rule {
+          source_labels = ["__meta_kubernetes_service_name"]
+          regex         = "kube-state-metrics"
+          action        = "keep"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+      }
+
+      // node-exporter
+      prometheus.scrape "node_exporter" {
+        targets         = discovery.relabel.node_exporter.output
+        scrape_interval = "30s"
+        job_name        = "node-exporter"
+        forward_to      = [prometheus.remote_write.mimir.receiver]
+      }
+
+      discovery.relabel "node_exporter" {
+        targets = discovery.kubernetes.endpoints.targets
+        rule {
+          source_labels = ["__meta_kubernetes_service_name"]
+          regex         = "node-exporter.*"
+          action        = "keep"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label  = "node"
+        }
+      }
+
   extraPorts:
     - name: otlp-grpc
       port: 4317
@@ -298,16 +187,13 @@ alloy:
       targetPort: 4318
       protocol: TCP
 
-# Cluster role for pod discovery and scraping
 serviceAccount:
   create: true
   name: alloy
 
-# ClusterRole for Kubernetes discovery
 rbac:
   create: true
 
-# Service configuration to expose OTLP ports
 controller:
   type: daemonset
   resources:
@@ -317,7 +203,3 @@ controller:
     limits:
       cpu: 500m
       memory: 512Mi
-
-# Alloy StatefulSet configuration (optional, for centralized collection)
-statefulset:
-  enabled: false
