@@ -200,12 +200,12 @@ alloy:
         // Promote parsed fields to Loki labels
         stage.labels {
           values = {
-            body       = ""
-            level      = ""
-            trace_id   = ""
-            message_id = ""   # notice no dots
-            topic      = ""
-            guild_id   = ""
+            body       = "",
+            level      = "",
+            trace_id   = "",
+            message_id = "",
+            topic      = "",
+            guild_id   = "",
           }
         }
       }
