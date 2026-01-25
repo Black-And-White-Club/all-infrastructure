@@ -3,6 +3,7 @@
 # Infrastructure metrics scraped via Prometheus (kube-state-metrics, node-exporter)
 
 alloy:
+  stabilityLevel: "public-preview"
   configMap:
     content: |
       logging {
