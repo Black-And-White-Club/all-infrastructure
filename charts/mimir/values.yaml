@@ -69,6 +69,8 @@ gateway:
     limits:
       cpu: 100m
       memory: 256Mi
+  nginx:
+    resolver: ""
 
 rollout_operator:
   enabled: false
