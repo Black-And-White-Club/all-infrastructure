@@ -51,7 +51,7 @@ datasources:
       # Metrics datasource - Mimir (Prometheus-compatible)
       - name: Mimir
         type: prometheus
-        url: http://mimir-gateway.observability.svc.cluster.local:8080/prometheus
+        url: http://mimir-gateway.observability.svc.cluster.local:8080
         access: proxy
         isDefault: true
         editable: true
