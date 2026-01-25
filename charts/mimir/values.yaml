@@ -70,7 +70,7 @@ gateway:
       cpu: 100m
       memory: 256Mi
   nginx:
-    resolver: ""
+    resolver: "10.233.0.3"
 
 rollout_operator:
   enabled: false

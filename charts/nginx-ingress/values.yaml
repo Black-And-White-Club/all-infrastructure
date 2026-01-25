@@ -15,4 +15,4 @@ controller:
   metrics:
     enabled: false
   config:
-    resolver: "coredns.kube-system.svc.cluster.local valid=30s"
+    resolver: "coredns.kube-system.svc.cluster.local. valid=30s"
