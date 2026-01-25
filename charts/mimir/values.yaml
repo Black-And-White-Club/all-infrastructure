@@ -62,8 +62,6 @@ overrides_exporter:
 
 gateway:
   enabled: true
-  extraArgs:
-    config.expand-env: "true"
   resources:
     requests:
       cpu: 20m
