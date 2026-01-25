@@ -3,7 +3,6 @@
 # Infrastructure metrics scraped via Prometheus (kube-state-metrics, node-exporter)
 
 alloy:
-  stabilityLevel: "public-preview"
   configMap:
     content: |
       logging {
@@ -23,22 +22,45 @@ alloy:
           endpoint = "0.0.0.0:4318"
         }
         output {
-          logs    = [otelcol.processor.resource.default.input]
-          metrics = [otelcol.processor.resource.default.input]
-          traces  = [otelcol.processor.resource.default.input]
+          // Pointing to the new transform processor
+          logs    = [otelcol.processor.transform.default.input]
+          metrics = [otelcol.processor.transform.default.input]
+          traces  = [otelcol.processor.transform.default.input]
         }
       }
 
       /////////////////////////////////////////
-      // RESOURCE PROCESSOR - ENRICH ALL SIGNALS
+      // TRANSFORM PROCESSOR - ENRICH ALL SIGNALS
+      // (Replaces the invalid otelcol.processor.resource)
       /////////////////////////////////////////
 
-      otelcol.processor.resource "default" {
-        attributes {
-          action = "insert"
-          key    = "k8s.cluster.name"
-          value  = "production"
+      otelcol.processor.transform "default" {
+        error_mode = "ignore"
+
+        // 1. Logs: Set cluster name in resource attributes
+        log_statements {
+          context = "resource"
+          statements = [
+            "set(attributes[\"k8s.cluster.name\"], \"production\")",
+          ]
         }
+
+        // 2. Metrics: Set cluster name in resource attributes
+        metric_statements {
+          context = "resource"
+          statements = [
+            "set(attributes[\"k8s.cluster.name\"], \"production\")",
+          ]
+        }
+
+        // 3. Traces: Set cluster name in resource attributes
+        trace_statements {
+          context = "resource"
+          statements = [
+            "set(attributes[\"k8s.cluster.name\"], \"production\")",
+          ]
+        }
+
         output {
           logs    = [otelcol.processor.attributes.logs.input]
           metrics = [otelcol.processor.batch.default.input]
