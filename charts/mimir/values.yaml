@@ -5,7 +5,9 @@ global:
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
-
+  dnsService: "coredns"
+  dnsNamespace: "kube-system"
+  clusterDomain: "cluster.local"
 # Disable built-in MinIO (using OCI Object Storage)
 minio:
   enabled: false
@@ -69,8 +71,6 @@ gateway:
     limits:
       cpu: 100m
       memory: 256Mi
-  nginx:
-    resolver: "coredns.kube-system.svc.cluster.local."
 
 rollout_operator:
   enabled: false
