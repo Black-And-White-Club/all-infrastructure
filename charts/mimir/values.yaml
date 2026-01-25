@@ -61,7 +61,7 @@ overrides_exporter:
   enabled: false
 
 gateway:
-  enabled: false
+  enabled: true
 
 rollout_operator:
   enabled: false
