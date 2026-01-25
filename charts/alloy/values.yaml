@@ -184,86 +184,43 @@ alloy:
 
         stage.cri {}
 
-        // Extract level from common formats
-        stage.logfmt {
-          mapping = { level = "level", lvl = "lvl" }
-        }
-
+        // Parse main JSON payload
         stage.json {
+          source = "log"
           expressions = {
-            level      = "level",
-            severity   = "severity",
             body       = "body",
-            msg        = "msg",
-            message    = "message",
             attributes = "attributes",
             resources  = "resources",
           }
         }
 
-        // Normalize level
-        stage.template {
-          source   = "level"
-          template = "{{ or .level .lvl .severity \"unknown\" | ToLower }}"
-        }
-
-        // Parse attributes
+        // Parse attributes object
         stage.json {
           source = "attributes"
           expressions = {
-            topic          = "topic",
-            operation      = "operation",
             message_id     = "message_id",
+            topic          = "topic",
             correlation_id = "correlation_id",
+            operation      = "operation",
           }
         }
 
-        // Parse resources
+        // Optional: parse resources
         stage.json {
           source = "resources"
           expressions = {
-            service_name = `service.name`,
-            environment  = `deployment.environment`,
+            service_name = "service.name",
+            environment  = "deployment.environment",
           }
         }
 
-        // Compute line hash for dedup detection
-        stage.template {
-          source   = "line_hash"
-          template = "{{ .msg | Hash \"xxhash\" }}"
-        }
-
-        // Labels (low cardinality only)
         stage.labels {
           values = {
-            level        = "",
             topic        = "",
             operation    = "",
             service_name = "",
             environment  = "",
           }
-        }
-
-        // Structured metadata (high cardinality - Loki 3.0+)
-        stage.structured_metadata {
-          values = {
-            message_id     = "",
-            correlation_id = "",
-            line_hash      = "",
-          }
-        }
-
-        // Drop known spam patterns
-        stage.drop {
-          expression  = "health.?check|readiness|liveness|/healthz|/ready|/live"
-          drop_counter_reason = "health_check_spam"
-        }
-
-        // Rate limit per stream (optional - tune as needed)
-        stage.limit {
-          rate  = 100
-          burst = 200
-          drop  = true
         }
       }
 
