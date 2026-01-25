@@ -188,28 +188,24 @@ alloy:
         // Parse JSON logs from your application
         stage.json {
           expressions = {
-            body        = "body",
-            level       = "level",
-            trace_id    = "traceid",
-            message_id  = "attributes.message_id",
-            topic       = "attributes.topic",
-            component   = "attributes.component",
-            guild_id    = "attributes.guild_id",
-            service_name = "resources.service.name",
+            body       = "body",
+            level      = "level",
+            trace_id   = "traceid",
+            message_id = "attributes.message_id" ,  
+            topic      = "attributes.topic",
+            guild_id   = "attributes.guild_id",
           }
         }
 
         // Promote parsed fields to Loki labels
         stage.labels {
           values = {
-            body         = "",
-            level        = "",
-            trace_id     = "traceid",
-            message_id   = "attributes.message_id",
-            topic        = "attributes.topic",
-            component    = "attributes.component",
-            guild_id     = "attributes.guild_id",
-            service_name = "resources.service.name",
+            body       = ""
+            level      = ""
+            trace_id   = ""
+            message_id = ""   # notice no dots
+            topic      = ""
+            guild_id   = ""
           }
         }
       }
