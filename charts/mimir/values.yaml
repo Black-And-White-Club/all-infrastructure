@@ -61,7 +61,7 @@ overrides_exporter:
   enabled: false
 
 gateway:
-  enabled: true
+  enabled: false
   resources:
     requests:
       cpu: 20m
