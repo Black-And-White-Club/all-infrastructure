@@ -182,33 +182,48 @@ alloy:
       loki.process "pod_logs" {
         forward_to = [loki.write.loki.receiver]
 
-        // Parse container log format (CRI)
         stage.cri {}
 
-        // Parse JSON logs from your application
+        // Parse main JSON payload
         stage.json {
+          source = "log"
           expressions = {
             body       = "body",
-            level      = "level",
-            trace_id   = "traceid",
-            message_id = "attributes.message_id" ,  
-            topic      = "attributes.topic",
-            guild_id   = "attributes.guild_id",
+            attributes = "attributes",
+            resources  = "resources",
           }
         }
 
-        // Promote parsed fields to Loki labels
+        // Parse attributes object
+        stage.json {
+          source = "attributes"
+          expressions = {
+            message_id     = "message_id",
+            topic          = "topic",
+            correlation_id = "correlation_id",
+            operation      = "operation",
+          }
+        }
+
+        // Optional: parse resources
+        stage.json {
+          source = "resources"
+          expressions = {
+            service_name = "service.name",
+            environment  = "deployment.environment",
+          }
+        }
+
         stage.labels {
           values = {
-            body       = "",
-            level      = "",
-            trace_id   = "",
-            message_id = "",
-            topic      = "",
-            guild_id   = "",
+            topic        = "",
+            operation    = "",
+            service_name = "",
+            environment  = "",
           }
         }
       }
+
 
       // Send logs to Loki
       loki.write "loki" {
