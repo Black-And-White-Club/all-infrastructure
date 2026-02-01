@@ -5,3 +5,4 @@ resources:
   - resume-frontend.yaml
   - frolf-backend.yaml
   - frolf-discord.yaml
+  - frolf-bot-pwa.yaml
