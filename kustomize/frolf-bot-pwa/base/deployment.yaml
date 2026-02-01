@@ -13,6 +13,8 @@ spec:
       labels:
         app: frolf-bot-pwa
     spec:
+      imagePullSecrets:
+        - name: ocir-secret
       containers:
         - name: frolf-bot-pwa
           image: ghcr.io/black-and-white-club/frolf-bot-pwa:latest
