@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+# Namespace to deploy into
+namespace: frolf-bot
+
+# Generate the config map for environment variables
+configMapGenerator:
+  - name: frolf-pwa-config
+    literals:
+      - PUBLIC_VITE_NATS_URL=wss://nats.frolf-bot.duckdns.org
+      - PUBLIC_VITE_API_URL=https://api.frolf-bot.duckdns.org
+      - PUBLIC_VITE_OTEL_ENDPOINT=https://otel.frolf-bot.duckdns.org/v1/traces
+      - PUBLIC_VITE_DEBUG="false"
+
+# Image modification - ArgoCD Image Updater will patch this
+images:
+  - name: ghcr.io/black-and-white-club/frolf-bot-pwa
+    newTag: latest

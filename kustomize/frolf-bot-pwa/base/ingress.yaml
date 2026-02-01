@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frolf-bot-pwa
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  rules:
+    - host: frolf-bot.duckdns.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frolf-bot-pwa
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - frolf-bot.duckdns.org
+      secretName: frolf-bot-pwa-tls

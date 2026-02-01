@@ -52,3 +52,5 @@ patches:
             value: "grpc"
           - name: OTLP_LOGS_ENABLED
             value: "true"
+          - name: PWA_BASE_URL
+            value: "https://frolf-bot.duckdns.org"
