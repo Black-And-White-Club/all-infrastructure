@@ -19,4 +19,5 @@ configMapGenerator:
 # Image modification - ArgoCD Image Updater will patch this
 images:
   - name: ghcr.io/black-and-white-club/frolf-bot-pwa
+    newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
     newTag: latest
