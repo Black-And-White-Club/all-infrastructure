@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frolf-bot-pwa
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: apps
+  source:
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+    targetRevision: HEAD
+    path: kustomize/frolf-bot-pwa/overlays/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frolf-bot
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
