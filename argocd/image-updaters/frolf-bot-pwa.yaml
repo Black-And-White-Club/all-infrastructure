@@ -1,0 +1,25 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: frolf-bot-pwa-image-updater
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "21"
+spec:
+  namespace: argocd
+  applicationRefs:
+    - namePattern: "frolf-bot-pwa"
+      images:
+        - alias: "frolf-bot-pwa"
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa:latest"
+          commonUpdateSettings:
+            updateStrategy: "digest"
+            allowTags: "regexp:^latest$"
+            pullSecret: "pullsecret:argocd/ocir-secret"
+          manifestTargets:
+            kustomize:
+              name: "frolf-bot-pwa"
+  writeBackConfig:
+    method: "git:secret:argocd/repo-all-infrastructure"
+    gitConfig:
+      writeBackTarget: "kustomization"
