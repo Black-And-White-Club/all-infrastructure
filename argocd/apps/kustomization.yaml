@@ -5,6 +5,7 @@ resources:
   - frolf-discord.yaml
   - frolf-nats.yaml
   - frolf-postgres.yaml
+  - frolf-bot-pwa.yaml
   - resume-backend.yaml
   - resume-frontend.yaml
   - resume-postgres.yaml
