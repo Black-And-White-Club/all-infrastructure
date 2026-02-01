@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frolf-bot-pwa
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: frolf-bot-pwa
+  template:
+    metadata:
+      labels:
+        app: frolf-bot-pwa
+    spec:
+      containers:
+        - name: frolf-bot-pwa
+          image: ghcr.io/black-and-white-club/frolf-bot-pwa:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: BODY_SIZE_LIMIT
+              value: "Infinity"
+            - name: PUBLIC_VITE_NATS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_VITE_NATS_URL
+            - name: PUBLIC_VITE_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_VITE_API_URL
+            - name: PUBLIC_VITE_OTEL_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_VITE_OTEL_ENDPOINT
+            - name: PUBLIC_VITE_DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_VITE_DEBUG
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
