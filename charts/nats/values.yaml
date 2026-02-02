@@ -18,21 +18,6 @@ config:
     port: 9222
     no_tls: true
 
-# Ingress configuration for external access (WebSockets)
-ingress:
-  enabled: true
-  className: nginx
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-  hosts:
-    - nats.frolf-bot.duckdns.org
-  tls:
-    - secretName: nats-tls
-      hosts:
-        - nats.frolf-bot.duckdns.org
-
 # Resource limits for the NATS pod
 container:
   resources:
