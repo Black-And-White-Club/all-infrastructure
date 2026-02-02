@@ -24,7 +24,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: nats
+                name: frolf-nats
                 port:
                   number: 9222
   tls:
