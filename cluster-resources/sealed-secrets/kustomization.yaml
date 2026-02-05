@@ -16,5 +16,6 @@ resources:
   - sealed-frolf-postgres-secret.yaml
   - sealed-backend-secrets.yaml
   - sealed-discord-secrets.yaml
+  - sealed-nats-secrets.yaml
   - grafana-admin-secret-sealed.yaml
   - loki-objectstore-creds-sealed.yaml
