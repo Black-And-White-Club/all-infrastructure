@@ -6,7 +6,7 @@ services:
   # ---------------------------------------------------------------------------
   # Infrastructure Services
   # ---------------------------------------------------------------------------
-  
+
   postgres:
     image: postgres:15-alpine
     container_name: frolf-postgres-local
@@ -15,11 +15,11 @@ services:
       POSTGRES_PASSWORD: local
       POSTGRES_DB: frolf_bot
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U local -d frolf_bot']
+      test: ["CMD-SHELL", "pg_isready -U local -d frolf_bot"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -31,15 +31,16 @@ services:
     container_name: frolf-nats-local
     command: ["-c", "/etc/nats/nats.conf"]
     ports:
-      - '4222:4222'
-      - '4443:4443'
-      - '8222:8222'
-      - '6222:6222'
+      - "4222:4222"
+      - "4443:4443"
+      - "8222:8222"
+      - "6222:6222"
     volumes:
       - nats_data:/data
       - ./config/nats.conf:/etc/nats/nats.conf:ro
     healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:8222/healthz']
+      test:
+        ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8222/healthz"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -47,44 +48,46 @@ services:
       - frolf-network
 
   # ---------------------------------------------------------------------------
-  # PWA Frontend
+  # PWA Frontend (DEV MODE — NO IMAGE BUILD)
   # ---------------------------------------------------------------------------
-  
+
   pwa:
-    build:
-      context: ../frolf-bot-pwa
-      dockerfile: Dockerfile
-      args:
-        VITE_NATS_URL: ws://localhost:4443
-        VITE_API_URL: http://localhost:8080
-        VITE_OTEL_ENDPOINT: ""
-        VITE_USE_MOCK: "false"
-        VITE_DEBUG: "true"
+    image: oven/bun:1-alpine
     container_name: frolf-pwa-local
-    # Read environment variables from multiple sources
+    working_dir: /app
+    # CHANGE 1: We put 'bun install' back, but it will be instant (cached)
+    command: >
+      sh -c "
+      bun install &&
+      bun run dev --host
+      "
+    volumes:
+      - ../frolf-bot-pwa:/app
+      # CHANGE 2: This 'Anonymous Volume' tells Docker: 
+      # 'Do NOT look at the host folder for this path. Use your own internal storage.'
+      - /app/node_modules
+      - bun_cache:/root/.bun
     env_file:
-      - ../frolf-bot-pwa/.env.local     # PWA specific secrets (AUTH_SECRET, etc)
-      - ../discord-frolf-bot/.env       # Re-use Discord secrets from here!
+      - ../frolf-bot-pwa/.env.local
+      - ../discord-frolf-bot/.env
     environment:
-      PORT: 3000
-      HOST: 0.0.0.0
-      ORIGIN: http://localhost:3000
+      # ... (keep your existing env vars) ...
+      VITE_NATS_URL: ws://localhost:4443
+      VITE_API_URL: http://host.docker.internal:3001
+      VITE_OTEL_ENDPOINT: ""
+      VITE_USE_MOCK: "false"
+      VITE_DEBUG: "true"
       AUTH_TRUST_HOST: "true"
-      # Overrides & Fallbacks
-      PUBLIC_API_URL: http://host.docker.internal:8080
-      # Ensure these are passed from the env files
-      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
-      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
-      AUTH_SECRET: ${AUTH_SECRET:-dev-insecure-secret-please-change}
+      ORIGIN: http://localhost:5173
     ports:
-      - '3000:3000'
+      - "5173:5173"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/health']
-      interval: 10s
-      timeout: 5s
-      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
     networks:
       - frolf-network
     profiles:
@@ -93,10 +96,13 @@ services:
 # -----------------------------------------------------------------------------
 # Volumes & Networks
 # -----------------------------------------------------------------------------
+
 volumes:
   postgres_data:
     driver: local
   nats_data:
+    driver: local
+  bun_cache:
     driver: local
 
 networks:
