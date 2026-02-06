@@ -54,3 +54,38 @@ patches:
             value: "true"
           - name: PWA_BASE_URL
             value: "https://frolf-bot.duckdns.org"
+          - name: JWT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: JWT_SECRET
+          - name: JWT_ISSUER
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: JWT_ISSUER
+          - name: JWT_AUDIENCE
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: JWT_AUDIENCE
+          - name: AUTH_CALLOUT_ENABLED
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: AUTH_CALLOUT_ENABLED
+          - name: AUTH_CALLOUT_SUBJECT
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: AUTH_CALLOUT_SUBJECT
+          - name: AUTH_CALLOUT_ISSUER_NKEY
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: AUTH_CALLOUT_ISSUER_NKEY
+          - name: AUTH_CALLOUT_SIGNING_NKEY
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: AUTH_CALLOUT_SIGNING_NKEY
