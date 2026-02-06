@@ -23,26 +23,28 @@ spec:
           env:
             - name: BODY_SIZE_LIMIT
               value: "Infinity"
-            - name: PUBLIC_VITE_NATS_URL
+            - name: PRIVATE_API_URL
+              value: "http://frolf-bot-backend.frolf-bot.svc.cluster.local"
+            - name: PUBLIC_NATS_URL
               valueFrom:
                 configMapKeyRef:
                   name: frolf-pwa-config
-                  key: PUBLIC_VITE_NATS_URL
-            - name: PUBLIC_VITE_API_URL
+                  key: PUBLIC_NATS_URL
+            - name: PUBLIC_API_URL
               valueFrom:
                 configMapKeyRef:
                   name: frolf-pwa-config
-                  key: PUBLIC_VITE_API_URL
-            - name: PUBLIC_VITE_OTEL_ENDPOINT
+                  key: PUBLIC_API_URL
+            - name: PUBLIC_OTEL_ENDPOINT
               valueFrom:
                 configMapKeyRef:
                   name: frolf-pwa-config
-                  key: PUBLIC_VITE_OTEL_ENDPOINT
-            - name: PUBLIC_VITE_DEBUG
+                  key: PUBLIC_OTEL_ENDPOINT
+            - name: PUBLIC_DEBUG
               valueFrom:
                 configMapKeyRef:
                   name: frolf-pwa-config
-                  key: PUBLIC_VITE_DEBUG
+                  key: PUBLIC_DEBUG
           readinessProbe:
             httpGet:
               path: /health
