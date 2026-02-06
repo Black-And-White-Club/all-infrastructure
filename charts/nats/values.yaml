@@ -23,30 +23,29 @@ config:
     port: 9222
     no_tls: true
 
-  merge:
-    # Auth Callout Configuration
-    accounts:
-      APP:
+  merge: |
+    accounts {
+      APP {
         jetstream: enabled
-        users:
-          - user: "auth-service"
-            password: "$NATS_AUTH_SERVICE_PASSWORD"
-          - user: "discord-bot"
-            password: "$NATS_DISCORD_BOT_PASSWORD"
-      SYS:
-        users:
-          - user: "sys"
-            password: "$NATS_SYS_PASSWORD"
-
+        users: [
+          { user: "auth-service", password: $NATS_AUTH_SERVICE_PASSWORD }
+          { user: "discord-bot", password: $NATS_DISCORD_BOT_PASSWORD }
+        ]
+      }
+      SYS {
+        users: [
+          { user: "sys", password: $NATS_SYS_PASSWORD }
+        ]
+      }
+    }
     system_account: SYS
-
-    authorization:
-      auth_callout:
+    authorization {
+      auth_callout {
         account: APP
         issuer: "ACFZCYMXEOZSYNMEEGHGDOGN4PFYWLZEHIGHBBYPMQ3UFH4PZJ44QIAP"
-        auth_users:
-          - "auth-service"
-          - "discord-bot"
+        auth_users: ["auth-service", "discord-bot"]
+      }
+    }
 
 natsBox:
   enabled: false
