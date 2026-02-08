@@ -21,4 +21,4 @@ images:
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
     digest: sha256:c14cf9d0af310888ecb4eaec47415540bf4bfd7951a3eb703b229b7c49edb03a
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
-    digest: sha256:c14cf9d0af310888ecb4eaec47415540bf4bfd7951a3eb703b229b7c49edb03a
+    digest: sha256:5923e1bfa92f800e23efaf0cc79619501e0586b025d67cab9065a6e9ab4a46c5
