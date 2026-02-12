@@ -19,6 +19,6 @@ images:
     newTag: latest
   - name: frolf-bot-pwa
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
-    digest: sha256:5923e1bfa92f800e23efaf0cc79619501e0586b025d67cab9065a6e9ab4a46c5
+    digest: sha256:415db8c5a8c9a6780db43b88d43f8b523f254edf880089fe7869ba8007df8eea
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
     digest: sha256:14899b4587a96e69063624bc8229358573a8d932ec42324e844610df52a1e093
