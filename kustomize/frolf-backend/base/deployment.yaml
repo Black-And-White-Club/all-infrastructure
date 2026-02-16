@@ -23,9 +23,6 @@ spec:
         - name: wait-for-postgres
           image: busybox:1.35
           securityContext:
-            runAsNonRoot: true
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
@@ -176,7 +173,7 @@ spec:
                   key: JWT_AUDIENCE
           startupProbe:
             httpGet:
-              path: /health
+              path: /livez
               port: 8080
               scheme: HTTP
             periodSeconds: 5
@@ -184,7 +181,7 @@ spec:
             failureThreshold: 24
           livenessProbe:
             httpGet:
-              path: /health
+              path: /livez
               port: 8080
               scheme: HTTP
             initialDelaySeconds: 10
@@ -193,7 +190,7 @@ spec:
             failureThreshold: 5
           readinessProbe:
             httpGet:
-              path: /health
+              path: /readyz
               port: 8080
               scheme: HTTP
             initialDelaySeconds: 5
