@@ -187,9 +187,9 @@ variable "vm_names" {
 }
 
 variable "assign_reserved_ips" {
-  description = "List of booleans indicating if each VM should receive a reserved public ip"
+  description = "List of booleans indicating if each VM should receive a reserved public ip (default disabled for all nodes)"
   type        = list(bool)
-  default     = [false, true]
+  default     = [false, false]
 }
 
 variable "allowed_ssh_cidrs" {

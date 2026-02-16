@@ -1,0 +1,10 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: resume-db-default-deny
+  namespace: resume-db
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

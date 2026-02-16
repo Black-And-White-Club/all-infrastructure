@@ -7,7 +7,7 @@ resources:
 images:
   - name: frolf-bot-discord
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
-    newTag: latest
+    digest: sha256:faa4446c1291cb5ff9db85ef72f74509d17af6f4efb0494693460a34944052fb
 labels:
   - includeSelectors: true
     pairs:

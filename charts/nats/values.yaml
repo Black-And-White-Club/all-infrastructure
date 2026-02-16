@@ -19,9 +19,7 @@ config:
   nats:
     port: 4222
   websocket:
-    enabled: true
-    port: 9222
-    no_tls: true
+    enabled: false
 
   merge:
     accounts:

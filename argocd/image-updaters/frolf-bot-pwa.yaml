@@ -11,15 +11,16 @@ spec:
     - namePattern: "frolf-bot-pwa"
       images:
         - alias: "frolf-bot-pwa"
-          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa:latest"
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa"
           commonUpdateSettings:
-            updateStrategy: "digest"
-            allowTags: "regexp:^latest$"
+            updateStrategy: "semver"
+            allowTags: 'regexp:^v[0-9]+\.[0-9]+\.[0-9]+$'
             pullSecret: "pullsecret:argocd/ocir-secret"
           manifestTargets:
             kustomize:
-              name: "frolf-bot-pwa"
+              name: "us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa"
   writeBackConfig:
     method: "git:secret:argocd/repo-all-infrastructure"
     gitConfig:
+      branch: "main"
       writeBackTarget: "kustomization"

@@ -1,10 +1,8 @@
 controller:
+  hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
   service:
-    type: NodePort
-    externalTrafficPolicy: Local
-    nodePorts:
-      http: 30080
-      https: 30443
+    type: ClusterIP
   resources:
     requests:
       cpu: 50m

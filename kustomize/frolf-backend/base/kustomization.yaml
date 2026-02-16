@@ -8,7 +8,7 @@ resources:
 images:
   - name: frolf-bot-backend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    newTag: latest
+    digest: sha256:79597413455b66baf80288fac7bceac1968e740abd3a6941c1e9bb0d4a9c2421
 labels:
   - includeSelectors: true
     pairs:

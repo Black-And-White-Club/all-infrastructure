@@ -13,12 +13,23 @@ spec:
       labels:
         app: resume-frontend
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       imagePullSecrets:
         - name: ocir-secret
       containers:
         - name: resume-frontend
           image: resume-frontend
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
               memory: "64Mi"

@@ -1,0 +1,3 @@
+# Populate this file with SSH host keys for managed nodes before running Ansible.
+# Example:
+# ssh-keyscan -t ed25519,rsa <host-or-ip> >> ansible/known_hosts

@@ -2,11 +2,11 @@
 kube_version: "v1.31.4"
 
 # Network plugin
-kube_network_plugin: flannel
+kube_network_plugin: calico
 
 # Add public IPs to API server certificate SANs for external access
 supplementary_addresses_in_ssl_keys:
-  - 157.151.239.144
+  - 203.0.113.10
 
 # Enable Helm
 helm_enabled: true
