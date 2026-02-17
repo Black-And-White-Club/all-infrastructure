@@ -14,6 +14,7 @@ spec:
           imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend"
           commonUpdateSettings:
             updateStrategy: "newest-build"
+            pullSecret: "pullsecret:argocd/ocir-secret"
           manifestTargets:
             kustomize:
               name: "resume-backend"
