@@ -25,6 +25,14 @@ spec:
       server: 'https://kubernetes.default.svc'
     - namespace: 'default'
       server: 'https://kubernetes.default.svc'
+    - namespace: 'resume-db'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'resume-app'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'frolf-bot'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'observability'
+      server: 'https://kubernetes.default.svc'
     - namespace: ''
       server: 'https://kubernetes.default.svc'
 
@@ -35,8 +43,6 @@ spec:
       kind: Node
     - group: ''
       kind: PersistentVolume
-    - group: ''
-      kind: PersistentVolumeClaim
     - group: 'storage.k8s.io'
       kind: StorageClass
     - group: 'storage.k8s.io'
@@ -75,6 +81,8 @@ spec:
       kind: Endpoints
     - group: ''
       kind: Pod
+    - group: ''
+      kind: PersistentVolumeClaim
     - group: 'apps'
       kind: Deployment
     - group: 'apps'
