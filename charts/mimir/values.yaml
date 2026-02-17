@@ -198,3 +198,4 @@ store_gateway:
     limits:
       cpu: 150m
       memory: 256Mi
+
