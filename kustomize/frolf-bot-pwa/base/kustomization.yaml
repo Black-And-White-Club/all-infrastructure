@@ -5,3 +5,5 @@ resources:
   - deployment.yaml
   - service.yaml
   - ingress.yaml
+  - external-tempo.yaml
+  - ingress-nats.yaml
