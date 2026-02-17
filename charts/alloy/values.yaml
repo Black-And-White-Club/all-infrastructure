@@ -217,6 +217,25 @@ serviceAccount:
 rbac:
   create: true
 
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://frolf-bot.duckdns.org"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type"
+  hosts:
+    - host: otel.frolf-bot.duckdns.org
+      paths:
+        - path: /
+          pathType: Prefix
+          port: 4318
+  tls:
+    - secretName: frolf-bot-otel-tls
+      hosts:
+        - otel.frolf-bot.duckdns.org
+
 controller:
   type: daemonset
   resources:
