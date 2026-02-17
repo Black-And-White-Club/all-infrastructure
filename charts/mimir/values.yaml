@@ -52,6 +52,8 @@ mimir:
     limits:
       # Keep metrics for 30 days to cap object-storage growth.
       compactor_blocks_retention_period: 720h
+      # Allow out-of-order samples to handle jitter/drift in small clusters
+      out_of_order_time_window: 1h
 
 ##############################################
 # DISABLED COMPONENTS (not needed for small setups)
