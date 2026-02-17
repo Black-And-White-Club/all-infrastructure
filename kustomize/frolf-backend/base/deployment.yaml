@@ -133,6 +133,8 @@ spec:
               value: "alloy.observability.svc.cluster.local:4317"
             - name: OTLP_TRANSPORT
               value: "grpc"
+            - name: OTLP_INSECURE
+              value: "true"
             - name: PPROF_ENABLED
               value: "true"
             - name: PPROF_ADDR
