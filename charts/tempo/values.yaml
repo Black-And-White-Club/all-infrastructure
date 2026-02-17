@@ -24,7 +24,7 @@ distributor:
     - -config.expand-env=true
   resources:
     requests:
-      cpu: 25m
+      cpu: 10m
       memory: 64Mi
     limits:
       cpu: 200m
@@ -44,7 +44,7 @@ ingester:
     enabled: false
   resources:
     requests:
-      cpu: 25m
+      cpu: 10m
       memory: 128Mi
     limits:
       cpu: 500m
@@ -66,7 +66,7 @@ compactor:
       max_block_bytes: 107374182400
   resources:
     requests:
-      cpu: 25m
+      cpu: 10m
       memory: 64Mi
     limits:
       cpu: 200m
@@ -82,7 +82,7 @@ querier:
     - -config.expand-env=true
   resources:
     requests:
-      cpu: 25m
+      cpu: 10m
       memory: 64Mi
     limits:
       cpu: 200m
@@ -98,7 +98,7 @@ queryFrontend:
     - -config.expand-env=true
   resources:
     requests:
-      cpu: 25m
+      cpu: 10m
       memory: 64Mi
     limits:
       cpu: 200m
