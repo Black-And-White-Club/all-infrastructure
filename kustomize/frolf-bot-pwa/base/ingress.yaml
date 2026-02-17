@@ -17,20 +17,7 @@ spec:
                 name: frolf-bot-pwa
                 port:
                   number: 80
-    - host: nats.frolf-bot.duckdns.org
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frolf-nats
-                port:
-                  number: 9222
   tls:
     - hosts:
         - frolf-bot.duckdns.org
       secretName: frolf-bot-pwa-tls
-    - hosts:
-        - nats.frolf-bot.duckdns.org
-      secretName: nats-tls

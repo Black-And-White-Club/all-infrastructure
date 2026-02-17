@@ -12,11 +12,20 @@ spec:
       labels:
         app: frolf-bot-backend
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       imagePullSecrets:
         - name: ocir-secret
       initContainers:
         - name: wait-for-postgres
           image: busybox:1.35
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
           command: ["sh", "-c"]
           args:
             - |
@@ -36,7 +45,13 @@ spec:
       containers:
         - name: backend
           image: frolf-bot-backend
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8080
             - containerPort: 6060
@@ -156,28 +171,36 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: JWT_AUDIENCE
-          livenessProbe:
+          startupProbe:
             httpGet:
-              path: /health
+              path: /livez
               port: 8080
               scheme: HTTP
-            initialDelaySeconds: 90
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 24
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 10
             periodSeconds: 10
-            timeoutSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 5
           readinessProbe:
             httpGet:
-              path: /health
+              path: /readyz
               port: 8080
               scheme: HTTP
-            initialDelaySeconds: 60
+            initialDelaySeconds: 5
             periodSeconds: 5
-            timeoutSeconds: 5
-            failureThreshold: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
           resources:
             requests:
               memory: "128Mi"
-              cpu: "25m"
+              cpu: "100m"
             limits:
               memory: "512Mi"
               cpu: "500m"

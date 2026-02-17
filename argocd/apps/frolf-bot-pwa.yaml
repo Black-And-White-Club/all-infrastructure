@@ -6,15 +6,12 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd-image-updater.argoproj.io/image-list: frolf-bot-pwa=us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
-    argocd-image-updater.argoproj.io/frolf-bot-pwa.update-strategy: latest
-    argocd-image-updater.argoproj.io/write-back-method: git
     argocd.argoproj.io/sync-wave: "21"
 spec:
   project: apps
   source:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
-    targetRevision: HEAD
+    targetRevision: main
     path: kustomize/frolf-bot-pwa/overlays/production
   destination:
     server: https://kubernetes.default.svc

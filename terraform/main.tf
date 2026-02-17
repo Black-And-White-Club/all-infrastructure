@@ -78,20 +78,6 @@ resource "oci_identity_policy" "terraform_policy" {
   ]
 }
 
-resource "oci_identity_policy" "administrators_policy" {
-  compartment_id = var.tenancy_ocid
-  name           = "AdministratorsPolicy"
-  description    = "Default policy for Administrators group"
-  statements = [
-    "Allow group Administrators to manage all-resources in tenancy"
-  ]
-}
-
-/* The Administrators group membership: we add a resource so it can be imported
-  into Terraform state. If you want to manage membership outside Terraform,
-  remove this resource block again. */
-
-
 module "identity_users" {
   source = "./modules/identity-users"
 
@@ -125,6 +111,7 @@ module "resume_db_block_storage" {
 locals {
   computed_disk_ocids      = var.create_resume_db_block_storage ? module.resume_db_block_storage[0].disk_ocids : {}
   computed_disk_attach_map = { for k, v in local.computed_disk_ocids : k => 1 }
+  csi_node_display_name    = length(var.vm_names) > 1 ? var.vm_names[1] : var.vm_names[0]
 }
 
 module "compute" {
@@ -145,8 +132,7 @@ module "compute" {
   boot_volume_size_in_gbs = var.boot_volume_size_in_gbs
 
   depends_on = [
-    oci_identity_policy.terraform_policy,
-    oci_identity_policy.administrators_policy
+    oci_identity_policy.terraform_policy
   ]
 
   # Attach any created block-storage volumes to compute instances.
@@ -155,7 +141,16 @@ module "compute" {
   disk_attach_to              = local.computed_disk_attach_map
   enable_resume_db_auto_mount = false
   resume_db_mount_point       = "/mnt/data/resume-db"
-  backend_https_port          = 30443
+  backend_http_port           = 80
+  backend_https_port          = 443
+}
+
+module "bastion" {
+  source = "./modules/bastion"
+
+  compartment_ocid = var.compartment_ocid
+  subnet_id        = module.compute.subnet_id
+  allowed_cidrs    = var.allowed_k8s_api_cidrs
 }
 
 # Optional remote setup: ensure /mnt/data/resume-db directory exists and is owned appropriately
@@ -188,8 +183,6 @@ module "container_registry_frolf" {
   compartment_ocid  = var.compartment_ocid
   tenancy_namespace = data.oci_objectstorage_namespace.namespace.namespace
   repo_name         = "frolf-bot"
-
-  depends_on = [oci_identity_policy.terraform_policy]
 }
 
 module "container_registry_resume" {
@@ -198,8 +191,6 @@ module "container_registry_resume" {
   compartment_ocid  = var.compartment_ocid
   tenancy_namespace = data.oci_objectstorage_namespace.namespace.namespace
   repo_name         = "resume"
-
-  depends_on = [oci_identity_policy.terraform_policy]
 }
 
 module "object_storage" {
@@ -212,8 +203,6 @@ module "object_storage" {
     loki  = { name = var.loki_bucket_name }
     tempo = { name = var.tempo_bucket_name }
   }
-
-  depends_on = [oci_identity_policy.terraform_policy]
 }
 
 module "resume_load_balancer" {
@@ -225,9 +214,10 @@ module "resume_load_balancer" {
   # vm_names = ["k8s-control-plane", "k8s-worker"] → index 1 is worker
   backend_ip_addresses  = [module.compute.private_ips[1]]
   name_prefix           = "resume-ingress"
-  backend_http_port     = 30080
-  backend_https_port    = 30443
+  backend_http_port     = 80
+  backend_https_port    = 443
   http_health_path      = "/healthz"
+  health_check_protocol = "TCP"
   enable_https_listener = true
   certificate_ocid      = var.resume_certificate_ocid
 }
@@ -256,9 +246,7 @@ module "csi_instance_principals" {
 
   tenancy_ocid     = var.tenancy_ocid
   compartment_ocid = var.compartment_ocid
-
-  # You can make the matching rule more specific if needed, e.g.:
-  # matching_rule = "Any {instance.id = 'ocid1.instance...', instance.id = 'ocid1.instance...'}"
+  matching_rule    = "all {instance.compartment.id = '${var.compartment_ocid}', instance.displayName = '${local.csi_node_display_name}'}"
 }
 
 output "csi_dynamic_group_name" {

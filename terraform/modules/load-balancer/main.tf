@@ -28,9 +28,9 @@ resource "oci_load_balancer_backend_set" "http" {
   policy           = "ROUND_ROBIN"
 
   health_checker {
-    protocol = "HTTP"
+    protocol = upper(var.health_check_protocol)
     port     = var.backend_http_port
-    url_path = var.http_health_path
+    url_path = upper(var.health_check_protocol) == "HTTP" ? var.http_health_path : null
   }
 }
 

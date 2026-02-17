@@ -11,6 +11,9 @@ spec:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure
     targetRevision: main
     path: charts/cert-manager
+    directory:
+      include: clusterissuer.yaml
+      recurse: false
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
