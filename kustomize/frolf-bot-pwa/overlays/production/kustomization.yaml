@@ -8,11 +8,11 @@ namespace: frolf-bot
 configMapGenerator:
   - name: frolf-pwa-config
     literals:
-      - PUBLIC_NATS_URL=wss://nats.frolf-bot.duckdns.org
-      - PUBLIC_API_URL=https://api.frolf-bot.duckdns.org
-      - PUBLIC_OTEL_ENDPOINT=https://otel.frolf-bot.duckdns.org/v1/traces
+      - PUBLIC_NATS_URL=wss://frolf-bot.duckdns.org/nats
+      - PUBLIC_API_URL=https://frolf-bot.duckdns.org
+      - PUBLIC_OTEL_ENDPOINT=https://frolf-bot.duckdns.org/v1/traces
       - PUBLIC_DEBUG="false"
-      - PUBLIC_API_HOST_ALLOWLIST="api.frolf-bot.duckdns.org"
+      - PUBLIC_API_HOST_ALLOWLIST="frolf-bot.duckdns.org"
 # Image modification - ArgoCD Image Updater will patch this
 images:
   - name: frolf-bot-pwa

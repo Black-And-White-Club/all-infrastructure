@@ -226,9 +226,9 @@ ingress:
     nginx.ingress.kubernetes.io/cors-allow-methods: "POST, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type"
   hosts:
-    - otel.frolf-bot.duckdns.org
+    - frolf-bot.duckdns.org
   extraPaths:
-    - path: /
+    - path: /v1
       pathType: Prefix
       backend:
         service:
@@ -236,9 +236,9 @@ ingress:
           port:
             number: 4318
   tls:
-    - secretName: frolf-bot-otel-tls
+    - secretName: frolf-bot-pwa-tls
       hosts:
-        - otel.frolf-bot.duckdns.org
+        - frolf-bot.duckdns.org
 
 controller:
   type: daemonset

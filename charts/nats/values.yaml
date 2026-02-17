@@ -19,7 +19,8 @@ config:
   nats:
     port: 4222
   websocket:
-    enabled: false
+    enabled: true
+    port: 9222
 
   merge:
     accounts:
@@ -88,11 +89,12 @@ ingress:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/rewrite-target: /
   hosts:
-    - host: nats.frolf-bot.duckdns.org
+    - host: frolf-bot.duckdns.org
       paths:
-        - /
+        - /nats
   tls:
-    - secretName: frolf-bot-nats-tls
+    - secretName: frolf-bot-pwa-tls
       hosts:
-        - nats.frolf-bot.duckdns.org
+        - frolf-bot.duckdns.org
