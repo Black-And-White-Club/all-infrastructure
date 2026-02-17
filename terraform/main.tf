@@ -145,6 +145,14 @@ module "compute" {
   backend_https_port          = 443
 }
 
+module "bastion" {
+  source = "./modules/bastion"
+
+  compartment_ocid = var.compartment_ocid
+  subnet_id        = module.compute.subnet_id
+  allowed_cidrs    = var.allowed_k8s_api_cidrs
+}
+
 # Optional remote setup: ensure /mnt/data/resume-db directory exists and is owned appropriately
 resource "null_resource" "resume_db_directory_setup" {
   count = var.enable_resume_db_remote_setup ? 1 : 0
