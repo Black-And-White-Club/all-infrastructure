@@ -48,8 +48,28 @@ resource "oci_core_security_list" "default" {
     }
   }
 
-  # No direct internet ingress to application ports.
-  # Public traffic must enter through the OCI load balancer and private VCN paths.
+  # Allow public internet traffic to reach the OCI load balancer (ports 80/443).
+  # The LB sits in this subnet, so it needs these ingress rules.
+  # Backend nodes are only reached via the LB over private VCN paths.
+  ingress_security_rules {
+    protocol    = "6" # TCP
+    source      = "0.0.0.0/0"
+    description = "Allow HTTP from internet (OCI load balancer)"
+    tcp_options {
+      min = var.backend_http_port
+      max = var.backend_http_port
+    }
+  }
+
+  ingress_security_rules {
+    protocol    = "6" # TCP
+    source      = "0.0.0.0/0"
+    description = "Allow HTTPS from internet (OCI load balancer)"
+    tcp_options {
+      min = var.backend_https_port
+      max = var.backend_https_port
+    }
+  }
 
   # Kubernetes API server - internal
   ingress_security_rules {
