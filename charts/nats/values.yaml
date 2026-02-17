@@ -80,3 +80,19 @@ service:
     websocket:
       port: 9222
       name: websocket
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  hosts:
+    - host: nats.frolf-bot.duckdns.org
+      paths:
+        - /
+  tls:
+    - secretName: frolf-bot-nats-tls
+      hosts:
+        - nats.frolf-bot.duckdns.org
