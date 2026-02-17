@@ -10,10 +10,10 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
 spec:
   rules:
-    - host: api.frolf-bot.duckdns.org
+    - host: frolf-bot.duckdns.org
       http:
         paths:
-          - path: /
+          - path: /api
             pathType: Prefix
             backend:
               service:
@@ -22,5 +22,5 @@ spec:
                   number: 8080
   tls:
     - hosts:
-        - api.frolf-bot.duckdns.org
-      secretName: frolf-bot-api-tls
+        - frolf-bot.duckdns.org
+      secretName: frolf-bot-pwa-tls
