@@ -209,6 +209,10 @@ alloy:
       port: 4318
       targetPort: 4318
       protocol: TCP
+    - name: internal-http
+      port: 12347
+      targetPort: 12345
+      protocol: TCP
 
 serviceAccount:
   create: true
@@ -235,6 +239,13 @@ ingress:
           name: alloy
           port:
             number: 4318
+    - path: /
+      pathType: Prefix
+      backend:
+        service:
+          name: alloy
+          port:
+            number: 12347
   tls:
     - secretName: frolf-bot-pwa-tls
       hosts:
