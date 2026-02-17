@@ -225,6 +225,7 @@ ingress:
   enabled: true
   className: nginx
   annotations:
+    kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://frolf-bot.duckdns.org"
     nginx.ingress.kubernetes.io/cors-allow-methods: "POST, OPTIONS"
@@ -239,13 +240,6 @@ ingress:
           name: alloy
           port:
             number: 4318
-    - path: /
-      pathType: Prefix
-      backend:
-        service:
-          name: alloy
-          port:
-            number: 12347
   tls:
     - secretName: frolf-bot-pwa-tls
       hosts:
