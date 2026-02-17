@@ -58,8 +58,19 @@ variable "backend_https_port" {
 
 variable "http_health_path" {
   type        = string
-  description = "HTTP health check path"
+  description = "HTTP health check path (used only when health_check_protocol is HTTP)"
   default     = "/healthz"
+}
+
+variable "health_check_protocol" {
+  type        = string
+  description = "Backend health check protocol (TCP is safer for ingress listener checks)"
+  default     = "TCP"
+
+  validation {
+    condition     = contains(["TCP", "HTTP"], upper(var.health_check_protocol))
+    error_message = "health_check_protocol must be either TCP or HTTP."
+  }
 }
 
 variable "enable_https_listener" {

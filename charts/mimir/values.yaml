@@ -49,6 +49,9 @@ mimir:
       scheduler_address: "mimir-query-scheduler-headless.observability.svc:9095"
     frontend_worker:
       scheduler_address: "mimir-query-scheduler-headless.observability.svc:9095"
+    limits:
+      # Keep metrics for 30 days to cap object-storage growth.
+      compactor_blocks_retention_period: 720h
 
 ##############################################
 # DISABLED COMPONENTS (not needed for small setups)

@@ -70,3 +70,24 @@ down:
 
 clean:
 	$(COMPOSE) down -v --remove-orphans
+
+# ====================================================================================
+# Bastion / Kubeconfig Helpers
+# ====================================================================================
+
+# Start a port-forwarding session via OCI Bastion to the K8s API Server
+# Requires OCI CLI and jq installed.
+# Usage: make bastion-connect
+.PHONY: bastion-connect
+bastion-connect:
+	@echo "Starting Bastion Session..."
+	@scripts/bastion-connect.sh
+
+# Update kubeconfig to point to local tunnel
+.PHONY: kubeconfig-local
+kubeconfig-local:
+	@kubectl config set-cluster kubernetes --server=https://127.0.0.1:6443 --insecure-skip-tls-verify=true
+	@kubectl config unset clusters.kubernetes.certificate-authority-data
+	@kubectl config set-context kubernetes-admin@kubernetes --cluster=kubernetes --user=kubernetes-admin
+	@kubectl config use-context kubernetes-admin@kubernetes
+	@echo "Kubeconfig updated to localhost:6443 (insecure TLS)"

@@ -1,63 +1,71 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Helper script to generate backend-secrets for frolf-bot
-# Usage: ./generate-frolf-backend-secrets.sh
+# Helper script to generate sealed backend-secrets for frolf-bot.
+# All sensitive values must be provided explicitly through environment variables.
 #
-# Prerequisites:
-# 1. Run ../scripts/generate-nats-auth-keys.sh to generate auth keys
-# 2. Update the AUTH_CALLOUT_* variables below with the generated seed keys
+# Usage:
+#   DB_PASSWORD=... NATS_AUTH_PASSWORD=... AUTH_CALLOUT_ISSUER_NKEY=... \
+#   AUTH_CALLOUT_SIGNING_NKEY=... JWT_SECRET=... \
+#   ./generate-frolf-backend-secrets.sh [output-file]
 
-OUTPUT_FILE="sealed-backend-secrets.yaml"
-NAMESPACE="frolf-bot"
-SECRET_NAME="backend-secrets"
+OUTPUT_FILE="${1:-sealed-backend-secrets.yaml}"
+NAMESPACE="${NAMESPACE:-frolf-bot}"
+SECRET_NAME="${SECRET_NAME:-backend-secrets}"
 
-# =============================================================================
-# Database Configuration
-# =============================================================================
-DB_HOST="frolf-postgres-postgresql.frolf-bot.svc.cluster.local"
-DB_PORT="5432"
-DB_USER="postgres"
-DB_PASSWORD="postgres"
-DB_NAME="frolf_bot"
+DB_HOST="${DB_HOST:-frolf-postgres-postgresql.frolf-bot.svc.cluster.local}"
+DB_PORT="${DB_PORT:-5432}"
+DB_USER="${DB_USER:-postgres}"
+DB_PASSWORD="${DB_PASSWORD:-}"
+DB_NAME="${DB_NAME:-frolf_bot}"
 
-# Construct connection strings
+NATS_AUTH_USER="${NATS_AUTH_USER:-auth-service}"
+NATS_AUTH_PASSWORD="${NATS_AUTH_PASSWORD:-}"
+
+AUTH_CALLOUT_ENABLED="${AUTH_CALLOUT_ENABLED:-true}"
+AUTH_CALLOUT_SUBJECT="${AUTH_CALLOUT_SUBJECT:-\$SYS.REQ.USER.AUTH}"
+AUTH_CALLOUT_ISSUER_NKEY="${AUTH_CALLOUT_ISSUER_NKEY:-}"
+AUTH_CALLOUT_SIGNING_NKEY="${AUTH_CALLOUT_SIGNING_NKEY:-}"
+
+JWT_SECRET="${JWT_SECRET:-}"
+JWT_ISSUER="${JWT_ISSUER:-frolf-bot}"
+JWT_AUDIENCE="${JWT_AUDIENCE:-frolf-bot-users}"
+
+require_command() {
+  local cmd="$1"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "ERROR: required command '$cmd' is not installed." >&2
+    exit 1
+  fi
+}
+
+require_var() {
+  local var_name="$1"
+  local var_value="${!var_name:-}"
+  if [[ -z "${var_value}" ]]; then
+    echo "ERROR: ${var_name} is required and must be set." >&2
+    exit 1
+  fi
+}
+
+require_command kubectl
+require_command kubeseal
+
+require_var DB_PASSWORD
+require_var NATS_AUTH_PASSWORD
+require_var AUTH_CALLOUT_ISSUER_NKEY
+require_var AUTH_CALLOUT_SIGNING_NKEY
+require_var JWT_SECRET
+
 POSTGRES_DSN="postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
 DATABASE_URL="${POSTGRES_DSN}"
-
-# =============================================================================
-# NATS Configuration
-# =============================================================================
-# The auth-service user credentials must match what's in the NATS helm values
-NATS_AUTH_USER="auth-service"
-NATS_AUTH_PASSWORD="${NATS_AUTH_PASSWORD:-CHANGE_ME_STRONG_PASSWORD}"
 NATS_URL="nats://${NATS_AUTH_USER}:${NATS_AUTH_PASSWORD}@frolf-nats.frolf-bot.svc.cluster.local:4222"
 
-# =============================================================================
-# Auth Callout Configuration
-# Generate keys with: ./scripts/generate-nats-auth-keys.sh ./secrets
-# Then copy the seed values here (lines starting with SA... and SU...)
-# =============================================================================
-AUTH_CALLOUT_ENABLED="true"
-AUTH_CALLOUT_SUBJECT="\$SYS.REQ.USER.AUTH"
+RAW_SECRET_FILE="$(mktemp)"
+trap 'rm -f "$RAW_SECRET_FILE"' EXIT
 
-# TODO: Replace these with your actual generated keys!
-AUTH_CALLOUT_ISSUER_NKEY="${AUTH_CALLOUT_ISSUER_NKEY:-SAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}"
-AUTH_CALLOUT_SIGNING_NKEY="${AUTH_CALLOUT_SIGNING_NKEY:-SUXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}"
-
-# =============================================================================
-# JWT Configuration
-# =============================================================================
-JWT_SECRET="${JWT_SECRET:-CHANGE_ME_GENERATE_STRONG_SECRET}"
-JWT_ISSUER="frolf-bot"
-JWT_AUDIENCE="frolf-bot-users"
-
-# =============================================================================
-# Generate the secret
-# =============================================================================
-echo "Generating raw secret..."
-kubectl create secret generic ${SECRET_NAME} \
-  --namespace ${NAMESPACE} \
+kubectl create secret generic "${SECRET_NAME}" \
+  --namespace "${NAMESPACE}" \
   --from-literal=DATABASE_URL="${DATABASE_URL}" \
   --from-literal=DB_HOST="${DB_HOST}" \
   --from-literal=DB_PORT="${DB_PORT}" \
@@ -73,16 +81,7 @@ kubectl create secret generic ${SECRET_NAME} \
   --from-literal=JWT_SECRET="${JWT_SECRET}" \
   --from-literal=JWT_ISSUER="${JWT_ISSUER}" \
   --from-literal=JWT_AUDIENCE="${JWT_AUDIENCE}" \
-  --dry-run=client -o yaml > "${SECRET_NAME}.yaml"
+  --dry-run=client -o yaml > "${RAW_SECRET_FILE}"
 
-echo "Sealing secret..."
-kubeseal --format=yaml < "${SECRET_NAME}.yaml" > "${OUTPUT_FILE}"
-
-# Clean up raw secret
-rm "${SECRET_NAME}.yaml"
-
+kubeseal --format=yaml < "${RAW_SECRET_FILE}" > "${OUTPUT_FILE}"
 echo "Sealed secret created at ${OUTPUT_FILE}"
-echo ""
-echo "IMPORTANT: Make sure to also update the NATS helm values with:"
-echo "  - The account PUBLIC key (for issuer field)"
-echo "  - Matching NATS_AUTH_PASSWORD"

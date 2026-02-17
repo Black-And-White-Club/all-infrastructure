@@ -48,41 +48,8 @@ resource "oci_core_security_list" "default" {
     }
   }
 
-  ingress_security_rules {
-    protocol = "6"
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = 80
-      max = 80
-    }
-  }
-
-  ingress_security_rules {
-    protocol = "6"
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = var.backend_http_port
-      max = var.backend_http_port
-    }
-  }
-
-  ingress_security_rules {
-    protocol = "6"
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = var.backend_https_port
-      max = var.backend_https_port
-    }
-  }
-
-  ingress_security_rules {
-    protocol = "6"
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = 443
-      max = 443
-    }
-  }
+  # No direct internet ingress to application ports.
+  # Public traffic must enter through the OCI load balancer and private VCN paths.
 
   # Kubernetes API server - internal
   ingress_security_rules {
@@ -170,4 +137,3 @@ resource "oci_core_security_list" "default" {
     }
   }
 }
-

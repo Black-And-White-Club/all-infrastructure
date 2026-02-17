@@ -11,10 +11,10 @@ spec:
     - namePattern: "frolf-backend"
       images:
         - alias: "backend"
-          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend:latest"
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend"
           commonUpdateSettings:
-            updateStrategy: "digest"
-            allowTags: "regexp:^latest$"
+            updateStrategy: "semver"
+            allowTags: 'regexp:^v[0-9]+\.[0-9]+\.[0-9]+$'
             pullSecret: "pullsecret:argocd/ocir-secret"
           manifestTargets:
             kustomize:
@@ -22,4 +22,5 @@ spec:
   writeBackConfig:
     method: "git:secret:argocd/repo-all-infrastructure"
     gitConfig:
+      branch: "main"
       writeBackTarget: "kustomization"

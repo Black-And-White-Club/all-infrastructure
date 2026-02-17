@@ -121,7 +121,7 @@ storage:
 
 # Memcached for caching
 memcached:
-  enabled: true
+  enabled: false
   replicas: 1
   # Clear any inherited values from global - memcached doesn't need these
   extraEnvFrom: []
@@ -136,7 +136,7 @@ memcached:
 
 # Metrics generator - generates RED metrics from traces for TraceQL metrics queries
 metricsGenerator:
-  enabled: true
+  enabled: false
   replicas: 1
   extraEnvFrom:
     - secretRef:

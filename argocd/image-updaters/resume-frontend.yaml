@@ -11,10 +11,10 @@ spec:
     - namePattern: "resume-frontend"
       images:
         - alias: "frontend"
-          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend:latest"
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend"
           commonUpdateSettings:
-            updateStrategy: "digest"
-            allowTags: "regexp:^latest$"
+            updateStrategy: "semver"
+            allowTags: 'regexp:^v[0-9]+\.[0-9]+\.[0-9]+$'
             pullSecret: "pullsecret:argocd/ocir-secret"
           manifestTargets:
             kustomize:

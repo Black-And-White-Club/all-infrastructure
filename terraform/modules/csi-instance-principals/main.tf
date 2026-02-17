@@ -27,9 +27,12 @@ variable "policy_name" {
 }
 
 variable "matching_rule" {
-  description = "Matching rule for the dynamic group. Defaults to all instances in the compartment."
+  description = "Matching rule for the dynamic group. Must explicitly scope membership to CSI-capable nodes only."
   type        = string
-  default     = ""
+  validation {
+    condition     = trimspace(var.matching_rule) != ""
+    error_message = "matching_rule must be explicitly set to avoid granting CSI permissions to all instances in a compartment."
+  }
 }
 
 # Dynamic group that includes the K8s worker nodes
@@ -38,9 +41,7 @@ resource "oci_identity_dynamic_group" "csi_nodes" {
   name           = var.dynamic_group_name
   description    = "Dynamic group for Kubernetes nodes running the OCI CSI driver"
 
-  # Default: match all instances in the compartment
-  # You can make this more specific by instance OCID or tags
-  matching_rule = var.matching_rule != "" ? var.matching_rule : "instance.compartment.id = '${var.compartment_ocid}'"
+  matching_rule = var.matching_rule
 }
 
 # IAM policies for the CSI driver to manage block volumes
@@ -52,7 +53,7 @@ resource "oci_identity_policy" "csi_policy" {
   statements = [
     # Block volume management
     "Allow dynamic-group ${oci_identity_dynamic_group.csi_nodes.name} to manage volumes in compartment id ${var.compartment_ocid}",
-    "Allow dynamic-group ${oci_identity_dynamic_group.csi_nodes.name} to manage volume-attachments in compartment id ${var.compartment_ocid}",
+    "Allow dynamic-group ${oci_identity_dynamic_group.csi_nodes.name} to use volume-attachments in compartment id ${var.compartment_ocid}",
 
     # Required for attaching volumes to instances
     "Allow dynamic-group ${oci_identity_dynamic_group.csi_nodes.name} to use instances in compartment id ${var.compartment_ocid}",

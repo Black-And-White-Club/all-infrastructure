@@ -12,12 +12,23 @@ spec:
       labels:
         app: frolf-bot-discord
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       imagePullSecrets:
         - name: ocir-secret
       containers:
         - name: discord
           image: frolf-bot-discord
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8081
             - containerPort: 6060
@@ -80,7 +91,7 @@ spec:
           resources:
             requests:
               memory: "128Mi"
-              cpu: "10m"
+              cpu: "50m"
             limits:
               memory: "256Mi"
               cpu: "250m"

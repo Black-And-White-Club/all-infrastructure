@@ -68,6 +68,10 @@ resource "oci_core_instance" "vm" {
       )
     } : {}
   )
+
+  lifecycle {
+    ignore_changes = [metadata]
+  }
 }
 
 data "oci_core_private_ips" "private_ips" {

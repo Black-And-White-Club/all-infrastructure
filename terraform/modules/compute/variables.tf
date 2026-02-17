@@ -89,14 +89,14 @@ variable "resume_db_mount_point" {
 
 variable "backend_http_port" {
   type        = number
-  description = "Port used by the ingress/nodeport that the external LB will target"
-  default     = 30080
+  description = "Port used by the ingress controller HTTP listener that the external LB will target"
+  default     = 80
 }
 
 variable "backend_https_port" {
   type        = number
-  description = "NodePort where the HTTPS traffic should be forwarded (LB -> ingress)"
-  default     = 30443
+  description = "Port used by the ingress controller HTTPS listener that the external LB will target"
+  default     = 443
 }
 
 variable "vm_count" {
@@ -112,9 +112,9 @@ variable "vm_names" {
 }
 
 variable "assign_reserved_ips" {
-  description = "List of booleans indicating if each VM should get a reserved public IP"
+  description = "List of booleans indicating if each VM should get a reserved public IP (default disabled for all nodes)"
   type        = list(bool)
-  default     = [false, true]
+  default     = [false, false]
 }
 
 variable "allowed_k8s_api_cidrs" {

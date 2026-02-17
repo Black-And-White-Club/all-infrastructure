@@ -11,10 +11,10 @@ spec:
     - namePattern: "frolf-discord"
       images:
         - alias: "discord"
-          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord:latest"
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord"
           commonUpdateSettings:
-            updateStrategy: "digest"
-            allowTags: "regexp:^latest$"
+            updateStrategy: "semver"
+            allowTags: 'regexp:^v[0-9]+\.[0-9]+\.[0-9]+$'
             pullSecret: "pullsecret:argocd/ocir-secret"
           manifestTargets:
             kustomize:

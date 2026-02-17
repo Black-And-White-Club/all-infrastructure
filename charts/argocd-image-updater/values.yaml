@@ -13,7 +13,7 @@ config:
     tokenSecretName: "argocd-image-updater-secret"
   gitCommitUser: "argocd-image-updater"
   gitCommitMail: "argocd-image-updater@noreply.com"
-  logLevel: "debug"
+  logLevel: "info"
 
   # Git credentials for writing back to repository
   git:
