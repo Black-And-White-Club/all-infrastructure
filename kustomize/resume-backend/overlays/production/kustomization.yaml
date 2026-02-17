@@ -5,6 +5,6 @@ resources:
 images:
   - name: resume-backend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend
-    digest: sha256:3a6b1d94520e0dc4650445c0039838bc0373204f3cc95bb8696e9080d3b52b1f
+    newTag: latest
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend
     newTag: latest
