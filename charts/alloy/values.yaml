@@ -221,7 +221,7 @@ controller:
   type: daemonset
   resources:
     requests:
-      cpu: 25m
+      cpu: 10m
       memory: 128Mi
     limits:
       cpu: 500m
