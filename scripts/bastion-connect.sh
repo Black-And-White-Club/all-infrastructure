@@ -50,6 +50,9 @@ done
 
 echo "Session is ACTIVE."
 
+echo "Waiting 10s for key propagation..."
+sleep 10
+
 # Manually construct the SSH command since ssh-metadata-command is not returned for port forwarding sessions
 
 # Construct the command
