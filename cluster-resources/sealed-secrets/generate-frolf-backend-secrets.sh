@@ -7,6 +7,8 @@ set -euo pipefail
 # Usage:
 #   DB_PASSWORD=... NATS_AUTH_PASSWORD=... AUTH_CALLOUT_ISSUER_NKEY=... \
 #   AUTH_CALLOUT_SIGNING_NKEY=... JWT_SECRET=... \
+#   DISCORD_OAUTH_CLIENT_ID=... DISCORD_OAUTH_CLIENT_SECRET=... \
+#   GOOGLE_OAUTH_CLIENT_ID=... GOOGLE_OAUTH_CLIENT_SECRET=... \
 #   ./generate-frolf-backend-secrets.sh [output-file]
 
 OUTPUT_FILE="${1:-sealed-backend-secrets.yaml}"
@@ -30,6 +32,14 @@ AUTH_CALLOUT_SIGNING_NKEY="${AUTH_CALLOUT_SIGNING_NKEY:-}"
 JWT_SECRET="${JWT_SECRET:-}"
 JWT_ISSUER="${JWT_ISSUER:-frolf-bot}"
 JWT_AUDIENCE="${JWT_AUDIENCE:-frolf-bot-users}"
+
+DISCORD_OAUTH_CLIENT_ID="${DISCORD_OAUTH_CLIENT_ID:-}"
+DISCORD_OAUTH_CLIENT_SECRET="${DISCORD_OAUTH_CLIENT_SECRET:-}"
+DISCORD_OAUTH_REDIRECT_URL="${DISCORD_OAUTH_REDIRECT_URL:-https://api.frolfbot.com/api/auth/discord/callback}"
+GOOGLE_OAUTH_CLIENT_ID="${GOOGLE_OAUTH_CLIENT_ID:-}"
+GOOGLE_OAUTH_CLIENT_SECRET="${GOOGLE_OAUTH_CLIENT_SECRET:-}"
+GOOGLE_OAUTH_REDIRECT_URL="${GOOGLE_OAUTH_REDIRECT_URL:-https://api.frolfbot.com/api/auth/google/callback}"
+PWA_BASE_URL="${PWA_BASE_URL:-https://pwa.frolfbot.com}"
 
 require_command() {
   local cmd="$1"
@@ -56,6 +66,10 @@ require_var NATS_AUTH_PASSWORD
 require_var AUTH_CALLOUT_ISSUER_NKEY
 require_var AUTH_CALLOUT_SIGNING_NKEY
 require_var JWT_SECRET
+require_var DISCORD_OAUTH_CLIENT_ID
+require_var DISCORD_OAUTH_CLIENT_SECRET
+require_var GOOGLE_OAUTH_CLIENT_ID
+require_var GOOGLE_OAUTH_CLIENT_SECRET
 
 POSTGRES_DSN="postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
 DATABASE_URL="${POSTGRES_DSN}"
@@ -81,6 +95,13 @@ kubectl create secret generic "${SECRET_NAME}" \
   --from-literal=JWT_SECRET="${JWT_SECRET}" \
   --from-literal=JWT_ISSUER="${JWT_ISSUER}" \
   --from-literal=JWT_AUDIENCE="${JWT_AUDIENCE}" \
+  --from-literal=DISCORD_OAUTH_CLIENT_ID="${DISCORD_OAUTH_CLIENT_ID}" \
+  --from-literal=DISCORD_OAUTH_CLIENT_SECRET="${DISCORD_OAUTH_CLIENT_SECRET}" \
+  --from-literal=DISCORD_OAUTH_REDIRECT_URL="${DISCORD_OAUTH_REDIRECT_URL}" \
+  --from-literal=GOOGLE_OAUTH_CLIENT_ID="${GOOGLE_OAUTH_CLIENT_ID}" \
+  --from-literal=GOOGLE_OAUTH_CLIENT_SECRET="${GOOGLE_OAUTH_CLIENT_SECRET}" \
+  --from-literal=GOOGLE_OAUTH_REDIRECT_URL="${GOOGLE_OAUTH_REDIRECT_URL}" \
+  --from-literal=PWA_BASE_URL="${PWA_BASE_URL}" \
   --dry-run=client -o yaml > "${RAW_SECRET_FILE}"
 
 kubeseal --format=yaml < "${RAW_SECRET_FILE}" > "${OUTPUT_FILE}"
