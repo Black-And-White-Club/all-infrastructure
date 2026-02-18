@@ -89,3 +89,33 @@ patches:
               secretKeyRef:
                 name: backend-secrets
                 key: AUTH_CALLOUT_SIGNING_NKEY
+          - name: DISCORD_OAUTH_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: DISCORD_OAUTH_CLIENT_ID
+          - name: DISCORD_OAUTH_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: DISCORD_OAUTH_CLIENT_SECRET
+          - name: DISCORD_OAUTH_REDIRECT_URL
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: DISCORD_OAUTH_REDIRECT_URL
+          - name: GOOGLE_OAUTH_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: GOOGLE_OAUTH_CLIENT_ID
+          - name: GOOGLE_OAUTH_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: GOOGLE_OAUTH_CLIENT_SECRET
+          - name: GOOGLE_OAUTH_REDIRECT_URL
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: GOOGLE_OAUTH_REDIRECT_URL
