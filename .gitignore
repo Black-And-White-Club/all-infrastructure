@@ -43,3 +43,4 @@ cluster-resources/sealed-secrets/generate-ocir-sealed-secret.sh
 CONSUMER_RELIABILITY_PROMPT.md
 WATERMILL_EVENT_REMEDIATION_PLAN.md
 /secrets/
+docs/oauth-launch-plan.md
