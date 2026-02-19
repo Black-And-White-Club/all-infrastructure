@@ -35,11 +35,11 @@ JWT_AUDIENCE="${JWT_AUDIENCE:-frolf-bot-users}"
 
 DISCORD_OAUTH_CLIENT_ID="${DISCORD_OAUTH_CLIENT_ID:-}"
 DISCORD_OAUTH_CLIENT_SECRET="${DISCORD_OAUTH_CLIENT_SECRET:-}"
-DISCORD_OAUTH_REDIRECT_URL="${DISCORD_OAUTH_REDIRECT_URL:-https://api.frolfbot.com/api/auth/discord/callback}"
+DISCORD_OAUTH_REDIRECT_URL="${DISCORD_OAUTH_REDIRECT_URL:-https://frolf-bot.duckdns.org/api/auth/discord/callback}"
 GOOGLE_OAUTH_CLIENT_ID="${GOOGLE_OAUTH_CLIENT_ID:-}"
 GOOGLE_OAUTH_CLIENT_SECRET="${GOOGLE_OAUTH_CLIENT_SECRET:-}"
-GOOGLE_OAUTH_REDIRECT_URL="${GOOGLE_OAUTH_REDIRECT_URL:-https://api.frolfbot.com/api/auth/google/callback}"
-PWA_BASE_URL="${PWA_BASE_URL:-https://pwa.frolfbot.com}"
+GOOGLE_OAUTH_REDIRECT_URL="${GOOGLE_OAUTH_REDIRECT_URL:-https://frolf-bot.duckdns.org/api/auth/google/callback}"
+PWA_BASE_URL="${PWA_BASE_URL:-https://frolf-bot.duckdns.org}"
 
 require_command() {
   local cmd="$1"
