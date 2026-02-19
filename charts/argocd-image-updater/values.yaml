@@ -38,6 +38,9 @@ resources:
 serviceAccount:
   create: true
 
+extraArgs:
+  - --leader-election=false
+
 extraEnvVars:
   - name: ARGOCD_SERVER
     value: "argocd-server.argocd.svc.cluster.local"
