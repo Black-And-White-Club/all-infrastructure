@@ -5,7 +5,7 @@ resources:
 images:
   - name: frolf-bot-discord
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
-    newTag: v1.0.123
+    newTag: v1.0.125
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
     newTag: v1.0.124
 patches:
