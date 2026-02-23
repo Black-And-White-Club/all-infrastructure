@@ -7,7 +7,7 @@ images:
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
     newTag: v1.0.191
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    newTag: v1.0.191
+    newTag: v1.0.192
 patches:
   - target:
       kind: Deployment
