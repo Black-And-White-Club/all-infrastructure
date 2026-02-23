@@ -136,7 +136,7 @@ memcached:
 
 # Metrics generator - generates RED metrics from traces for TraceQL metrics queries
 metricsGenerator:
-  enabled: false
+  enabled: true
   replicas: 1
   extraEnvFrom:
     - secretRef:
