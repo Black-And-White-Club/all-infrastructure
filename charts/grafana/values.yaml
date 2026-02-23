@@ -47,6 +47,14 @@ admin:
 datasources:
   datasources.yaml:
     apiVersion: 1
+    prune: true
+    deleteDatasources:
+      - name: Mimir
+        orgId: 1
+      - name: Loki
+        orgId: 1
+      - name: Tempo
+        orgId: 1
     datasources:
       # Metrics datasource - Mimir (Prometheus-compatible)
       - name: Mimir
