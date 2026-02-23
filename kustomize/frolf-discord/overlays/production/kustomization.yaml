@@ -7,7 +7,7 @@ images:
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
     newTag: v1.0.140
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
-    newTag: v1.0.139
+    newTag: v1.0.140
 patches:
   - target:
       kind: Deployment
