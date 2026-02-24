@@ -51,6 +51,11 @@ spec:
                 configMapKeyRef:
                   name: frolf-pwa-config
                   key: PUBLIC_API_HOST_ALLOWLIST
+            - name: PRIVATE_API_HOST_ALLOWLIST
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PRIVATE_API_HOST_ALLOWLIST
           readinessProbe:
             httpGet:
               path: /health

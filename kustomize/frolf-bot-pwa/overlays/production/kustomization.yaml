@@ -11,8 +11,9 @@ configMapGenerator:
       - PUBLIC_NATS_URL=wss://frolf-bot.duckdns.org/nats
       - PUBLIC_API_URL=https://frolf-bot.duckdns.org
       - PUBLIC_OTEL_ENDPOINT=https://frolf-bot.duckdns.org/v1/traces
-      - PUBLIC_DEBUG="false"
-      - PUBLIC_API_HOST_ALLOWLIST="frolf-bot.duckdns.org"
+      - PUBLIC_DEBUG=false
+      - PUBLIC_API_HOST_ALLOWLIST=frolf-bot.duckdns.org
+      - PRIVATE_API_HOST_ALLOWLIST=frolf-bot-backend.frolf-bot.svc.cluster.local
 # Image modification - ArgoCD Image Updater will patch this
 images:
   - name: frolf-bot-pwa
