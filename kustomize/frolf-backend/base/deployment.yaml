@@ -144,6 +144,11 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: JWT_SECRET
+            - name: TOKEN_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: TOKEN_ENCRYPTION_KEY
             - name: AUTH_CALLOUT_ENABLED
               valueFrom:
                 secretKeyRef:
@@ -164,6 +169,11 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: AUTH_CALLOUT_SIGNING_NKEY
+            - name: AUTH_CALLOUT_SERVER_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: AUTH_CALLOUT_SERVER_PUBLIC_KEY
             - name: JWT_ISSUER
               valueFrom:
                 secretKeyRef:
