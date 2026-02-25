@@ -5,6 +5,6 @@ resources:
 images:
   - name: resume-frontend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend
-    newTag: 386c664
+    newTag: e81cd1c
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend
     newTag: 386c664
