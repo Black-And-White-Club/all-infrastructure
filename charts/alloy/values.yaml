@@ -200,6 +200,45 @@ alloy:
         }
       }
 
+      // kubelet and cadvisor
+      discovery.kubernetes "nodes" {
+        role = "node"
+      }
+
+      discovery.relabel "nodes" {
+        targets = discovery.kubernetes.nodes.targets
+        rule {
+          source_labels = ["__meta_kubernetes_node_name"]
+          target_label  = "node"
+        }
+      }
+
+      prometheus.scrape "kubelet" {
+        targets           = discovery.relabel.nodes.output
+        scheme            = "https"
+        metrics_path      = "/metrics"
+        scrape_interval   = "30s"
+        job_name          = "kubelet"
+        bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+        tls_config {
+          insecure_skip_verify = true
+        }
+        forward_to        = [prometheus.remote_write.mimir.receiver]
+      }
+
+      prometheus.scrape "cadvisor" {
+        targets           = discovery.relabel.nodes.output
+        scheme            = "https"
+        metrics_path      = "/metrics/cadvisor"
+        scrape_interval   = "30s"
+        job_name          = "cadvisor"
+        bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+        tls_config {
+          insecure_skip_verify = true
+        }
+        forward_to        = [prometheus.remote_write.mimir.receiver]
+      }
+
   extraPorts:
     - name: otlp-grpc
       port: 4317
