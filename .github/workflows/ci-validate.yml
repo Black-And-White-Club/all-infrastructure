@@ -44,6 +44,7 @@ jobs:
         with:
           working_directory: terraform
           soft_fail: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   # ── Helm: lint + schema validation ─────────────────────────────────────────
   helm-lint:
