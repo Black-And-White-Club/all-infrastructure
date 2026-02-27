@@ -10,3 +10,4 @@ resources:
   - namespace-manager.yaml
   - oci-csi-driver.yaml
   - nginx-ingress-app.yaml
+  - argo-rollouts.yaml

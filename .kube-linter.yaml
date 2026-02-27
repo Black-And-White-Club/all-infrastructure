@@ -1,0 +1,12 @@
+# kube-linter configuration
+# Docs: https://docs.kubelinter.io/#/configuring-kubelinter
+checks:
+  # Start from all checks and exclude ones that don't apply to this setup
+  addAllBuiltIn: true
+  exclude:
+    # ArgoCD manages deployments — ignore warnings about unset replicas
+    - minimum-three-replicas
+    # Sealed Secrets decrypt at runtime — SAs set by the controller
+    - no-read-only-root-fs
+    # Some platform components (e.g. NATS, nginx) legitimately run privileged
+    - run-as-non-root
