@@ -1,0 +1,83 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+
+  "docker": { "enabled": false },
+
+  "argocd": {
+    "fileMatch": ["argocd/.+\\.yaml$"]
+  },
+
+  "packageRules": [
+    {
+      "matchDatasources": ["helm"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    },
+    {
+      "matchPackagePatterns": ["^argo-cd$", "^sealed-secrets$", "^postgresql$", "^ingress-nginx$"],
+      "matchDatasources": ["helm"],
+      "automerge": false,
+      "labels": ["requires-manual-review"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchUpdateTypes": ["minor"],
+      "automerge": false,
+      "labels": ["helm-minor"],
+      "additionalBranchPrefix": "renovate/"
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["breaking-change"],
+      "additionalBranchPrefix": "renovate/"
+    },
+    {
+      "groupName": "grafana-stack",
+      "matchPackagePatterns": ["^grafana$", "^loki$", "^mimir-distributed$", "^tempo$", "^alloy$"],
+      "matchDatasources": ["helm"]
+    },
+    {
+      "groupName": "prometheus-stack",
+      "matchPackagePatterns": ["^kube-state-metrics$", "^prometheus-node-exporter$"],
+      "matchDatasources": ["helm"]
+    },
+    {
+      "groupName": "argocd-platform",
+      "matchPackagePatterns": ["^argo-cd$", "^argocd-image-updater$", "^argo-rollouts$"],
+      "matchDatasources": ["helm"]
+    },
+    {
+      "matchDatasources": ["terraform-provider"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": false,
+      "labels": ["terraform"]
+    },
+    {
+      "matchDatasources": ["terraform-provider"],
+      "matchUpdateTypes": ["minor"],
+      "automerge": false,
+      "labels": ["terraform-minor"],
+      "additionalBranchPrefix": "renovate/"
+    },
+    {
+      "matchDatasources": ["terraform-provider"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["breaking-change"],
+      "additionalBranchPrefix": "renovate/"
+    }
+  ],
+
+  "schedule": ["before 9am on weekdays"],
+
+  "terraform": { "enabled": true },
+
+  "prCreation": "immediate",
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 5
+}

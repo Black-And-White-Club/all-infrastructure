@@ -1,0 +1,32 @@
+controller:
+  # Resource limits for the Rollouts controller
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Number of replicas — 1 is fine for a single-node setup
+  replicas: 1
+
+  # Enable metrics for Prometheus scraping
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false  # enable if Prometheus Operator is installed
+
+dashboard:
+  # Enable the Argo Rollouts dashboard
+  enabled: true
+  service:
+    type: ClusterIP
+    port: 3100
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
