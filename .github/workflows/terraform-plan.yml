@@ -55,14 +55,14 @@ jobs:
           mkdir -p ~/.oci
           echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/private_key.pem
           chmod 600 ~/.oci/private_key.pem
-          cat > ~/.oci/config <<'EOF'
-[DEFAULT]
-user=${{ secrets.OCI_USER_OCID }}
-fingerprint=${{ secrets.OCI_FINGERPRINT }}
-key_file=~/.oci/private_key.pem
-tenancy=${{ secrets.OCI_TENANCY_OCID }}
-region=${{ secrets.OCI_REGION }}
-EOF
+          {
+            echo '[DEFAULT]'
+            echo "user=${{ secrets.OCI_USER_OCID }}"
+            echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}"
+            echo 'key_file=~/.oci/private_key.pem'
+            echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}"
+            echo "region=${{ secrets.OCI_REGION }}"
+          } > ~/.oci/config
 
       - name: terraform init
         run: |
