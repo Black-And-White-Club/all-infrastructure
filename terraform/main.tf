@@ -1,3 +1,4 @@
+# Infrastructure root module
 terraform {
   required_version = "~> 1.9"
 
