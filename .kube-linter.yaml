@@ -1,0 +1,37 @@
+# kube-linter configuration
+# Docs: https://docs.kubelinter.io/#/configuring-kubelinter
+checks:
+  addAllBuiltIn: true
+  exclude:
+    # ArgoCD manages deployments — ignore warnings about unset replicas
+    - minimum-three-replicas
+    # Sealed Secrets decrypt at runtime — SAs set by the controller
+    - no-read-only-root-fs
+    # Some platform components (e.g. NATS, nginx) legitimately run privileged
+    - run-as-non-root
+    # ArgoCD Image Updater manages image tags — :latest is expected in manifests
+    - latest-tag
+    # Secrets injected via env vars is intentional; apps read from environment
+    - read-secret-from-env-var
+    # Sealed Secrets resolve at runtime; kube-linter can't see decrypted values
+    - env-value-from
+    # Single-node cluster — node affinity rules are not applicable
+    - no-node-affinity
+    # No NetworkPolicy in this simple cluster setup — not a requirement here
+    - non-isolated-pod
+    # Namespace is set by ArgoCD / kustomize overlays, not in base manifests
+    - use-namespace
+    # DNS config customization not required for this setup
+    - dnsconfig-options
+    # Owner labels and email annotations are not part of this project's conventions
+    - required-label-owner
+    - required-annotation-email
+    # Restart policy defaults are intentional (Kubernetes default is Always)
+    - restart-policy
+    # Deployment strategy defaults to RollingUpdate; no need to set explicitly
+    - no-rolling-update-strategy
+    # Each overlay is rendered independently so cross-app services aren't visible
+    - dangling-ingress
+    # Default service account used intentionally for simple workloads
+    # (automountServiceAccountToken: false prevents token mounting)
+    - default-service-account

@@ -13,6 +13,7 @@ spec:
       labels:
         app: frolf-bot-pwa
     spec:
+      automountServiceAccountToken: false
       imagePullSecrets:
         - name: ocir-secret
       containers:
