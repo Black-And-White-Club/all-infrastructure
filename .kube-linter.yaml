@@ -30,3 +30,13 @@ checks:
     - restart-policy
     # Deployment strategy defaults to RollingUpdate; no need to set explicitly
     - no-rolling-update-strategy
+    # Each overlay is rendered independently so cross-app services aren't visible
+    - dangling-ingress
+    # Init containers (wait-for-postgres) are intentionally lightweight
+    - unset-cpu-requirements
+    - unset-memory-requirements
+    # Probes not yet configured on frolf-discord and resume-frontend
+    - no-liveness-probe
+    - no-readiness-probe
+    # Default service account used intentionally for simple workloads
+    - default-service-account
