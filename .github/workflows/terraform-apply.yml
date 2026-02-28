@@ -10,6 +10,11 @@ permissions:
   contents: read
   pull-requests: write
 
+# Cancel in-progress runs on new push, but not a pending gate approval
+concurrency:
+  group: terraform-apply-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   # Required for OCI S3-compatible backend (chunked encoding not supported)
   AWS_REQUEST_CHECKSUM_CALCULATION: when_required

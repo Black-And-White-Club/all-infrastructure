@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: ci-validate-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ── Terraform: lint + security scan ────────────────────────────────────────
   terraform-lint:
