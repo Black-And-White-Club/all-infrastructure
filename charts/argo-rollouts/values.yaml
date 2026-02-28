@@ -3,7 +3,7 @@ controller:
   image:
     registry: ghcr.io
     repository: argoproj/argo-rollouts
-    tag: v1.8.0
+    tag: v1.8.4
 
   # Resource limits for the Rollouts controller
   resources:
@@ -30,7 +30,7 @@ dashboard:
   image:
     registry: ghcr.io
     repository: argoproj/argo-rollouts
-    tag: v1.8.0
+    tag: v1.8.4
   service:
     type: ClusterIP
     port: 3100
