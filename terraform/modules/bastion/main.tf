@@ -9,6 +9,8 @@ variable "subnet_id" {
 variable "allowed_cidrs" {
   type    = list(string)
   default = ["0.0.0.0/0"]
+  # Bastion CIDR allowlist — defaults open since the OCI security list
+  # already restricts port 22 and 6443 ingress to specific IPs.
 }
 
 resource "oci_bastion_bastion" "bastion" {

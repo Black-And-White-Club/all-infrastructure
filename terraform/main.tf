@@ -166,7 +166,7 @@ module "bastion" {
 
   compartment_ocid = var.compartment_ocid
   subnet_id        = module.compute.subnet_id
-  allowed_cidrs    = var.allowed_k8s_api_cidrs
+  allowed_cidrs    = length(var.allowed_k8s_api_cidrs) > 0 ? var.allowed_k8s_api_cidrs : ["0.0.0.0/0"]
 }
 
 # Optional remote setup: ensure /mnt/data/resume-db directory exists and is owned appropriately
