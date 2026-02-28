@@ -1,10 +1,4 @@
 controller:
-  # Override image registry — quay.io is unreachable from OCI nodes
-  image:
-    registry: ghcr.io
-    repository: argoproj/argo-rollouts
-    tag: v1.8.4
-
   # Resource limits for the Rollouts controller
   resources:
     requests:
@@ -26,11 +20,6 @@ controller:
 dashboard:
   # Enable the Argo Rollouts dashboard
   enabled: true
-  # Override image registry — quay.io is unreachable from OCI nodes
-  image:
-    registry: ghcr.io
-    repository: argoproj/argo-rollouts
-    tag: v1.8.4
   service:
     type: ClusterIP
     port: 3100
