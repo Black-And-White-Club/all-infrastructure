@@ -97,6 +97,8 @@ spec:
               value: "true"
             - name: PPROF_ADDR
               value: ":6060"
+            - name: HEALTH_PORT
+              value: ":8081"
           livenessProbe:
             tcpSocket:
               port: 8081
