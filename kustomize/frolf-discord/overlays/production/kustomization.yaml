@@ -71,3 +71,5 @@ patches:
             value: "true"
           - name: OTLP_LOGS_ENABLED
             value: "true"
+          - name: HEALTH_PORT
+            value: ":8081"
