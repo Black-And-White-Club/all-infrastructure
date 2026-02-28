@@ -50,7 +50,11 @@ repoServer:
       value: "4"
 
 # Redis - caching layer
+# Override image to use Docker Hub — ecr-public.aws.com is unreachable from OCI nodes
 redis:
+  image:
+    repository: docker.io/library/redis
+    tag: "8.0-alpine"
   resources:
     limits:
       cpu: 100m
