@@ -32,6 +32,7 @@ spec:
       kind: CustomResourceDefinition
       jsonPointers:
         - /spec/conversion
+        - /spec/preserveUnknownFields
 
   syncPolicy:
     automated:
