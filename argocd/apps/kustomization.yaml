@@ -10,3 +10,4 @@ resources:
   - resume-frontend.yaml
   - resume-postgres.yaml
   - resume-app-ingress.yaml
+  - frolf-postgres-backup.yaml

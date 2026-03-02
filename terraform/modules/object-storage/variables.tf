@@ -3,6 +3,7 @@ variable "buckets" {
   type = map(object({
     name               = string
     public_access_type = optional(string)
+    lifecycle_days     = optional(number)
   }))
   default = {}
 }
