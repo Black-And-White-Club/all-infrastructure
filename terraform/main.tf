@@ -287,7 +287,9 @@ module "csi_instance_principals" {
 
   tenancy_ocid     = var.tenancy_ocid
   compartment_ocid = var.compartment_ocid
-  matching_rule    = "all {instance.compartment.id = '${var.compartment_ocid}', instance.displayName = '${local.csi_node_display_name}'}"
+  # Match all instances in the compartment so both control-plane and worker nodes
+  # can use instance principals. The CSI controller pod may run on either node.
+  matching_rule    = "instance.compartment.id = '${var.compartment_ocid}'"
 }
 
 output "csi_dynamic_group_name" {
