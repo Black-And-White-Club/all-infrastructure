@@ -12,8 +12,6 @@ spec:
     targetRevision: main
     # Points to the directory containing ALL namespace YAMLs
     path: cluster-resources/namespaces
-    directory:
-      recurse: false
   destination:
     server: https://kubernetes.default.svc
     # Namespaces are cluster-level resources, so destination namespace is less relevant,
