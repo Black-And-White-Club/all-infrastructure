@@ -91,6 +91,10 @@ resource "oci_identity_policy" "terraform_policy" {
     # Object storage (for your buckets)
     "Allow group terraform-admins to manage buckets in compartment id ${var.compartment_ocid}",
     "Allow group terraform-admins to manage objects in compartment id ${var.compartment_ocid}",
+
+    # Object Storage service principal — required for lifecycle policies to execute DELETE actions.
+    # Without this, applying oci_objectstorage_object_lifecycle_policy returns 400-InsufficientServicePermissions.
+    "Allow service objectstorage-${var.region} to manage object-family in compartment id ${var.compartment_ocid}",
   ]
 }
 
