@@ -24,6 +24,10 @@ terraform {
       source  = "hashicorp/null"
       version = "~> 3.2"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.12"
+    }
   }
 }
 
@@ -93,9 +97,22 @@ resource "oci_identity_policy" "terraform_policy" {
     "Allow group terraform-admins to manage objects in compartment id ${var.compartment_ocid}",
 
     # Object Storage service principal — required for lifecycle policies to execute DELETE actions.
+    # Must use "in tenancy" scope; OCI service policies do not support the "compartment id <ocid>" syntax.
     # Without this, applying oci_objectstorage_object_lifecycle_policy returns 400-InsufficientServicePermissions.
-    "Allow service objectstorage-${var.region} to manage object-family in compartment id ${var.compartment_ocid}",
+    "Allow service objectstorage-${var.region} to manage object-family in tenancy",
   ]
+}
+
+# OCI IAM policy changes are eventually consistent (can take 30+ seconds to propagate).
+# This sleep ensures lifecycle policies aren't applied before the objectstorage service
+# principal policy has propagated, preventing 400-InsufficientServicePermissions errors.
+resource "time_sleep" "wait_for_iam_policy" {
+  depends_on      = [oci_identity_policy.terraform_policy]
+  create_duration = "30s"
+
+  triggers = {
+    policy_id = oci_identity_policy.terraform_policy.id
+  }
 }
 
 module "identity_users" {
@@ -225,6 +242,8 @@ module "object_storage" {
     frolf-postgres-backup = { name = var.frolf_postgres_backup_bucket_name, lifecycle_days = 30 }
     sealed-secrets-backup = { name = var.sealed_secrets_backup_bucket_name }
   }
+
+  depends_on = [time_sleep.wait_for_iam_policy]
 }
 
 module "resume_load_balancer" {
