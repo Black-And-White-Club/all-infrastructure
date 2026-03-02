@@ -16,6 +16,8 @@ image:
 postgresqlDataDir: /var/lib/postgresql/data
 
 primary:
+  nodeSelector:
+    kubernetes.io/hostname: worker-1
   persistence:
     enabled: true
     storageClass: oci-block-storage
