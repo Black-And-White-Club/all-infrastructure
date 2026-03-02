@@ -11,7 +11,7 @@ global:
 image:
   registry: docker.io
   repository: library/postgres
-  tag: "17"
+  tag: "17.4"
 
 postgresqlDataDir: /var/lib/postgresql/data
 

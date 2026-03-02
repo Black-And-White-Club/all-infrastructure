@@ -132,6 +132,18 @@ variable "tempo_bucket_name" {
   default     = "tempo-shared-bucket"
 }
 
+variable "frolf_postgres_backup_bucket_name" {
+  description = "OCI Object Storage bucket for frolf-bot postgres backups"
+  type        = string
+  default     = "frolf-postgres-backup"
+}
+
+variable "sealed_secrets_backup_bucket_name" {
+  description = "OCI Object Storage bucket for sealed-secrets controller key backups"
+  type        = string
+  default     = "sealed-secrets-backup"
+}
+
 variable "disks" {
   description = "Optional map of block storage disks definitions for provisioning via block-storage module"
   type = map(object({

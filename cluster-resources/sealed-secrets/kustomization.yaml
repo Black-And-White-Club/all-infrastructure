@@ -19,3 +19,5 @@ resources:
   - sealed-nats-secrets.yaml
   - grafana-admin-secret-sealed.yaml
   - loki-objectstore-creds-sealed.yaml
+  - sealed-frolf-postgres-backup-creds.yaml
+  - sealed-sealed-secrets-backup-creds.yaml

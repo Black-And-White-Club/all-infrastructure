@@ -215,9 +215,11 @@ module "object_storage" {
   compartment_ocid = var.compartment_ocid
   namespace        = data.oci_objectstorage_namespace.namespace.namespace
   buckets = {
-    mimir = { name = var.mimir_bucket_name }
-    loki  = { name = var.loki_bucket_name }
-    tempo = { name = var.tempo_bucket_name }
+    mimir                 = { name = var.mimir_bucket_name }
+    loki                  = { name = var.loki_bucket_name }
+    tempo                 = { name = var.tempo_bucket_name }
+    frolf-postgres-backup = { name = var.frolf_postgres_backup_bucket_name, lifecycle_days = 30 }
+    sealed-secrets-backup = { name = var.sealed_secrets_backup_bucket_name }
   }
 }
 

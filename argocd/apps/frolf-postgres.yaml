@@ -10,6 +10,9 @@ spec:
   sources:
     - repoURL: https://charts.bitnami.com/bitnami
       chart: postgresql
+      # PINNED: Do NOT bump this version without verifying the PostgreSQL major version stays the same.
+      # Bitnami chart upgrades can bump the PG major version, which triggers initdb and wipes the database.
+      # frolf-bot lost its entire DB this way when PR #10 upgraded the chart (16.x→17.x transition).
       targetRevision: 16.2.4
       helm:
         valueFiles:
