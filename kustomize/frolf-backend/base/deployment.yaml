@@ -113,7 +113,7 @@ spec:
             - name: CONFIG_FILE
               value: ""
             - name: AUTO_MIGRATE
-              value: "true"
+              value: "false"
             - name: METRICS_ADDRESS
               value: "alloy.observability.svc.cluster.local:4317"
             - name: METRICS_ENABLED
