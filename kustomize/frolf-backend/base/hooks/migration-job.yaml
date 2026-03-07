@@ -2,6 +2,9 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: frolf-bot-backend-migrate
+  labels:
+    app: frolf-bot-backend-migrate
+    app.kubernetes.io/component: migration
   annotations:
     argocd.argoproj.io/hook: PreSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
@@ -13,6 +16,7 @@ spec:
     metadata:
       labels:
         app: frolf-bot-backend-migrate
+        app.kubernetes.io/component: migration
     spec:
       automountServiceAccountToken: false
       restartPolicy: OnFailure
@@ -63,6 +67,11 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: DATABASE_URL
+            - name: NATS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: NATS_URL
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
