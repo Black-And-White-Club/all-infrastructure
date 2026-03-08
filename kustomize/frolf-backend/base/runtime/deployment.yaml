@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frolf-bot-backend
+  labels:
+    app.kubernetes.io/component: api
 spec:
   replicas: 1
   selector:
@@ -11,6 +13,7 @@ spec:
     metadata:
       labels:
         app: frolf-bot-backend
+        app.kubernetes.io/component: api
     spec:
       automountServiceAccountToken: false
       securityContext:
@@ -113,7 +116,7 @@ spec:
             - name: CONFIG_FILE
               value: ""
             - name: AUTO_MIGRATE
-              value: "true"
+              value: "false"
             - name: METRICS_ADDRESS
               value: "alloy.observability.svc.cluster.local:4317"
             - name: METRICS_ENABLED
