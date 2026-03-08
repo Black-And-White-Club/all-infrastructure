@@ -9,6 +9,9 @@ metadata:
     argocd.argoproj.io/hook: PreSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
     argocd.argoproj.io/sync-wave: "-1"
+    # Jobs run to completion — liveness/readiness probes are not applicable to batch workloads
+    ignore-check.kube-linter.io/no-liveness-probe: "batch job, not a long-running service"
+    ignore-check.kube-linter.io/no-readiness-probe: "batch job, not a long-running service"
 spec:
   # backoffLimit: assumes migrations are idempotent — the backend migration framework must track
   # applied migrations and skip already-applied ones so retries are safe.
