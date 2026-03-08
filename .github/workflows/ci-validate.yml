@@ -91,6 +91,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Migration script unit tests (dry-run safety)
+        # Runs before kustomize/kubectl are installed — tests use mocked binaries via PATH and
+        # fixture manifests only; no cluster access or real kustomize invocations required.
+        run: bash scripts/tests/run.sh
+
       - name: Setup kustomize
         uses: imranismail/setup-kustomize@v2
         with:
@@ -118,5 +123,11 @@ jobs:
             echo "── kube-linter: $APP"
             kube-linter lint /tmp/rendered-"$APP".yaml \
               --config .kube-linter.yaml || FAILED=1
+
+            if [ "$APP" = "frolf-backend" ]; then
+              echo "── migration hook contract checks: $APP"
+              bash scripts/validate-frolf-backend-migration-hook.sh \
+                /tmp/rendered-"$APP".yaml || FAILED=1
+            fi
           done
           exit $FAILED

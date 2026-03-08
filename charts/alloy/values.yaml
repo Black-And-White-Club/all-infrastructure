@@ -73,6 +73,11 @@ alloy:
       /////////////////////////////////////////
 
       otelcol.processor.attributes "logs" {
+        action {
+          key    = "loki.resource.labels"
+          action = "insert"
+          value  = "service.name,service.version,deployment.environment.name,deployment.environment,k8s.namespace.name"
+        }
         // Hint attributes for Loki label extraction (low-cardinality only)
         action {
           key    = "loki.attribute.labels"

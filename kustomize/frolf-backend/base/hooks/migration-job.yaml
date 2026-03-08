@@ -1,0 +1,89 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: frolf-bot-backend-migrate
+  labels:
+    app: frolf-bot-backend-migrate
+    app.kubernetes.io/component: migration
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-1"
+    # Jobs run to completion — liveness/readiness probes are not applicable to batch workloads
+    ignore-check.kube-linter.io/no-liveness-probe: "batch job, not a long-running service"
+    ignore-check.kube-linter.io/no-readiness-probe: "batch job, not a long-running service"
+spec:
+  # backoffLimit: assumes migrations are idempotent — the backend migration framework must track
+  # applied migrations and skip already-applied ones so retries are safe.
+  backoffLimit: 4
+  # activeDeadlineSeconds caps total Job runtime across all retries; fail fast rather than hanging.
+  activeDeadlineSeconds: 300
+  # ttlSecondsAfterFinished retains the Job (and its logs) for 10 minutes after completion.
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: frolf-bot-backend-migrate
+        app.kubernetes.io/component: migration
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      imagePullSecrets:
+        - name: ocir-secret
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36.1@sha256:b9598f8c98e24d0ad42c1742c32516772c3aa2151011ebaf639089bd18c605b8
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"
+            limits:
+              cpu: "50m"
+              memory: "32Mi"
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              until nc -z frolf-postgres-postgresql.frolf-bot.svc.cluster.local 5432; do
+                echo "PostgreSQL is not ready yet. Waiting 5 seconds..."
+                sleep 5
+              done
+              echo "PostgreSQL is ready!"
+      containers:
+        - name: migrate
+          image: frolf-bot-backend
+          imagePullPolicy: IfNotPresent
+          args: ["migrate"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DATABASE_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: JWT_SECRET
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"

@@ -34,6 +34,28 @@ This repository is the shared platform/infra repo that provisions/kicks off the 
 
 If you need to resync everything, re-apply `argocd/root-app.yaml` or use the ArgoCD UI/CLI to refresh the `root` Application. The Ansible bootstrap playbook already applies the latest version after ArgoCD is installed.
 
+## Backend migration coverage
+
+- CI includes a static contract check for `frolf-backend` migration behavior:
+  - `scripts/validate-frolf-backend-migration-hook.sh`
+  - Verifies the rendered production manifest includes:
+    - `Job/frolf-bot-backend-migrate` with `PreSync` hook annotations
+    - migration command wiring (`args: migrate`)
+    - required env refs (`DATABASE_URL`, `JWT_SECRET`)
+    - `Deployment/frolf-bot-backend` with `AUTO_MIGRATE=\"false\"`
+- CI also runs shell unit tests for migration scripts:
+  - `scripts/tests/run.sh`
+  - `scripts/tests/validate-frolf-backend-migration-hook.test.sh`
+  - `scripts/tests/smoke-frolf-backend-migrations.test.sh`
+  - Uses mocked `kustomize`/`kubectl` commands and fixture manifests only (no cluster writes).
+- Runtime smoke script defaults to safe dry-run:
+  - `scripts/smoke-frolf-backend-migrations.sh`
+  - Default behavior: render + validate only (no cluster writes).
+  - Live execution requires explicit flags:
+    - `--execute` (run Job in-cluster)
+    - `--allow-prod` if context name looks like prod/production.
+  - Execute mode runs the migration job repeatedly (default 2 runs), tails logs, and checks deployment env still has `AUTO_MIGRATE=false`.
+
 ## Managing applications
 
 To add a new workload:
