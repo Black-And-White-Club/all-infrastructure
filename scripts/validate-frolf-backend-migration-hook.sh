@@ -48,7 +48,7 @@ if ! job_doc="$(extract_doc "Job" "frolf-bot-backend-migrate" "$manifest")"; the
 fi
 
 require_contains "$job_doc" "argocd.argoproj.io/hook: PreSync" "PreSync hook annotation" || failed=1
-require_contains "$job_doc" "argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded" "hook delete policy" || failed=1
+require_contains "$job_doc" "argocd.argoproj.io/hook-delete-policy: BeforeHookCreation" "hook delete policy" || failed=1
 require_contains "$job_doc" "argocd.argoproj.io/sync-wave: \"-1\"" "sync wave" || failed=1
 require_contains "$job_doc" "name: migrate" "migration container" || failed=1
 require_contains "$job_doc" "- migrate" "migration container args" || failed=1
@@ -60,19 +60,12 @@ if ! deploy_doc="$(extract_doc "Deployment" "frolf-bot-backend" "$manifest")"; t
 	exit 1
 fi
 
-if ! awk '
-	$0 ~ /name:[[:space:]]*AUTO_MIGRATE/ {
-		seen=1
-		next
-	}
-	seen && $0 ~ /value:[[:space:]]*"false"/ {
-		ok=1
-		exit 0
-	}
-	END {
-		exit !(seen && ok)
-	}
-' <<<"$deploy_doc"; then
+# Check that AUTO_MIGRATE is set to "false" by inspecting the line immediately
+# following "name: AUTO_MIGRATE". Using grep -A1 avoids the awk state-machine
+# bug where any later env var with value: "false" would satisfy the check.
+if ! printf '%s\n' "$deploy_doc" \
+	| grep -A1 'name:[[:space:]]*AUTO_MIGRATE' \
+	| grep -q 'value:[[:space:]]*"false"'; then
 	echo "ERROR: Deployment/frolf-bot-backend must set AUTO_MIGRATE to \"false\"" >&2
 	failed=1
 fi

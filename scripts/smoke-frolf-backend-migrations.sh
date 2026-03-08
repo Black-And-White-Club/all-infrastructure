@@ -50,34 +50,49 @@ Examples:
 USAGE
 }
 
+require_arg() {
+	local flag="$1"
+	if [[ $# -lt 2 ]] || [[ -z "${2:-}" ]]; then
+		echo "$flag requires a non-empty argument" >&2
+		exit 2
+	fi
+}
+
 while [[ $# -gt 0 ]]; do
 	case "$1" in
 		--overlay)
-			OVERLAY_PATH="${2:-}"
+			require_arg "$1" "${2:-}"
+			OVERLAY_PATH="$2"
 			shift 2
 			;;
 		--namespace)
-			NAMESPACE="${2:-}"
+			require_arg "$1" "${2:-}"
+			NAMESPACE="$2"
 			shift 2
 			;;
 		--job)
-			JOB_NAME="${2:-}"
+			require_arg "$1" "${2:-}"
+			JOB_NAME="$2"
 			shift 2
 			;;
 		--deployment)
-			DEPLOYMENT_NAME="${2:-}"
+			require_arg "$1" "${2:-}"
+			DEPLOYMENT_NAME="$2"
 			shift 2
 			;;
 		--timeout)
-			TIMEOUT="${2:-}"
+			require_arg "$1" "${2:-}"
+			TIMEOUT="$2"
 			shift 2
 			;;
 		--runs)
-			RUNS="${2:-}"
+			require_arg "$1" "${2:-}"
+			RUNS="$2"
 			shift 2
 			;;
 		--context)
-			KUBE_CONTEXT="${2:-}"
+			require_arg "$1" "${2:-}"
+			KUBE_CONTEXT="$2"
 			shift 2
 			;;
 		--execute)

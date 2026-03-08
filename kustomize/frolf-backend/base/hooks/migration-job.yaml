@@ -7,10 +7,13 @@ metadata:
     app.kubernetes.io/component: migration
   annotations:
     argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
     argocd.argoproj.io/sync-wave: "-1"
 spec:
   backoffLimit: 4
+  # activeDeadlineSeconds caps total Job runtime across all retries; fail fast rather than hanging.
+  activeDeadlineSeconds: 300
+  # ttlSecondsAfterFinished retains the Job (and its logs) for 10 minutes after completion.
   ttlSecondsAfterFinished: 600
   template:
     metadata:
@@ -29,7 +32,8 @@ spec:
         - name: ocir-secret
       initContainers:
         - name: wait-for-postgres
-          image: busybox:1.35
+          # TODO: pin to digest for supply chain safety (Renovate docker datasource is disabled).
+          image: busybox:1.36.1
           securityContext:
             capabilities:
               drop:
@@ -67,11 +71,6 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: DATABASE_URL
-            - name: NATS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: backend-secrets
-                  key: NATS_URL
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

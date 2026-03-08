@@ -56,6 +56,54 @@ assert_file_not_contains() {
 	fi
 }
 
+# write_valid_manifest <file>
+# Writes a minimal but fully valid frolf-backend rendered manifest to <file>.
+# Both test suites share this fixture so it stays in sync automatically.
+write_valid_manifest() {
+	local file="$1"
+	cat > "$file" <<'YAML'
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: frolf-bot-backend-migrate
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrate
+          args:
+            - migrate
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DATABASE_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: JWT_SECRET
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frolf-bot-backend
+spec:
+  template:
+    spec:
+      containers:
+        - name: backend
+          env:
+            - name: AUTO_MIGRATE
+              value: "false"
+YAML
+}
+
 assert_occurrences() {
 	local file="$1"
 	local needle="$2"

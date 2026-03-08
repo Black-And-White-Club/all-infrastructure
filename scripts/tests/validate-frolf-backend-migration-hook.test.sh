@@ -8,51 +8,6 @@ VALIDATOR_SCRIPT="$REPO_ROOT/scripts/validate-frolf-backend-migration-hook.sh"
 # shellcheck source=./lib.sh
 source "$SCRIPT_DIR/lib.sh"
 
-write_valid_manifest() {
-	local file="$1"
-	cat > "$file" <<'YAML'
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: frolf-bot-backend-migrate
-  annotations:
-    argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
-    argocd.argoproj.io/sync-wave: "-1"
-spec:
-  template:
-    spec:
-      containers:
-        - name: migrate
-          args:
-            - migrate
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: backend-secrets
-                  key: DATABASE_URL
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: backend-secrets
-                  key: JWT_SECRET
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: frolf-bot-backend
-spec:
-  template:
-    spec:
-      containers:
-        - name: backend
-          env:
-            - name: AUTO_MIGRATE
-              value: "false"
-YAML
-}
-
 test_usage_requires_manifest_arg() {
 	run_cmd bash "$VALIDATOR_SCRIPT"
 	assert_status 2
@@ -96,8 +51,68 @@ test_auto_migrate_must_be_false() {
 	tmpdir="$(mktemp -d)"
 	manifest="$tmpdir/manifest.yaml"
 	write_valid_manifest "$manifest"
-	sed 's/value: "false"/value: "true"/' "$manifest" > "$manifest.tmp"
+	# Scope the replacement to only the AUTO_MIGRATE value line.
+	sed 's/\(AUTO_MIGRATE\)/\1/' "$manifest" \
+		| awk '/name:[[:space:]]*AUTO_MIGRATE/{found=1} found && /value:/{sub(/"false"/, "\"true\""); found=0} {print}' \
+		> "$manifest.tmp"
 	mv "$manifest.tmp" "$manifest"
+
+	run_cmd bash "$VALIDATOR_SCRIPT" "$manifest"
+	assert_status 1
+	assert_output_contains "must set AUTO_MIGRATE to \"false\""
+	rm -rf "$tmpdir"
+}
+
+# Regression test: validator must fail when AUTO_MIGRATE is "true" even if a
+# later env var in the same deployment has value: "false". The original awk
+# state-machine implementation would incorrectly pass in this case.
+test_auto_migrate_true_with_other_false_env_below_must_fail() {
+	local tmpdir manifest
+	tmpdir="$(mktemp -d)"
+	manifest="$tmpdir/manifest.yaml"
+	cat > "$manifest" <<'YAML'
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: frolf-bot-backend-migrate
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrate
+          args:
+            - migrate
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DATABASE_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: JWT_SECRET
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frolf-bot-backend
+spec:
+  template:
+    spec:
+      containers:
+        - name: backend
+          env:
+            - name: AUTO_MIGRATE
+              value: "true"
+            - name: OTEL_SDK_DISABLED
+              value: "false"
+YAML
 
 	run_cmd bash "$VALIDATOR_SCRIPT" "$manifest"
 	assert_status 1
@@ -111,6 +126,7 @@ tests=(
 	test_valid_manifest_passes
 	test_missing_presync_hook_fails
 	test_auto_migrate_must_be_false
+	test_auto_migrate_true_with_other_false_env_below_must_fail
 )
 
 for test_fn in "${tests[@]}"; do

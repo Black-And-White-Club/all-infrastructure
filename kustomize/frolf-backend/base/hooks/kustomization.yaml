@@ -3,3 +3,7 @@ kind: Kustomization
 
 resources:
   - migration-job.yaml
+
+labels:
+  - pairs:
+      managed-by: lich-king
