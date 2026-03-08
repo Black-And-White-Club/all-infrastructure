@@ -148,9 +148,9 @@ kustomize build "$OVERLAY_PATH" > "$tmp_manifest"
 "$VALIDATOR_SCRIPT" "$tmp_manifest"
 
 awk -v job_name="$JOB_NAME" '
-	BEGIN { RS="---"; ORS="---\n" }
+	BEGIN { RS="---" }
 	$0 ~ /kind:[[:space:]]*Job/ && $0 ~ ("name:[[:space:]]*" job_name) {
-		print
+		printf "---\n%s", $0
 		found=1
 	}
 	END {

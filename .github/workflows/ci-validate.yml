@@ -92,6 +92,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Migration script unit tests (dry-run safety)
+        # Runs before kustomize/kubectl are installed — tests use mocked binaries via PATH and
+        # fixture manifests only; no cluster access or real kustomize invocations required.
         run: bash scripts/tests/run.sh
 
       - name: Setup kustomize
