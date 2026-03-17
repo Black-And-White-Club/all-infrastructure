@@ -1,0 +1,43 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frolf-bot-pwa-ingress
+  namespace: frolf-bot
+spec:
+  podSelector:
+    matchLabels:
+      app: frolf-bot-pwa
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    # Server-side requests to the backend API
+    - to:
+        - podSelector:
+            matchLabels:
+              app: frolf-bot-backend
+      ports:
+        - protocol: TCP
+          port: 8080
+    # OTLP HTTP traces/metrics/logs to Alloy
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: alloy
+      ports:
+        - protocol: TCP
+          port: 4318

@@ -277,7 +277,7 @@ ingress:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://frolf-bot.duckdns.org"
     nginx.ingress.kubernetes.io/cors-allow-methods: "POST, OPTIONS"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type, traceparent, tracestate"
   hosts:
     - frolf-bot.duckdns.org
   extraPaths:

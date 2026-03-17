@@ -14,19 +14,38 @@ spec:
         app: frolf-bot-pwa
     spec:
       automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: tmp
+          emptyDir: {}
       imagePullSecrets:
         - name: ocir-secret
       containers:
         - name: frolf-bot-pwa
           image: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa@sha256:415db8c5a8c9a6780db43b88d43f8b523f254edf880089fe7869ba8007df8eea
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 3000
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           env:
             - name: BODY_SIZE_LIMIT
-              value: "Infinity"
+              value: "10mb"
             - name: PRIVATE_API_URL
               value: "http://frolf-bot-backend.frolf-bot.svc.cluster.local"
+            - name: PRIVATE_OTEL_ENDPOINT
+              value: "http://alloy.observability.svc.cluster.local:4318"
             - name: PUBLIC_NATS_URL
               valueFrom:
                 configMapKeyRef:
