@@ -41,7 +41,7 @@ spec:
               mountPath: /tmp
           env:
             - name: BODY_SIZE_LIMIT
-              value: "10MB"
+              value: "10M"
             - name: PRIVATE_API_URL
               value: "http://frolf-bot-backend.frolf-bot.svc.cluster.local"
             - name: PRIVATE_OTEL_ENDPOINT
