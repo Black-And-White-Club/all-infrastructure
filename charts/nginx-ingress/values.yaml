@@ -1,4 +1,5 @@
 controller:
+  revisionHistoryLimit: 3
   hostNetwork: true
   dnsPolicy: ClusterFirstWithHostNet
   service:

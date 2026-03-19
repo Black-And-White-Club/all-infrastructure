@@ -59,6 +59,7 @@ loki:
 
 gateway:
   replicas: 1
+  revisionHistoryLimit: 3
   enabled: true
   nginxConfig:
     resolver: "coredns.kube-system.svc.cluster.local"
@@ -73,6 +74,7 @@ gateway:
 # Write - Use hostPath on worker node boot disk
 write:
   replicas: 1
+  revisionHistoryLimit: 3
   resources:
     requests:
       cpu: 10m
@@ -103,6 +105,7 @@ write:
 
 read:
   replicas: 1
+  revisionHistoryLimit: 3
   resources:
     requests:
       cpu: 10m
@@ -125,6 +128,7 @@ read:
 # Backend - Use hostPath on worker node boot disk
 backend:
   replicas: 1
+  revisionHistoryLimit: 3
   resources:
     requests:
       cpu: 10m

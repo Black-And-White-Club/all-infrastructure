@@ -4,6 +4,8 @@
 # Traces: Tempo
 # Collection: Alloy
 
+revisionHistoryLimit: 3
+
 resources:
   requests:
     cpu: 25m

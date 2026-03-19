@@ -9,6 +9,7 @@ global:
 
 # ArgoCD Server - UI and API
 server:
+  revisionHistoryLimit: 3
   resources:
     limits:
       cpu: 200m
@@ -22,6 +23,7 @@ server:
 
 # Application Controller - reconciles apps
 controller:
+  revisionHistoryLimit: 3
   resources:
     limits:
       cpu: 500m
@@ -35,6 +37,7 @@ controller:
 
 # Repo Server - handles git operations (handles Helm templating, needs more memory)
 repoServer:
+  revisionHistoryLimit: 3
   resources:
     limits:
       cpu: 500m
@@ -61,6 +64,7 @@ redis:
 
 # ApplicationSet Controller - manages ApplicationSets
 applicationSet:
+  revisionHistoryLimit: 3
   resources:
     limits:
       cpu: 100m

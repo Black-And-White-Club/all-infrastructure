@@ -1,4 +1,5 @@
 controller:
+  revisionHistoryLimit: 3
   # Resource limits for the Rollouts controller
   resources:
     requests:
@@ -18,6 +19,7 @@ controller:
       enabled: false  # enable if Prometheus Operator is installed
 
 dashboard:
+  revisionHistoryLimit: 3
   # Enable the Argo Rollouts dashboard
   enabled: true
   service:
