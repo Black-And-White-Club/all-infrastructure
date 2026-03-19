@@ -27,6 +27,8 @@ config:
       ping: yes
       credentials: pullsecret:argocd/ocir-secret
 
+revisionHistoryLimit: 3
+
 resources:
   requests:
     cpu: 10m

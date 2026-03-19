@@ -17,6 +17,7 @@ traces:
 # Distributor receives traces and forwards to ingesters
 distributor:
   replicas: 1
+  revisionHistoryLimit: 3
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
@@ -33,6 +34,7 @@ distributor:
 # Ingester writes traces to storage
 ingester:
   replicas: 1
+  revisionHistoryLimit: 3
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
@@ -53,6 +55,7 @@ ingester:
 # Compactor handles block compaction and retention
 compactor:
   replicas: 1
+  revisionHistoryLimit: 3
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
@@ -75,6 +78,7 @@ compactor:
 # Querier handles trace queries
 querier:
   replicas: 1
+  revisionHistoryLimit: 3
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
@@ -91,6 +95,7 @@ querier:
 # Query frontend handles query scheduling
 queryFrontend:
   replicas: 1
+  revisionHistoryLimit: 3
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
@@ -138,6 +143,7 @@ memcached:
 metricsGenerator:
   enabled: true
   replicas: 1
+  revisionHistoryLimit: 3
   extraEnvFrom:
     - secretRef:
         name: objectstore-creds
