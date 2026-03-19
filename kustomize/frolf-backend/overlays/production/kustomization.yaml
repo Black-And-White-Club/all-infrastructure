@@ -57,6 +57,11 @@ patches:
               secretKeyRef:
                 name: backend-secrets
                 key: PWA_BASE_URL
+          - name: TOKEN_ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: TOKEN_ENCRYPTION_KEY
           - name: JWT_SECRET
             valueFrom:
               secretKeyRef:
@@ -92,6 +97,11 @@ patches:
               secretKeyRef:
                 name: backend-secrets
                 key: AUTH_CALLOUT_SIGNING_NKEY
+          - name: AUTH_CALLOUT_SERVER_PUBLIC_KEY
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: AUTH_CALLOUT_SERVER_PUBLIC_KEY
           - name: DISCORD_OAUTH_CLIENT_ID
             valueFrom:
               secretKeyRef:
