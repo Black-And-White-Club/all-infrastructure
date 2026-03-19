@@ -4,8 +4,6 @@
 crds:
   enabled: true
 
-revisionHistoryLimit: 3
-
 resources:
   requests:
     cpu: 10m
@@ -15,7 +13,6 @@ resources:
     memory: 128Mi
 
 webhook:
-  revisionHistoryLimit: 3
   resources:
     requests:
       cpu: 10m
@@ -25,7 +22,6 @@ webhook:
       memory: 64Mi
 
 cainjector:
-  revisionHistoryLimit: 3
   resources:
     requests:
       cpu: 10m
