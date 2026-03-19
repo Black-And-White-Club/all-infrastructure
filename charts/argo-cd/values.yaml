@@ -23,7 +23,6 @@ server:
 
 # Application Controller - reconciles apps
 controller:
-  revisionHistoryLimit: 3
   resources:
     limits:
       cpu: 500m
