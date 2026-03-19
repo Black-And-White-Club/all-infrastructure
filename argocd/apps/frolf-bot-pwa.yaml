@@ -8,6 +8,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "21"
 spec:
+  revisionHistoryLimit: 3
   project: apps
   source:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git

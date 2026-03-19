@@ -4,6 +4,7 @@ metadata:
   name: frolf-bot-discord
 spec:
   replicas: 1
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: frolf-bot-discord

@@ -6,6 +6,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "15"
 spec:
+  revisionHistoryLimit: 3
   project: apps
   sources:
     - repoURL: https://charts.bitnami.com/bitnami
