@@ -45,3 +45,4 @@ WATERMILL_EVENT_REMEDIATION_PLAN.md
 /secrets/
 docs/oauth-launch-plan.md
 *.pem
+CLAUDE.md

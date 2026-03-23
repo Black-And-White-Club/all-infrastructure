@@ -42,6 +42,7 @@ serviceAccount:
 
 extraArgs:
   - --leader-election=false
+  - --git-push-timeout=300s
 
 extraEnvVars:
   - name: ARGOCD_SERVER
