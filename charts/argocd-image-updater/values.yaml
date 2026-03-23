@@ -42,7 +42,6 @@ serviceAccount:
 
 extraArgs:
   - --leader-election=false
-  - --git-push-timeout=300s
 
 extraEnvVars:
   - name: ARGOCD_SERVER
@@ -52,3 +51,8 @@ extraEnvVars:
       secretKeyRef:
         name: argocd-image-updater-secret
         key: argocd.token
+  # Abort git push if throughput drops below 1KB/s for 30s (detects TCP stalls on OCI faster)
+  - name: GIT_HTTP_LOW_SPEED_LIMIT
+    value: "1000"
+  - name: GIT_HTTP_LOW_SPEED_TIME
+    value: "30"
