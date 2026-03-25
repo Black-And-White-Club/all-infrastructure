@@ -178,10 +178,12 @@ alloy:
           regex         = "kube-state-metrics"
           action        = "keep"
         }
-        rule {
-          source_labels = ["__meta_kubernetes_namespace"]
-          target_label  = "namespace"
-        }
+        // Do NOT relabel __meta_kubernetes_namespace to "namespace" here.
+        // kube-state-metrics emits its own "namespace" label on every metric
+        // (e.g. namespace="frolf-bot" for pods in that namespace). Adding a
+        // scrape-level namespace=kube-system label would cause Prometheus to
+        // rename the metric label to "exported_namespace", breaking standard
+        // queries like kube_pod_container_resource_requests{namespace="frolf-bot"}.
       }
 
       // node-exporter
