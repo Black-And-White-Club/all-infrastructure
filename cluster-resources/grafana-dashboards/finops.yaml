@@ -271,7 +271,7 @@ data:
             "defaults": { "unit": "short", "custom": { "lineWidth": 2 } },
             "overrides": [
               {
-                "matcher": { "id": "byNamePattern", "options": ".*failure.*" },
+                "matcher": { "id": "byRegexp", "options": ".*failure.*" },
                 "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
               }
             ]
@@ -475,8 +475,8 @@ data:
           "fieldConfig": {
             "defaults": { "unit": "short" },
             "overrides": [
-              { "matcher": { "id": "byNamePattern", "options": ".*CPU.*" }, "properties": [{ "id": "unit", "value": "cores" }] },
-              { "matcher": { "id": "byNamePattern", "options": ".*Memory.*" }, "properties": [{ "id": "unit", "value": "bytes" }] }
+              { "matcher": { "id": "byRegexp", "options": ".*CPU.*" }, "properties": [{ "id": "unit", "value": "cores" }] },
+              { "matcher": { "id": "byRegexp", "options": ".*Memory.*" }, "properties": [{ "id": "unit", "value": "bytes" }] }
             ]
           },
           "targets": [
