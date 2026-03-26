@@ -110,6 +110,22 @@ datasources:
           serviceMap:
             datasourceUid: mimir
 
+# Sidecar watches ConfigMaps/Secrets labeled grafana_dashboard: "1" and hot-loads them
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "1"
+    folder: /var/lib/grafana/dashboards/sidecar
+    provider:
+      name: sidecar
+      orgId: 1
+      folder: ""
+      type: file
+      disableDeletion: false
+      allowUiUpdates: true
+    searchNamespace: observability
+
 # Default dashboard folders
 # dashboardProviders:
 #   dashboardproviders.yaml:
