@@ -31,6 +31,18 @@ data:
             "multi": false,
             "refresh": 2,
             "sort": 1
+          },
+          {
+            "name": "namespace",
+            "label": "Namespace",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(kube_pod_container_resource_requests, namespace)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "refresh": 2,
+            "sort": 1
           }
         ]
       },
@@ -315,7 +327,7 @@ data:
         {
           "id": 30,
           "type": "row",
-          "title": "Infrastructure Cost Proxy (frolf-bot namespace)",
+          "title": "Infrastructure Cost Proxy",
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
           "collapsed": false
         },
@@ -323,7 +335,7 @@ data:
           "id": 31,
           "type": "timeseries",
           "title": "CPU Usage by Pod",
-          "description": "Actual CPU consumption for frolf-bot pods. Primary driver of infrastructure cost.",
+          "description": "Actual CPU consumption per pod. Primary driver of infrastructure cost.",
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "options": {
@@ -335,7 +347,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"frolf-bot\", container!=\"\", container!=\"POD\"}[$__rate_interval]))",
+              "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}[$__rate_interval]))",
               "legendFormat": "{{pod}}",
               "refId": "A"
             }
@@ -345,7 +357,7 @@ data:
           "id": 32,
           "type": "timeseries",
           "title": "Memory Usage by Pod",
-          "description": "Working set memory for frolf-bot pods.",
+          "description": "Working set memory per pod.",
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "options": {
@@ -357,7 +369,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"frolf-bot\", container!=\"\", container!=\"POD\"})",
+              "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"})",
               "legendFormat": "{{pod}}",
               "refId": "A"
             }
@@ -391,7 +403,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"frolf-bot\", container!=\"\", container!=\"POD\"}[5m])) / sum(kube_pod_container_resource_requests{namespace=\"frolf-bot\", resource=\"cpu\"})",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}[5m])) / sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", resource=\"cpu\"})",
               "legendFormat": "CPU Utilization",
               "refId": "A"
             }
@@ -425,7 +437,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=\"frolf-bot\", container!=\"\", container!=\"POD\"}) / sum(kube_pod_container_resource_requests{namespace=\"frolf-bot\", resource=\"memory\"})",
+              "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}) / sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", resource=\"memory\"})",
               "legendFormat": "Memory Utilization",
               "refId": "A"
             }
@@ -435,7 +447,7 @@ data:
           "id": 35,
           "type": "stat",
           "title": "Pod Restarts (24h)",
-          "description": "Container restarts in frolf-bot namespace over last 24h — stability indicator",
+          "description": "Container restarts across selected namespaces over last 24h — stability indicator",
           "gridPos": { "h": 4, "w": 8, "x": 16, "y": 40 },
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "options": {
@@ -458,7 +470,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=\"frolf-bot\"}[24h]))",
+              "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[24h]))",
               "legendFormat": "Restarts",
               "refId": "A"
             }
@@ -467,7 +479,7 @@ data:
         {
           "id": 36,
           "type": "table",
-          "title": "Resource Requests vs Limits (frolf-bot pods)",
+          "title": "Resource Requests vs Limits",
           "description": "Right-sizing reference — CPU/memory requests and limits per container",
           "gridPos": { "h": 8, "w": 24, "x": 0, "y": 44 },
           "datasource": { "type": "prometheus", "uid": "mimir" },
@@ -481,25 +493,25 @@ data:
           },
           "targets": [
             {
-              "expr": "kube_pod_container_resource_requests{namespace=\"frolf-bot\", resource=\"cpu\"}",
+              "expr": "kube_pod_container_resource_requests{namespace=~\"$namespace\", resource=\"cpu\"}",
               "legendFormat": "CPU Request — {{container}}",
               "refId": "A",
               "instant": true
             },
             {
-              "expr": "kube_pod_container_resource_limits{namespace=\"frolf-bot\", resource=\"cpu\"}",
+              "expr": "kube_pod_container_resource_limits{namespace=~\"$namespace\", resource=\"cpu\"}",
               "legendFormat": "CPU Limit — {{container}}",
               "refId": "B",
               "instant": true
             },
             {
-              "expr": "kube_pod_container_resource_requests{namespace=\"frolf-bot\", resource=\"memory\"}",
+              "expr": "kube_pod_container_resource_requests{namespace=~\"$namespace\", resource=\"memory\"}",
               "legendFormat": "Memory Request — {{container}}",
               "refId": "C",
               "instant": true
             },
             {
-              "expr": "kube_pod_container_resource_limits{namespace=\"frolf-bot\", resource=\"memory\"}",
+              "expr": "kube_pod_container_resource_limits{namespace=~\"$namespace\", resource=\"memory\"}",
               "legendFormat": "Memory Limit — {{container}}",
               "refId": "D",
               "instant": true
