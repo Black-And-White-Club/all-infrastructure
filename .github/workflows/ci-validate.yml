@@ -43,12 +43,14 @@ jobs:
           tflint --init
           tflint --format=compact
 
+      - name: Install tfsec
+        run: |
+          curl -sSLo /usr/local/bin/tfsec \
+            https://github.com/aquasecurity/tfsec/releases/download/v1.28.11/tfsec-linux-amd64
+          chmod +x /usr/local/bin/tfsec
+
       - name: tfsec
-        uses: aquasecurity/tfsec-action@v1.0.3
-        with:
-          working_directory: terraform
-          soft_fail: false
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+        run: tfsec . --no-colour
 
   # ── Helm: lint + schema validation ─────────────────────────────────────────
   helm-lint:
