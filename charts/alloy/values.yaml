@@ -95,7 +95,7 @@ alloy:
 
       otelcol.processor.batch "default" {
         timeout         = "5s"
-        send_batch_size = 0
+        send_batch_size = 4096
         output {
           traces  = [otelcol.exporter.otlp.tempo.input]
           metrics = [otelcol.exporter.prometheus.mimir.input]
@@ -104,7 +104,7 @@ alloy:
 
       otelcol.processor.batch "logs" {
         timeout         = "5s"
-        send_batch_size = 0
+        send_batch_size = 4096
         output {
           logs = [otelcol.exporter.loki.default.input]
         }
@@ -296,7 +296,8 @@ ingress:
         - frolf-bot.duckdns.org
 
 controller:
-  type: daemonset
+  type: deployment
+  replicas: 1
   revisionHistoryLimit: 3
   resources:
     requests:

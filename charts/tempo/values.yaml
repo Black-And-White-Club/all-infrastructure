@@ -43,14 +43,18 @@ ingester:
   config:
     replication_factor: 1
   persistence:
-    enabled: false
+    enabled: true
+    storageClass: local-storage
+    size: 2Gi
+    accessModes:
+      - ReadWriteOnce
   resources:
     requests:
       cpu: 10m
-      memory: 128Mi
+      memory: 256Mi
     limits:
       cpu: 500m
-      memory: 512Mi
+      memory: 768Mi
 
 # Compactor handles block compaction and retention
 compactor:
