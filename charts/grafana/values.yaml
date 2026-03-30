@@ -68,6 +68,8 @@ datasources:
         editable: true
         jsonData:
           timeInterval: 15s
+          queryTimeout: "120s"
+          httpMethod: POST
           exemplarTraceIdDestinations:
             - name: TraceID
               url: http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Tempo%22,%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22expr%22:%22$${__value.raw}%22%7D%5D
