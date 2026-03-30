@@ -94,8 +94,9 @@ alloy:
       /////////////////////////////////////////
 
       otelcol.processor.batch "default" {
-        timeout         = "5s"
-        send_batch_size = 4096
+        timeout              = "5s"
+        send_batch_size      = 4096
+        send_batch_max_size  = 8192
         output {
           traces  = [otelcol.exporter.otlp.tempo.input]
           metrics = [otelcol.exporter.prometheus.mimir.input]
@@ -103,8 +104,9 @@ alloy:
       }
 
       otelcol.processor.batch "logs" {
-        timeout         = "5s"
-        send_batch_size = 4096
+        timeout              = "5s"
+        send_batch_size      = 4096
+        send_batch_max_size  = 8192
         output {
           logs = [otelcol.exporter.loki.default.input]
         }
