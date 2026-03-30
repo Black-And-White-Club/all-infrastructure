@@ -54,8 +54,6 @@ mimir:
       compactor_blocks_retention_period: 720h
       # Allow out-of-order samples to handle jitter/drift in small clusters
       out_of_order_time_window: 2h
-      # Allow slow 30-day range queries to complete (matches Grafana datasource timeout)
-      query_timeout: 120s
 
 ##############################################
 # DISABLED COMPONENTS (not needed for small setups)
