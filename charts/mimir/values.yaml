@@ -54,6 +54,11 @@ mimir:
       compactor_blocks_retention_period: 720h
       # Allow out-of-order samples to handle jitter/drift in small clusters
       out_of_order_time_window: 2h
+      # Single-querier deployment: sharding multiplies sub-queries ~128x per panel,
+      # flooding the scheduler. Disable it entirely.
+      query_sharding_total_shards: 1
+      # Split queries by 7d instead of 24h to reduce sub-query fan-out.
+      split_queries_by_interval: 7d
 
 ##############################################
 # DISABLED COMPONENTS (not needed for small setups)
