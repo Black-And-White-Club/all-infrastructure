@@ -54,6 +54,7 @@ mimir:
       compactor_blocks_retention_period: 720h
       # Allow out-of-order samples to handle jitter/drift in small clusters
       out_of_order_time_window: 2h
+    query_scheduler:
       # Dashboard load fires many concurrent expensive queries against a single-replica querier;
       # default of 100 saturates immediately on 30d range queries.
       max_outstanding_requests_per_tenant: 400
