@@ -8,17 +8,11 @@ rbac:
 createClusterRoles: true
 
 config:
-  argocd:
-    serverAddress: "argocd-server.argocd.svc.cluster.local"
-    tokenSecretName: "argocd-image-updater-secret"
-  gitCommitUser: "argocd-image-updater"
-  gitCommitMail: "argocd-image-updater@noreply.com"
-  logLevel: "info"
-
-  # Git credentials for writing back to repository
-  git:
-    user: "argocd-image-updater"
-    email: "argocd-image-updater@noreply.com"
+  argocd.serverAddress: "argocd-server.argocd.svc.cluster.local"
+  argocd.tokenSecretName: "argocd-image-updater-secret"
+  git.user: "argocd-image-updater"
+  git.email: "argocd-image-updater@noreply.com"
+  log.level: "info"
 
   registries:
     - name: Oracle Cloud Infrastructure Registry
@@ -43,7 +37,7 @@ serviceAccount:
 extraArgs:
   - --leader-election=false
 
-extraEnvVars:
+extraEnv:
   - name: ARGOCD_SERVER
     value: "argocd-server.argocd.svc.cluster.local"
   - name: ARGOCD_TOKEN
