@@ -47,3 +47,4 @@ docs/oauth-launch-plan.md
 *.pem
 CLAUDE.md
 AGENTS.md
+scripts/node-ssh.sh
