@@ -47,9 +47,8 @@ repoServer:
 
   replicas: 1
   # Reduce the parallelism limit to avoid high memory usage during heavy concurrent manifests
+  # Note: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT is set via argocd-cmd-params-cm by the chart
   env:
-    - name: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT
-      value: "4"
     - name: XDG_CONFIG_HOME
       value: /.config
     - name: SOPS_AGE_KEY_FILE
