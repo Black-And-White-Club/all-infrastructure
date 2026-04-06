@@ -43,6 +43,11 @@ cluster-resources/sealed-secrets/generate-ocir-sealed-secret.sh
 CONSUMER_RELIABILITY_PROMPT.md
 WATERMILL_EVENT_REMEDIATION_PLAN.md
 /secrets/
+# Fail-safe: prevent sealed secret payloads from being committed to public repo
+cluster-resources/sealed-secrets/sealed-*.yaml
+cluster-resources/sealed-secrets/*-sealed.yaml
+!cluster-resources/sealed-secrets/*-template.yaml
+!cluster-resources/sealed-secrets/sealed-repo-all-infrastructure.example.yaml
 docs/oauth-launch-plan.md
 *.pem
 CLAUDE.md
