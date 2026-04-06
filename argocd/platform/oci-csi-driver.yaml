@@ -1,7 +1,7 @@
 ---
-# ArgoCD Application to install the OCI Block Storage CSI driver.
-# The public repo keeps only a scrubbed instance principals template. Supply the
-# real compartment-scoped config from a private source before deploying.
+# ArgoCD Application to install the OCI Block Storage CSI driver
+# This template references the local `cluster-resources/csi/oci-csi-driver` directory.
+# Keep OCI credentials (SealedSecret) in `cluster-resources/sealed-secrets/` when needed.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

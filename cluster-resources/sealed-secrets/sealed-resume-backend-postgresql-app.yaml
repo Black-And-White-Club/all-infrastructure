@@ -1,0 +1,13 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: resume-backend-postgresql
+  namespace: resume-app
+spec:
+  encryptedData:
+    DATABASE_URL: AgBBDea5piMuD7DNQLJFEnJSH58xrSeS+jwBGGhf6Iiu/Gxcdqfej7vkVztF3agQtcR7MqDvuNRkdNEprroGM1xl1yoya9YHzeVFpaMy8VD6Ge1StEGZDBfXQnsNty24VupwBbFhKGg0+v7lVKkzKQ778grOPS5IcsUPVkXsPpi2qgepPB8qbpIGz3Y7EHyj3KRD2i8QeODbyepivyncb3PzsGR6R5UChNByB/p078urqwe1/94yhDgiBHNQ3naegEt36CYE8McPhxbESSKUgI0nbezX9velFzA24qMoMRqiReT4wRXdS9BsTIpGJvuXPvejsem127/NoT8Y++Apf8xV4cQq7A3bLMwY6ZDEkRDzkiuxABF0QlHo8TrCFBHzh/vfCKan1xEdKANurYizna+ETfcGTwWwHdKM4QYobooBfYW11rqYo+7MUujW6cTNhBz7u+yEeEGJUXTlDT1v2YqSspAuRkpxCAvCjj0iu2xxFEve0oM5qwmRgiFGkHL9cGKFXDPqs4Y0LiXakX8pVOhhLLbuwA8OQvxVjuzcznoGKjJ3vqq4ziXvSNNGdHHuEFetjJZvZcCEF0BnejcZ+y3FwZG7G0nY3ZK1hEkJFyAMBD6gZJclH0GkEvh/mfTUIYDCbFVfTIvO1b5zOlgYGOWtAKaPGr/1lOoDq2xt19st1fdPiIOyrEvva1b0BVM19wpsr3MrpfI8jmmO/C4Mi/39YUny2kbQB0wYGijOK0wT5pV2NUcVAQhjMWMMEsO5/2GE8a4xYPFSY/ppX2TDtgDNyDJmW3Vz/MfxaeioZsRtaNtHOsL24afk16oJdXf+t6Uq1T9oDyM8OTGvG6kunZJJ8eW0ocabnnIJ2WXXt0ERzqRbtGVcLvukcA==
+  template:
+    metadata:
+      name: resume-backend-postgresql
+      namespace: resume-app
