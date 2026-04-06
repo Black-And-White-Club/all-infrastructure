@@ -47,7 +47,7 @@ repoServer:
 
   replicas: 1
   # Reduce the parallelism limit to avoid high memory usage during heavy concurrent manifests
-  extraEnv:
+  env:
     - name: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT
       value: "4"
     - name: XDG_CONFIG_HOME
