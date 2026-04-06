@@ -50,6 +50,46 @@ repoServer:
   extraEnv:
     - name: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT
       value: "4"
+    - name: XDG_CONFIG_HOME
+      value: /.config
+    - name: SOPS_AGE_KEY_FILE
+      value: /sops-age/key.txt
+
+  volumes:
+    - name: custom-tools
+      emptyDir: {}
+    - name: sops-age-key
+      secret:
+        secretName: sops-age
+        items:
+          - key: key.txt
+            path: key.txt
+
+  initContainers:
+    - name: install-ksops
+      image: alpine:3.19
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          set -e
+          KSOPS_VERSION=4.3.3
+          wget -qO /tmp/ksops.tar.gz \
+            "https://github.com/viaduct-ai/kustomize-sops/releases/download/v${KSOPS_VERSION}/ksops_${KSOPS_VERSION}_Linux_x86_64.tar.gz"
+          tar -xzf /tmp/ksops.tar.gz -C /tmp ksops
+          mkdir -p /custom-tools/.config/kustomize/plugin/viaduct.ai/v1/ksops
+          cp /tmp/ksops /custom-tools/.config/kustomize/plugin/viaduct.ai/v1/ksops/ksops
+          chmod +x /custom-tools/.config/kustomize/plugin/viaduct.ai/v1/ksops/ksops
+      volumeMounts:
+        - name: custom-tools
+          mountPath: /custom-tools
+
+  volumeMounts:
+    - name: custom-tools
+      mountPath: /.config
+      subPath: .config
+    - name: sops-age-key
+      mountPath: /sops-age
+      readOnly: true
 
 # Redis - caching layer
 redis:
@@ -85,6 +125,11 @@ dex:
 # Disable HA mode (not needed for small clusters)
 redis-ha:
   enabled: false
+
+configs:
+  cm:
+    kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
+
 # Resource totals (approximate):
 # Limits:   ~1.4 CPU, ~1.54 GB RAM
 # Requests: ~0.375 CPU, ~0.896 GB RAM
