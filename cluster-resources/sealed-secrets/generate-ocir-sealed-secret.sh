@@ -105,7 +105,7 @@ if [[ -z "$USERNAME" || -z "$PASSWORD" ]]; then
 fi
 
 if [[ -z "$OUTPUT" ]]; then
-  OUTPUT="$SCRIPT_DIR/ocir-secret-${NAMESPACE}-sealed.yaml"
+  OUTPUT="${SECRETS_REPO_DIR:-$SCRIPT_DIR}/ocir-secret-${NAMESPACE}-sealed.yaml"
 fi
 
 KUBECTL_KUBECONFIG_ARGS=()

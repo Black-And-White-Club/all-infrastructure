@@ -21,7 +21,7 @@ kubectl create secret generic "$SECRET_NAME" \
   --from-literal=bucket-name="${BUCKET_NAME}" \
   --from-literal=s3-endpoint="${S3_ENDPOINT}" \
   --dry-run=client -o yaml \
-| kubeseal --format=yaml > "sealed-sealed-secrets-backup-creds.yaml"
+| kubeseal --format=yaml > "${SECRETS_REPO_DIR:-.}/sealed-sealed-secrets-backup-creds.yaml"
 
-echo "Generated: sealed-sealed-secrets-backup-creds.yaml"
+echo "Generated: ${SECRETS_REPO_DIR:-.}/sealed-sealed-secrets-backup-creds.yaml"
 echo "Next: git add sealed-sealed-secrets-backup-creds.yaml && git commit"

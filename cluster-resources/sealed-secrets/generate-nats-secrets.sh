@@ -4,7 +4,7 @@ set -euo pipefail
 # Helper script to generate NATS credentials sealed secret
 # Usage: NATS_AUTH_SERVICE_PASSWORD=xxx NATS_SYS_PASSWORD=xxx NATS_DISCORD_BOT_PASSWORD=xxx ./generate-nats-secrets.sh
 
-OUTPUT_FILE="sealed-nats-secrets.yaml"
+OUTPUT_FILE="${SECRETS_REPO_DIR:-.}/sealed-nats-secrets.yaml"
 NAMESPACE="frolf-bot"
 SECRET_NAME="nats-secrets"
 

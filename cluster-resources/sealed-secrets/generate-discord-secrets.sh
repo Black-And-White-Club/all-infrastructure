@@ -4,7 +4,7 @@ set -euo pipefail
 # Helper script to generate Discord bot sealed secret
 # Usage: DISCORD_TOKEN=xxx DISCORD_APP_ID=xxx NATS_DISCORD_BOT_PASSWORD=xxx ./generate-discord-secrets.sh
 
-OUTPUT_FILE="sealed-discord-secrets.yaml"
+OUTPUT_FILE="${SECRETS_REPO_DIR:-.}/sealed-discord-secrets.yaml"
 NAMESPACE="frolf-bot"
 SECRET_NAME="discord-secrets"
 

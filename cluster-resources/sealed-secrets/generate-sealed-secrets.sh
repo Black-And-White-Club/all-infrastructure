@@ -7,7 +7,7 @@ set -euo pipefail
 # Usage:
 #   ./generate-sealed-secrets.sh [output-dir]
 
-OUTPUT_DIR="${1:-./out}"
+OUTPUT_DIR="${1:-${SECRETS_REPO_DIR:-./out}}"
 NAMESPACE_DB="resume-db"
 NAMESPACE_APP="resume-app"
 SECRET_NAME="resume-backend-postgresql"

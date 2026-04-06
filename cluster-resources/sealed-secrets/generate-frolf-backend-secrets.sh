@@ -12,7 +12,7 @@ set -euo pipefail
 #   GOOGLE_OAUTH_CLIENT_ID=... GOOGLE_OAUTH_CLIENT_SECRET=... \
 #   ./generate-frolf-backend-secrets.sh [output-file]
 
-OUTPUT_FILE="${1:-sealed-backend-secrets.yaml}"
+OUTPUT_FILE="${1:-${SECRETS_REPO_DIR:-.}/sealed-backend-secrets.yaml}"
 NAMESPACE="${NAMESPACE:-frolf-bot}"
 SECRET_NAME="${SECRET_NAME:-backend-secrets}"
 
