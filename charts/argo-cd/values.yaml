@@ -46,11 +46,7 @@ repoServer:
       memory: 512Mi
 
   replicas: 1
-  # Reduce the parallelism limit to avoid high memory usage during heavy concurrent manifests
-  # Note: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT is set via argocd-cmd-params-cm by the chart
   env:
-    - name: XDG_CONFIG_HOME
-      value: /.config
     - name: SOPS_AGE_KEY_FILE
       value: /sops-age/key.txt
 
@@ -75,17 +71,16 @@ repoServer:
           wget -qO /tmp/ksops.tar.gz \
             "https://github.com/viaduct-ai/kustomize-sops/releases/download/v${KSOPS_VERSION}/ksops_${KSOPS_VERSION}_Linux_x86_64.tar.gz"
           tar -xzf /tmp/ksops.tar.gz -C /tmp ksops
-          mkdir -p /custom-tools/.config/kustomize/plugin/viaduct.ai/v1/ksops
-          cp /tmp/ksops /custom-tools/.config/kustomize/plugin/viaduct.ai/v1/ksops/ksops
-          chmod +x /custom-tools/.config/kustomize/plugin/viaduct.ai/v1/ksops/ksops
+          cp /tmp/ksops /custom-tools/ksops
+          chmod +x /custom-tools/ksops
       volumeMounts:
         - name: custom-tools
           mountPath: /custom-tools
 
   volumeMounts:
     - name: custom-tools
-      mountPath: /.config
-      subPath: .config
+      mountPath: /usr/local/bin/ksops
+      subPath: ksops
     - name: sops-age-key
       mountPath: /sops-age
       readOnly: true
