@@ -48,3 +48,6 @@ docs/oauth-launch-plan.md
 CLAUDE.md
 AGENTS.md
 scripts/node-ssh.sh
+docs/plans/2026-04-04-private-repos-self-hosted-runner-plan.md
+argocd/ocir-secret-sealed.yaml
+cluster-resources/sealed-secrets/*-sealed.yaml

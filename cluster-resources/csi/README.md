@@ -19,7 +19,9 @@ oci-csi-driver/
 
 ## Prerequisites
 
-Before the CSI driver can provision volumes, you need to create an OCI credentials secret:
+Before the CSI driver can provision volumes, you need to create an OCI
+credentials secret or a private instance-principals config. Do not commit the
+generated payload to this public repo.
 
 ```bash
 # Create provider config file (see manifests/provider-config-example.yaml in the OCI repo)
@@ -46,13 +48,18 @@ kubectl create secret generic oci-volume-provisioner \
 # Seal it
 kubeseal --controller-namespace kube-system --controller-name sealed-secrets \
   --format=yaml < /tmp/oci-volume-provisioner-secret.yaml \
-  > cluster-resources/sealed-secrets/oci-volume-provisioner-sealed.yaml
+  > /tmp/oci-volume-provisioner-sealed.yaml
 
 # Clean up plaintext
 rm /tmp/oci-volume-provisioner-config.yaml /tmp/oci-volume-provisioner-secret.yaml
 ```
 
-Add `oci-volume-provisioner-sealed.yaml` to the sealed-secrets kustomization.yaml and commit.
+Store `oci-volume-provisioner-sealed.yaml` in a private GitOps source or ignored
+local workspace. The public repo intentionally excludes live secret payloads.
+
+If you use instance principals instead of API keys, treat
+`oci-csi-driver/instance-principals-config.yaml` as a public-safe template and
+inject the real compartment OCID from a private source before deployment.
 
 ## ArgoCD Application
 

@@ -1,5 +1,6 @@
-# OCI Volume Provisioner config using Instance Principals
-# No API keys needed - the CSI driver uses the instance metadata service
+# OCI Volume Provisioner config using Instance Principals.
+# Public-safe template only. Replace the placeholder compartment OCID from a
+# private source before reconciling this manifest against a live cluster.
 apiVersion: v1
 kind: Secret
 metadata:
@@ -10,4 +11,4 @@ stringData:
   config.yaml: |
     auth:
       useInstancePrincipals: true
-    compartment: ocid1.compartment.oc1..aaaaaaaa5ehb7r5dse3sv7gbmturwzqiuukm2u5d5uaav7lo2aqqlcxa7l2a
+    compartment: ocid1.compartment.oc1..<replace-in-private-source>

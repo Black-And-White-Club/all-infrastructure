@@ -2,11 +2,15 @@
 
 This repository is the shared platform/infra repo that provisions/kicks off the Kubernetes clusters, platform services, and GitOps automation that underpin every project in this organization.
 
+Actual environment-specific secret payloads are intentionally not tracked here.
+Keep generated SealedSecret manifests and other private operational inputs in a
+private GitOps source or an ignored local workspace.
+
 ## Purpose
 
 - Provision cloud networking, compute, and storage via `terraform/`.
 - Bootstrap/minutely configure clusters, install ArgoCD, and manage certificates/secrets via `ansible/` + Helm.
-- Store the shared Kubernetes manifests that every tenant consumes (namespaces, storage classes, CRDs, secrets).
+- Store the shared Kubernetes manifests that every tenant consumes (namespaces, storage classes, CRDs, secret templates/workflows).
 - Host the GitOps control plane under `argocd/`: the root `Application` plus platform, observability, and app definitions.
 - Keep per-app Kustomize bases + lightweight overlays in `kustomize/` so Image Updater + ArgoCD can work together.
 
@@ -27,6 +31,10 @@ This repository is the shared platform/infra repo that provisions/kicks off the 
 2. Run `ansible/playbooks/bootstrap-argocd.yml` (set `KUBECONFIG` or pass `-e kubeconfig_path=...`) to install ArgoCD via Helm and apply `argocd/root-app.yaml` plus the consolidated project definitions.
 3. The root Application automatically includes `argocd/platform/`, `argocd/observability/`, `argocd/apps/`, `argocd/cluster-resources/`, and `argocd/projects/`. Watch it with `kubectl -n argocd get applications | grep root` or via the ArgoCD UI.
 4. Make future changes by editing the relevant YAML under `kustomize/`, `argocd/apps/`, or `argocd/platform/`, then commit/push; ArgoCD will reconcile them through the root app.
+
+If you need live cluster secrets, generate them from the helpers under
+`cluster-resources/sealed-secrets/` and keep the resulting SealedSecret payloads
+outside this public repo.
 
 ## GitOps orchestration
 

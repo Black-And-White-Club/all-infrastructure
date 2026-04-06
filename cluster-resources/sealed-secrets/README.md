@@ -1,8 +1,11 @@
 # SealedSecrets for OCI Credentials
 
-This directory should contain SealedSecrets for any OCI credentials used by
-in-cluster services (OCI CSI driver, object storage uploads, etc.). Do NOT
-commit unsealed (plaintext) secrets to Git.
+This directory contains generators, templates, and examples for cluster
+secrets. Live SealedSecret payloads are intentionally excluded from this public
+repo. Do not commit plaintext secrets or real sealed payloads here.
+
+Keep generated SealedSecret manifests in a private GitOps source or an ignored
+local workspace, then feed them to ArgoCD from that private source.
 
 ## Generating OCIR pull secrets for the frolf workloads
 
@@ -26,10 +29,8 @@ export OCIR_AUTH_TOKEN="<auth token>"
   --output ocir-secret-argocd-sealed.yaml
 ```
 
-Both commands write sealed secret YAML that is safe to commit in
-`all-infrastructure/cluster-resources/sealed-secrets`. After adding them to
-git, ArgoCD will sync and create the real `ocir-secret` objects in the
-requested namespaces on the next deploy.
+Both commands write sealed secret YAML. Store those outputs in a private repo or
+ignored local directory, then sync them to the cluster from that private source.
 
 To create a SealedSecret for object storage uploads (used by backups or other jobs/controllers):
 
@@ -52,11 +53,12 @@ kubectl --kubeconfig ~/.kube/config-oci -n kube-system create secret generic oci
 ```bash
 kubeseal --kubeconfig ~/.kube/config-oci --controller-name sealed-secrets \
   --controller-namespace kube-system -o yaml < /tmp/oci-objectstore-creds.yaml \
-  > all-infrastructure/cluster-resources/sealed-secrets/oci-objectstore-creds-sealed.yaml
+  > /tmp/oci-objectstore-creds-sealed.yaml
 ```
 
-3. Commit the sealed secret file to Git and push. ArgoCD will apply it and the
-   sealed-secrets controller will create the real secret in the cluster.
+3. Store the sealed secret file in a private GitOps source. ArgoCD can apply it
+   from there and the sealed-secrets controller will create the real secret in
+   the cluster.
 
 Important: Jobs or controllers that upload to object storage expect the secret named
 `oci-objectstore-creds` in the `kube-system` namespace and the Postgres password
@@ -64,7 +66,9 @@ to be present in `resume-backend-postgresql` secret in the `resume-db` namespace
 
 # SealedSecret management for infra-managed DBs
 
-This directory contains sealed secret templates for infra-managed DBs. The files are templates — they must contain `kubeseal`-generated encrypted data before being applied.
+This directory contains templates for infra-managed DB secrets. The files must
+contain `kubeseal`-generated encrypted data before being applied, but those live
+payloads should stay outside this public repo.
 
 Workflow (infra-centric):
 
@@ -87,11 +91,14 @@ kubeseal --format=yaml < resume-backend-postgresql-secret.yaml > sealed-resume-b
 
 3. If the app needs a secret in the app namespace as well, you can create it using this script (`generate-sealed-secrets.sh`) which will create both `resume-db` and `resume-app` sealed secrets.
 
-4. ArgoCD will pick up the sealed secret YAML and apply the required Kubernetes secrets at deployment time.
+4. ArgoCD can pick up the sealed secret YAML from your private GitOps source and
+   apply the required Kubernetes secrets at deployment time.
 5. To generate the secrets locally, run:
 
 ```bash
 ./all-infrastructure/cluster-resources/sealed-secrets/generate-sealed-secrets.sh ./tmp
 ```
 
-That script will generate a secure password, write raw secret YAMLs to `./tmp`, and then convert them into SealedSecret YAMLs using `kubeseal` (if available). Commit only the `sealed-` YAMLs into `all-infrastructure/cluster-resources/sealed-secrets/`.
+That script will generate a secure password, write raw secret YAMLs to `./tmp`,
+and then convert them into SealedSecret YAMLs using `kubeseal` (if available).
+Keep the generated `sealed-` YAMLs in a private source, not in this public repo.
