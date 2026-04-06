@@ -68,8 +68,9 @@ repoServer:
         - |
           set -e
           KSOPS_VERSION=4.3.3
+          ARCH=$(uname -m | sed 's/x86_64/x86_64/;s/aarch64/arm64/')
           wget -qO /tmp/ksops.tar.gz \
-            "https://github.com/viaduct-ai/kustomize-sops/releases/download/v${KSOPS_VERSION}/ksops_${KSOPS_VERSION}_Linux_x86_64.tar.gz"
+            "https://github.com/viaduct-ai/kustomize-sops/releases/download/v${KSOPS_VERSION}/ksops_${KSOPS_VERSION}_Linux_${ARCH}.tar.gz"
           tar -xzf /tmp/ksops.tar.gz -C /tmp ksops
           cp /tmp/ksops /custom-tools/ksops
           chmod +x /custom-tools/ksops
