@@ -9,6 +9,7 @@ spec:
   sourceRepos:
     - 'https://github.com/Black-And-White-Club/all-infrastructure.git'
     - 'https://github.com/Black-And-White-Club/all-infrastructure'
+    - 'https://github.com/Black-And-White-Club/all-infrastructure-secrets.git'
     - 'https://argoproj.github.io/argo-helm'
     - 'https://bitnami-labs.github.io/sealed-secrets'
     - 'https://charts.jetstack.io'
