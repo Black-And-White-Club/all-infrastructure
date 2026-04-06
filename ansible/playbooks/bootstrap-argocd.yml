@@ -68,6 +68,13 @@
       failed_when: false
       changed_when: false
 
+    - name: Apply bootstrap secrets (sops-age + private repo credential)
+      command: kubectl apply -f "{{ item }}"
+      loop:
+        - "{{ playbook_dir }}/../../secrets/bootstrap/sops-age.yaml"
+        - "{{ playbook_dir }}/../../secrets/bootstrap/argocd-private-repo.yaml"
+      when: bootstrap_secrets | default(false) | bool
+
     - name: Install or upgrade ArgoCD via Helm (idempotent)
       command: >
         helm upgrade --install argocd argo/argo-cd
