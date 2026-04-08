@@ -42,8 +42,8 @@ If you need to rebuild the cluster from scratch:
 
 ## Current Cluster Info
 
-- **Control Plane**: 129.153.14.244 (10.0.1.2)
-- **Worker-1**: 129.80.81.77 (10.0.1.136)
+- **Control Plane**: <CONTROL_PLANE_PUBLIC_IP> (<CONTROL_PLANE_INTERNAL_IP>)
+- **Worker-1**: <WORKER_PUBLIC_IP> (<WORKER_INTERNAL_IP>)
 - **Network Plugin**: Cilium (configured in group_vars)
 - **Container Runtime**: containerd
 

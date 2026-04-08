@@ -154,7 +154,7 @@ sources:
 ### Bootstrap (one-time)
 
 ```bash
-cd /Users/jace/Documents/GitHub/all-infrastructure
+cd all-infrastructure
 git add .
 git commit -m "Add The Lich King GitOps architecture"
 git push

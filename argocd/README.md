@@ -33,7 +33,7 @@ The Lich King (ApplicationSet)
 ### Step 1: Apply The Lich King
 
 ```bash
-cd /Users/jace/Documents/GitHub/all-infrastructure
+cd all-infrastructure
 ./scripts/bootstrap-lich-king.sh
 
 Note: As part of the new minimal bootstrap pattern Ansible performs ONE-TIME installs (ArgoCD + Sealed Secrets). The
