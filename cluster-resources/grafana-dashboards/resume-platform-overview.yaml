@@ -1,0 +1,606 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-resume-platform-overview
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  resume-platform-overview.json: |
+    {
+      "id": null,
+      "uid": "resume-platform-overview",
+      "title": "Resume Platform Overview",
+      "description": "Public-facing infrastructure dashboard for the portfolio platform. Focused on core health, capacity, and workload stability without deep internal host metrics noise.",
+      "tags": ["resume", "portfolio", "infrastructure"],
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "5m",
+      "time": { "from": "now-24h", "to": "now" },
+      "templating": {
+        "list": [
+          {
+            "name": "instance",
+            "label": "Node",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(node_uname_info, instance)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": false,
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "namespace",
+            "label": "Namespace",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(kube_pod_info, namespace)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "refresh": 2,
+            "sort": 1
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "row",
+          "title": "Platform Snapshot",
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+          "collapsed": false
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Uptime",
+          "description": "How long the selected node has been running without rebooting",
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "none",
+            "textMode": "auto"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": { "mode": "fixed", "fixedColor": "green" }
+            }
+          },
+          "targets": [
+            {
+              "expr": "node_time_seconds{instance=~\"$instance\"} - node_boot_time_seconds{instance=~\"$instance\"}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "CPU Busy",
+          "description": "Overall CPU busy percentage across the selected node",
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "area"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": 0 },
+                  { "color": "yellow", "value": 70 },
+                  { "color": "red", "value": 90 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[$__rate_interval])))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "RAM Used",
+          "description": "Effective memory usage excluding reclaimable memory",
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "area"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": 0 },
+                  { "color": "yellow", "value": 75 },
+                  { "color": "red", "value": 90 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "clamp_min((1 - (node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"})) * 100, 0)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "stat",
+          "title": "Root FS Used",
+          "description": "Disk usage on the root filesystem",
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "area"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": 0 },
+                  { "color": "yellow", "value": 80 },
+                  { "color": "red", "value": 90 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "100 * ((node_filesystem_size_bytes{instance=~\"$instance\", mountpoint=\"/\", fstype!=\"rootfs\"} - node_filesystem_avail_bytes{instance=~\"$instance\", mountpoint=\"/\", fstype!=\"rootfs\"}) / node_filesystem_size_bytes{instance=~\"$instance\", mountpoint=\"/\", fstype!=\"rootfs\"})",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "type": "stat",
+          "title": "Pod Restarts (24h)",
+          "description": "Container restarts across the selected namespaces during the last day",
+          "gridPos": { "h": 4, "w": 8, "x": 0, "y": 5 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "none"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": 0 },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 5 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[24h]))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "type": "stat",
+          "title": "CPU Request Utilization",
+          "description": "Actual CPU usage versus requested CPU across selected namespaces",
+          "gridPos": { "h": 4, "w": 8, "x": 8, "y": 5 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "area"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "blue", "value": null },
+                  { "color": "green", "value": 0.4 },
+                  { "color": "yellow", "value": 0.75 },
+                  { "color": "red", "value": 0.9 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}[5m])) / clamp_min(sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", resource=\"cpu\"}), 0.001)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "stat",
+          "title": "Memory Request Utilization",
+          "description": "Actual memory usage versus requested memory across selected namespaces",
+          "gridPos": { "h": 4, "w": 8, "x": 16, "y": 5 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "area"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "blue", "value": null },
+                  { "color": "green", "value": 0.4 },
+                  { "color": "yellow", "value": 0.75 },
+                  { "color": "red", "value": 0.9 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}) / clamp_min(sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", resource=\"memory\"}), 1)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 20,
+          "type": "row",
+          "title": "Node Trends",
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+          "collapsed": false
+        },
+        {
+          "id": 21,
+          "type": "timeseries",
+          "title": "System Load",
+          "description": "1, 5, and 15 minute load averages compared with CPU core count",
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 10 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["max", "mean"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "CPU Core Count" },
+                "properties": [
+                  { "id": "custom.fillOpacity", "value": 0 },
+                  { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } },
+                  { "id": "color", "value": { "mode": "fixed", "fixedColor": "dark-red" } }
+                ]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "node_load1{instance=~\"$instance\"}",
+              "legendFormat": "Load 1m",
+              "refId": "A"
+            },
+            {
+              "expr": "node_load5{instance=~\"$instance\"}",
+              "legendFormat": "Load 5m",
+              "refId": "B"
+            },
+            {
+              "expr": "node_load15{instance=~\"$instance\"}",
+              "legendFormat": "Load 15m",
+              "refId": "C"
+            },
+            {
+              "expr": "count(count(node_cpu_seconds_total{instance=~\"$instance\"}) by (cpu))",
+              "legendFormat": "CPU Core Count",
+              "refId": "D"
+            }
+          ]
+        },
+        {
+          "id": 22,
+          "type": "timeseries",
+          "title": "CPU Usage Breakdown",
+          "description": "High-level CPU activity split by user, system, I/O wait, other, and idle time",
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 10 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 40,
+                "drawStyle": "line",
+                "showPoints": "never",
+                "stacking": { "mode": "percent", "group": "A" }
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Idle" },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "dark-blue" } }]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Busy Iowait" },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "sum(irate(node_cpu_seconds_total{instance=~\"$instance\", mode=\"system\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=~\"$instance\"}) by (cpu)))",
+              "legendFormat": "Busy System",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(irate(node_cpu_seconds_total{instance=~\"$instance\", mode=\"user\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=~\"$instance\"}) by (cpu)))",
+              "legendFormat": "Busy User",
+              "refId": "B"
+            },
+            {
+              "expr": "sum(irate(node_cpu_seconds_total{instance=~\"$instance\", mode=\"iowait\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=~\"$instance\"}) by (cpu)))",
+              "legendFormat": "Busy Iowait",
+              "refId": "C"
+            },
+            {
+              "expr": "sum(irate(node_cpu_seconds_total{instance=~\"$instance\", mode!=\"idle\", mode!=\"user\", mode!=\"system\", mode!=\"iowait\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=~\"$instance\"}) by (cpu)))",
+              "legendFormat": "Busy Other",
+              "refId": "D"
+            },
+            {
+              "expr": "sum(irate(node_cpu_seconds_total{instance=~\"$instance\", mode=\"idle\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=~\"$instance\"}) by (cpu)))",
+              "legendFormat": "Idle",
+              "refId": "E"
+            }
+          ]
+        },
+        {
+          "id": 23,
+          "type": "timeseries",
+          "title": "Memory Overview",
+          "description": "RAM and swap usage with cache/buffer split for the selected node",
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 40,
+                "drawStyle": "line",
+                "showPoints": "never",
+                "stacking": { "mode": "normal", "group": "A" }
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Total" },
+                "properties": [
+                  { "id": "custom.fillOpacity", "value": 0 },
+                  { "id": "color", "value": { "mode": "fixed", "fixedColor": "light-green" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Swap Used" },
+                "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "dark-red" } }]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "node_memory_MemTotal_bytes{instance=~\"$instance\"}",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "expr": "node_memory_MemTotal_bytes{instance=~\"$instance\"} - node_memory_MemFree_bytes{instance=~\"$instance\"} - (node_memory_Cached_bytes{instance=~\"$instance\"} + node_memory_Buffers_bytes{instance=~\"$instance\"} + node_memory_SReclaimable_bytes{instance=~\"$instance\"})",
+              "legendFormat": "Used",
+              "refId": "B"
+            },
+            {
+              "expr": "node_memory_Cached_bytes{instance=~\"$instance\"} + node_memory_Buffers_bytes{instance=~\"$instance\"} + node_memory_SReclaimable_bytes{instance=~\"$instance\"}",
+              "legendFormat": "Cache + Buffer",
+              "refId": "C"
+            },
+            {
+              "expr": "node_memory_MemFree_bytes{instance=~\"$instance\"}",
+              "legendFormat": "Free",
+              "refId": "D"
+            },
+            {
+              "expr": "(node_memory_SwapTotal_bytes{instance=~\"$instance\"} - node_memory_SwapFree_bytes{instance=~\"$instance\"})",
+              "legendFormat": "Swap Used",
+              "refId": "E"
+            }
+          ]
+        },
+        {
+          "id": 30,
+          "type": "row",
+          "title": "Traffic And Storage",
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+          "collapsed": false
+        },
+        {
+          "id": 31,
+          "type": "timeseries",
+          "title": "Network Traffic",
+          "description": "Inbound and outbound traffic across primary interfaces",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["max", "mean"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bps",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 30,
+                "drawStyle": "line",
+                "showPoints": "never"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byRegexp", "options": ".*Tx.*" },
+                "properties": [{ "id": "custom.transform", "value": "negative-Y" }]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "rate(node_network_receive_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|cali.*|flannel.*|docker.*|cni.*|lxc.*\"}[$__rate_interval]) * 8",
+              "legendFormat": "Rx {{device}}",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(node_network_transmit_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|cali.*|flannel.*|docker.*|cni.*|lxc.*\"}[$__rate_interval]) * 8",
+              "legendFormat": "Tx {{device}}",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "id": 32,
+          "type": "timeseries",
+          "title": "Disk Throughput",
+          "description": "Read and write throughput by storage device",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["max", "mean"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 30,
+                "drawStyle": "line",
+                "showPoints": "never"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byRegexp", "options": ".*Read.*" },
+                "properties": [{ "id": "custom.transform", "value": "negative-Y" }]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "irate(node_disk_read_bytes_total{instance=~\"$instance\", device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval])",
+              "legendFormat": "{{device}} Read",
+              "refId": "A"
+            },
+            {
+              "expr": "irate(node_disk_written_bytes_total{instance=~\"$instance\", device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval])",
+              "legendFormat": "{{device}} Write",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "id": 40,
+          "type": "row",
+          "title": "Workload Health",
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+          "collapsed": false
+        },
+        {
+          "id": 41,
+          "type": "timeseries",
+          "title": "Top Pods By CPU",
+          "description": "Highest CPU-consuming pods in the selected namespaces",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["max", "mean"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "cores",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "topk(8, sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}[$__rate_interval])))",
+              "legendFormat": "{{pod}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 42,
+          "type": "timeseries",
+          "title": "Top Pods By Memory",
+          "description": "Highest memory-consuming pods in the selected namespaces",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["max", "mean"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "topk(8, sum by (pod) (container_memory_working_set_bytes{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}))",
+              "legendFormat": "{{pod}}",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
