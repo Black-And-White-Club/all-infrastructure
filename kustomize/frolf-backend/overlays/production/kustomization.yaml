@@ -138,3 +138,9 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/image
         value: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend@sha256:31f9b7622bedd81f25c662921de3c138c2a624617250fddf5126d2c2d53bfa53
+images:
+  - name: frolf-bot-backend
+    newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
+    newTag: v1.0.252
+  - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
+    newTag: v1.0.252
