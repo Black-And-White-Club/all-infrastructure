@@ -30,6 +30,15 @@ spec:
       - group: ''
         kind: ServiceAccount
         name: default
+      - group: ''
+        kind: Secret
+        name: frolf-bot-pwa-tls
+      - group: ''
+        kind: Secret
+        name: nats-tls
+      - group: ''
+        kind: Secret
+        name: resume-app-tls
 
   namespaceResourceWhitelist:
     - group: ''
