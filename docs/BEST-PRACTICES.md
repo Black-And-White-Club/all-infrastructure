@@ -1,5 +1,9 @@
 # Infrastructure Best Practices
 
+Deprecated: this file is no longer the canonical architecture source.
+
+Use [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) for current-state architecture and [`argocd/README.md`](../argocd/README.md) for current GitOps operations.
+
 This file documents the general production-ready best practices this repo follows.
 
 1. Storage

@@ -18,7 +18,7 @@ spec:
         valueFiles:
           - $values/charts/argo-rollouts/values.yaml
 
-    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
       targetRevision: main
       path: charts/argo-rollouts
       ref: values

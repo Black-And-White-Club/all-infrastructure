@@ -16,7 +16,7 @@ spec:
       helm:
         valueFiles:
           - $values/charts/argo-cd/values.yaml
-    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
       targetRevision: main
       path: charts/argo-cd
       ref: values

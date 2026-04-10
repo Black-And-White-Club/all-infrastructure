@@ -8,9 +8,10 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
     targetRevision: main
-    # Points to the directory containing ALL namespace YAMLs
+    # This path owns namespace-scoped defaults (Namespaces and LimitRanges) that
+    # must remain allowed by the platform AppProject.
     path: cluster-resources/namespaces
   destination:
     server: https://kubernetes.default.svc

@@ -6,3 +6,11 @@ resources:
   - service.yaml
   - ingress.yaml
   - ingress-nats.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: frolf-bot-pwa
+      app.kubernetes.io/instance: frolf-bot
+      app.kubernetes.io/component: web
+      app.kubernetes.io/part-of: frolf-bot
+      app.kubernetes.io/managed-by: argocd

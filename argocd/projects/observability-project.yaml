@@ -7,7 +7,9 @@ spec:
   description: Shared observability stack
 
   sourceRepos:
-    - "*"
+    - "https://github.com/Black-And-White-Club/all-infrastructure.git"
+    - "https://grafana.github.io/helm-charts"
+    - "https://prometheus-community.github.io/helm-charts"
 
   destinations:
     - namespace: "observability"
@@ -15,9 +17,34 @@ spec:
     - namespace: "kube-system"
       server: "https://kubernetes.default.svc"
 
+  orphanedResources:
+    warn: true
+
   namespaceResourceWhitelist:
-    - group: "*"
-      kind: "*"
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: "apps"
+      kind: DaemonSet
+    - group: "apps"
+      kind: Deployment
+    - group: "apps"
+      kind: StatefulSet
+    - group: "networking.k8s.io"
+      kind: Ingress
+    - group: "policy"
+      kind: PodDisruptionBudget
+    - group: "rbac.authorization.k8s.io"
+      kind: Role
+    - group: "rbac.authorization.k8s.io"
+      kind: RoleBinding
   clusterResourceWhitelist:
     - group: rbac.authorization.k8s.io
       kind: ClusterRole

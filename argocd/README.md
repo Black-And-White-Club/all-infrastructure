@@ -1,91 +1,40 @@
-# The Lich King - GitOps Bootstrap Guide
+# Argo CD
 
-## Overview
+This directory is the current GitOps source of truth for `all-infrastructure`.
 
-**The Lich King** is the master ApplicationSet that manages all platform and application resources on the OCI Kubernetes cluster using GitOps principles.
+The root application is [`root-app.yaml`](./root-app.yaml), an Argo CD `Application` that reconciles the platform, observability, app, cluster-resource, and project definitions in this directory.
 
-This folder contains ArgoCD Applications and ApplicationSets that deploy cluster-level resources and platform components.
+For the current architecture and ownership model, see [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md).
 
-## Architecture
+## Bootstrap
 
-```
-The Lich King (ApplicationSet)
-│
-├── Wave 0: Platform Base
-│   ├── Sealed Secrets (Helm chart)
-│   └── Cluster Resources (namespaces, storage classes, PVs)
-│
-├── Wave 1: Observability
-│   └── Grafana (shared visualization for resume + frolf-bot)
-│
-├── Wave 2: Shared Services
-│   └── NATS (JetStream enabled)
-│
-└── Wave 10: Applications
-    ├── Resume (→ resume-infrastructure repo)
-    │   └── Includes: Prometheus in resume namespace
-    └── Frolf Bot (→ frolf-bot-infrastructure repo)
-        └── Includes: Mimir/Loki/Tempo/Alloy in frolf-bot namespace
-```
-
-## Bootstrap Process
-
-### Step 1: Apply The Lich King
+1. Provision OCI resources with Terraform.
+2. Bootstrap the cluster and install Argo CD with Ansible.
+3. Apply [`root-app.yaml`](./root-app.yaml) if Ansible has not already done so.
 
 ```bash
-cd all-infrastructure
-./scripts/bootstrap-lich-king.sh
-
-Note: As part of the new minimal bootstrap pattern Ansible performs ONE-TIME installs (ArgoCD + Sealed Secrets). The
-`scripts/bootstrap-lich-king.sh` script expects ArgoCD to be present and will apply `the-lich-king` to let Lich King
-manage all platform and application sets.
-
- - `argocd-applications/applicationsets/` contains ApplicationSet definitions
- - `argocd-applications/apps-descriptors/` contains small application descriptor files used by
-     `apps-appset.yaml` to generate full ArgoCD Application manifests. This is the canonical place
-     to add or modify app entries when following the Lich King/AppSet pattern.
- - `argocd-applications/apps/` previously contained full Application manifests; those files have
-     been migrated to descriptors and archived at `argocd-applications/apps-archived/`. The stub
-     files under `apps/` remain to preserve history but are no longer the primary source-of-truth.
- - `argocd-applications/observability/` contains tiny chart descriptors for ApplicationSets to
-     generate Grafana/Alloy/Mimir apps.
-
-This enables `the-lich-king` to orchestrate ApplicationSets and create per-app ArgoCD Applications.
+cd ansible
+ansible-playbook -i inventory/hosts.ini playbooks/bootstrap-argocd.yml
 ```
 
-### Step 2: Watch Deployment
+## Layout
+
+- `apps/`: application Argo CD `Application` resources
+- `cluster-resources/`: Argo CD applications for namespaces, storage, network policies, dashboards, and secrets
+- `image-updaters/`: Argo CD Image Updater custom resources
+- `observability/`: shared observability stack applications
+- `platform/`: shared platform component applications
+- `projects/`: AppProject policy
+
+## Operations
 
 ```bash
-# Watch Applications
 KUBECONFIG=~/.kube/config-oci kubectl get applications -n argocd -w
-
-# Access ArgoCD UI
 KUBECONFIG=~/.kube/config-oci kubectl port-forward svc/argocd-server -n argocd 8081:443
-# Open https://localhost:8081
 ```
 
-## How GitOps Works
+## Notes
 
-1. **Update files** in this repo (charts/, cluster-resources/, argocd-applications/)
-2. **Commit and push** to GitHub
-3. **ArgoCD auto-syncs** within ~3 minutes
-
-## File Structure
-
-- `platform/` - platform-level Applications (cert-manager, argocd-image-updater, app-projects, etc.)
-- `bootstrap/` - (removed) previously contained one-time install manifests. Ansible now performs those one-time tasks.
-
-* `the-lich-king/` - The master Application that orchestrates every downstream ApplicationSet once the bootstrap completes
-* `platform/` - Platform Applications and ApplicationSets (cert-manager, cluster resources, shared services, etc.)
-* `applications/` - Application bootstrappers (pointing at resume/frolf repos)
-
-See `/docs/MIGRATION-PLAN.md` for detailed architecture and migration guide.
-
-## CRD Management & Sync-Wave Ordering
-
-When a controller (like Argo CD Image Updater) installs CRDs via a Helm chart, Argo can still try to apply Custom Resources (CRs) before the CRD is registered, resulting in "not found" errors. To avoid this race and stay GitOps-native, prefer one of these patterns:
-
-- Chart-managed CRDs (recommended): Keep `crds.install: true` in the chart `values.yaml`. Set the controller Application to an early sync-wave (e.g., "2"), and set any per-app CR Applications to a later sync-wave (e.g., "21"). This ensures CRDs are installed by the chart before per-app CRs sync.
-- Explicit CRD Application: Manage CRDs in a dedicated path and Argo Application (e.g., `cluster-resources/crds`), give it the earliest sync-wave, set the controller chart `crds.install: false`, and keep per-app CRs in later waves. This is useful when you need explicit control over CRD lifecycle.
-
-We follow the chart-managed CRDs pattern in this repo: the Image Updater chart installs CRDs and per-app ImageUpdater Application(s) live under `argocd-applications/` with `sync-wave: 21` to ensure proper ordering.
+- Child applications use sync waves to keep CRDs/controllers/resources ordered.
+- Argo CD Image Updater writes approved image changes back to Git under this repo.
+- Secrets are sourced from the private `all-infrastructure-secrets` repo via the cluster-sealed-secrets application.

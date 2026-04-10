@@ -5,3 +5,7 @@ metadata:
   labels:
     name: observability
     managed-by: argocd
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn-version: v1.31
+    pod-security.kubernetes.io/audit-version: v1.31

@@ -12,7 +12,7 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
     targetRevision: main
     path: cluster-resources/csi/oci-csi-driver
   destination:

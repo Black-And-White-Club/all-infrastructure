@@ -18,7 +18,7 @@ spec:
         parameters:
           - name: crds.enabled
             value: "true"
-    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
       targetRevision: main
       ref: values
   destination:

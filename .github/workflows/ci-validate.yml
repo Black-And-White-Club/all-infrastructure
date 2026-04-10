@@ -1,10 +1,16 @@
 name: CI — Validate Infrastructure
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
   push:
     branches: [main]
+  schedule:
+    - cron: "0 9 * * 1"
+
+permissions:
+  contents: read
 
 concurrency:
   group: ci-validate-${{ github.ref }}
@@ -20,10 +26,10 @@ jobs:
         working-directory: terraform
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
         with:
           terraform_version: "~1.9"
 
@@ -34,9 +40,9 @@ jobs:
         run: terraform validate
 
       - name: Setup tflint
-        uses: terraform-linters/setup-tflint@v4
+        uses: terraform-linters/setup-tflint@19a52fbac37dacb22a09518e4ef6ee234f2d4987
         with:
-          tflint_version: latest
+          tflint_version: v0.55.1
 
       - name: tflint
         run: |
@@ -45,8 +51,12 @@ jobs:
 
       - name: Install tfsec
         run: |
-          curl -sSLo /usr/local/bin/tfsec \
-            https://github.com/aquasecurity/tfsec/releases/download/v1.28.11/tfsec-linux-amd64
+          set -euo pipefail
+          TFSEC_VERSION=v1.28.11
+          TFSEC_SHA256=18e2f947a4f0ec74bf6db07245fc81f83930835ef1b5d51d2d5152a6548b5e45
+          curl -fsSLo /usr/local/bin/tfsec \
+            "https://github.com/aquasecurity/tfsec/releases/download/${TFSEC_VERSION}/tfsec-linux-amd64"
+          echo "${TFSEC_SHA256}  /usr/local/bin/tfsec" | sha256sum -c -
           chmod +x /usr/local/bin/tfsec
 
       - name: tfsec
@@ -58,17 +68,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Setup Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4
         with:
           version: v3.17.0
 
       - name: Install kubeconform
         run: |
-          wget -qO- https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
-            | tar xz -C /usr/local/bin
+          set -euo pipefail
+          KUBECONFORM_VERSION=v0.6.7
+          KUBECONFORM_SHA256=95f14e87aa28c09d5941f11bd024c1d02fdc0303ccaa23f61cef67bc92619d73
+          curl -fsSLo /tmp/kubeconform-linux-amd64.tar.gz \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "${KUBECONFORM_SHA256}  /tmp/kubeconform-linux-amd64.tar.gz" | sha256sum -c -
+          tar xzf /tmp/kubeconform-linux-amd64.tar.gz -C /usr/local/bin kubeconform
           chmod +x /usr/local/bin/kubeconform
 
       - name: Lint charts/
@@ -91,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Migration script unit tests (dry-run safety)
         # Runs before kustomize/kubectl are installed — tests use mocked binaries via PATH and
@@ -99,14 +114,19 @@ jobs:
         run: bash scripts/tests/run.sh
 
       - name: Setup kustomize
-        uses: imranismail/setup-kustomize@v2
+        uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f
         with:
           kustomize-version: "5.x"
 
       - name: Install kube-linter
         run: |
-          curl -sSL https://github.com/stackrox/kube-linter/releases/latest/download/kube-linter-linux.tar.gz \
-            | tar xz -C /usr/local/bin
+          set -euo pipefail
+          KUBE_LINTER_VERSION=v0.7.6
+          KUBE_LINTER_SHA256=cb6128997162b8b7e6962284313635643434421b4e9b4f86545af7a4976e0139
+          curl -fsSLo /tmp/kube-linter-linux.tar.gz \
+            "https://github.com/stackrox/kube-linter/releases/download/${KUBE_LINTER_VERSION}/kube-linter-linux.tar.gz"
+          echo "${KUBE_LINTER_SHA256}  /tmp/kube-linter-linux.tar.gz" | sha256sum -c -
+          tar xzf /tmp/kube-linter-linux.tar.gz -C /usr/local/bin kube-linter
           chmod +x /usr/local/bin/kube-linter
 
       - name: Build and lint each kustomize overlay

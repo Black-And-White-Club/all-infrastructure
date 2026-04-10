@@ -8,7 +8,6 @@ spec:
 
   sourceRepos:
     - 'https://github.com/Black-And-White-Club/all-infrastructure.git'
-    - 'https://github.com/Black-And-White-Club/all-infrastructure'
     - 'https://github.com/Black-And-White-Club/all-infrastructure-secrets.git'
     - 'https://argoproj.github.io/argo-helm'
     - 'https://bitnami-labs.github.io/sealed-secrets'
@@ -74,6 +73,10 @@ spec:
   namespaceResourceWhitelist:
     - group: ''
       kind: ConfigMap
+    # cluster-namespaces applies both Namespace and LimitRange defaults from
+    # cluster-resources/namespaces, so the platform project must allow core LimitRange.
+    - group: ''
+      kind: LimitRange
     - group: ''
       kind: Secret
     - group: ''
