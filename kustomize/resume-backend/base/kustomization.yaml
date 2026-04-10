@@ -10,8 +10,3 @@ labels:
     pairs:
       app: resume-backend
       managed-by: lich-king
-
-images:
-  - name: resume-backend
-    newName: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend
-    newTag: latest

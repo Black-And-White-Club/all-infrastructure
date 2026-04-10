@@ -19,14 +19,16 @@ Each app in `kustomize/` now follows a **base + production overlay** layout so t
 ## Base kustomization rules
 
 - Keep the actual `Deployment`, `Service`, `StatefulSet`, `ConfigMap`, `SealedSecret`, and supporting YAMLs inside the `base/` directory alongside a single `kustomization.yaml`.
-- The `base/kustomization.yaml` is where you declare `resources:`, `images:`, `labels:`, and any `configMapGenerator` blocks. This is the document Argo CD Image Updater mutates, so keep the image names there.
+- Keep base workload manifests image-agnostic: use placeholder image names like `frolf-bot-backend` or `resume-frontend` in the workload YAML, and do not pin deployable tags or digests in the base.
+- The production overlay is the deployed unit for Argo CD applications in this repo, so Argo CD Image Updater should mutate the production overlay `kustomization.yaml`, not the base.
 - **Do not set `namespace:` in the base kustomization.** The namespace comes from the Argo CD `Application.destination` so the same base can deploy anywhere.
 - Any sealed secrets you need should live in the base `resources:` list. Do not try to use `secretGenerator` for sealed secrets; they must remain literal YAML so that kubeseal can validate them.
 
 ## Production overlays
 
 - Every Argo CD app currently points at `kustomize/<app>/overlays/production`. The production overlay simply references `../../base` and can be extended later if the environment requires extra config.
-- Keep overlays thin: reference the base, add patches only when you need to override fields for that environment, and avoid duplicating `resources` lists.
+- Keep overlays thin: reference the base, add patches only when you need to override fields for that environment, avoid duplicating `resources` lists, and keep exactly one updater-owned `images:` entry per app.
+- The overlay `images:` entry is the single source of truth for deployed image versions. Do not combine it with hardcoded image patches or extra duplicate image mappings.
 
 ## ConfigMapGenerator gotcha
 

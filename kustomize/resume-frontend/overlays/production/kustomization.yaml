@@ -6,5 +6,3 @@ images:
   - name: resume-frontend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend
     newTag: "3416980"
-  - name: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/frontend
-    newTag: "3416980"

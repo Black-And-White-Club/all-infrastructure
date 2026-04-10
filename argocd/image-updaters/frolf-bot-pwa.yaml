@@ -18,7 +18,7 @@ spec:
             pullSecret: "pullsecret:argocd/ocir-secret"
           manifestTargets:
             kustomize:
-              name: "us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa"
+              name: "frolf-bot-pwa"
   writeBackConfig:
     method: "git:secret:argocd/repo-all-infrastructure"
     gitConfig:

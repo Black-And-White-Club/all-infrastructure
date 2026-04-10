@@ -26,7 +26,7 @@ spec:
         - name: ocir-secret
       containers:
         - name: frolf-bot-pwa
-          image: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa@sha256:415db8c5a8c9a6780db43b88d43f8b523f254edf880089fe7869ba8007df8eea
+          image: frolf-bot-pwa
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
