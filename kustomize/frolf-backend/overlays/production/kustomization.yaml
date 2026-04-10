@@ -5,9 +5,12 @@ resources:
 images:
   - name: frolf-bot-backend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    newTag: v1.0.251
+    # PreSync migrations must pull an immutable image reference. The semver tag
+    # for this release disappeared from OCIR on fresh pulls, while the running
+    # deployment resolved to this digest.
+    digest: sha256:f097b8138f8390e89ccd5a4579c58c1164b2c1b6b8ba12c5d9e875a7ead7e1e9
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    newTag: v1.0.251
+    digest: sha256:f097b8138f8390e89ccd5a4579c58c1164b2c1b6b8ba12c5d9e875a7ead7e1e9
 patches:
   - target:
       kind: Deployment

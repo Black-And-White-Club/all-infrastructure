@@ -2,6 +2,13 @@ controller:
   revisionHistoryLimit: 3
   hostNetwork: true
   dnsPolicy: ClusterFirstWithHostNet
+  # On a 2-node hostNetwork cluster, surge rollouts deadlock because the new pod
+  # cannot bind 80/443 while the old pod is still holding those ports.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   service:
     type: ClusterIP
   resources:
