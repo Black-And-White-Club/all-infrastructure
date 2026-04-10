@@ -122,7 +122,7 @@ jobs:
         run: |
           set -euo pipefail
           KUBE_LINTER_VERSION=v0.7.6
-          KUBE_LINTER_SHA256=cb6128995134f89fa3bd7c0b360507fce95a8c5df5ce7fd4f0ec1e2ea0c75b32
+          KUBE_LINTER_SHA256=cb6128997162b8b7e6962284313635643434421b4e9b4f86545af7a4976e0139
           curl -fsSLo /tmp/kube-linter-linux.tar.gz \
             "https://github.com/stackrox/kube-linter/releases/download/${KUBE_LINTER_VERSION}/kube-linter-linux.tar.gz"
           echo "${KUBE_LINTER_SHA256}  /tmp/kube-linter-linux.tar.gz" | sha256sum -c -
