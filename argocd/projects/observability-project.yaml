@@ -18,11 +18,16 @@ spec:
       server: "https://kubernetes.default.svc"
 
   orphanedResources:
-    warn: true
+    # The observability and kube-system namespaces contain many namespace/system
+    # generated resources shared across multiple apps, so orphan warnings are
+    # mostly noise here.
+    warn: false
 
   namespaceResourceWhitelist:
     - group: ""
       kind: ConfigMap
+    - group: ""
+      kind: Pod
     - group: ""
       kind: PersistentVolumeClaim
     - group: ""
@@ -35,6 +40,8 @@ spec:
       kind: DaemonSet
     - group: "apps"
       kind: Deployment
+    - group: "apps"
+      kind: ReplicaSet
     - group: "apps"
       kind: StatefulSet
     - group: "networking.k8s.io"

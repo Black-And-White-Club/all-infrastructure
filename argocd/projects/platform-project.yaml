@@ -6,6 +6,11 @@ metadata:
 spec:
   description: Platform infrastructure services
 
+  orphanedResources:
+    # Platform apps target shared and system namespaces where many controller-
+    # generated resources are intentionally outside Git ownership.
+    warn: false
+
   sourceRepos:
     - 'https://github.com/Black-And-White-Club/all-infrastructure.git'
     - 'https://github.com/Black-And-White-Club/all-infrastructure-secrets.git'

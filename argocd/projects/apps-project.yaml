@@ -21,10 +21,21 @@ spec:
 
   orphanedResources:
     warn: true
+    # Shared application namespaces always include namespace-generated defaults
+    # that are not owned by any Argo application.
+    ignore:
+      - group: ''
+        kind: ConfigMap
+        name: kube-root-ca.crt
+      - group: ''
+        kind: ServiceAccount
+        name: default
 
   namespaceResourceWhitelist:
     - group: ''
       kind: ConfigMap
+    - group: ''
+      kind: Pod
     - group: ''
       kind: PersistentVolumeClaim
     - group: ''
@@ -35,6 +46,8 @@ spec:
       kind: ServiceAccount
     - group: 'apps'
       kind: Deployment
+    - group: 'apps'
+      kind: ReplicaSet
     - group: 'apps'
       kind: StatefulSet
     - group: 'batch'
