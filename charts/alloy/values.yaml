@@ -213,6 +213,37 @@ alloy:
         }
       }
 
+      // ingress-nginx controller metrics
+      prometheus.scrape "nginx_ingress" {
+        targets         = discovery.relabel.nginx_ingress.output
+        scrape_interval = "30s"
+        job_name        = "nginx-ingress"
+        forward_to      = [prometheus.remote_write.mimir.receiver]
+      }
+
+      discovery.relabel "nginx_ingress" {
+        targets = discovery.kubernetes.endpoints.targets
+        rule {
+          source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_service_name"]
+          regex         = "ingress-nginx;(nginx-ingress-controller|nginx-ingress-controller-metrics)"
+          separator     = ";"
+          action        = "keep"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_endpoint_port_name"]
+          regex         = "metrics|prometheus"
+          action        = "keep"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_service_name"]
+          target_label  = "service"
+        }
+      }
+
       // kubelet and cadvisor
       discovery.kubernetes "nodes" {
         role = "node"

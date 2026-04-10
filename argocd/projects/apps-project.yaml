@@ -19,6 +19,33 @@ spec:
     - namespace: 'frolf-bot'
       server: 'https://kubernetes.default.svc'
 
+  orphanedResources:
+    warn: true
+
   namespaceResourceWhitelist:
-    - group: '*'
-      kind: '*'
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: PersistentVolumeClaim
+    - group: ''
+      kind: Secret
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ServiceAccount
+    - group: 'apps'
+      kind: Deployment
+    - group: 'apps'
+      kind: StatefulSet
+    - group: 'batch'
+      kind: CronJob
+    - group: 'batch'
+      kind: Job
+    - group: 'networking.k8s.io'
+      kind: Ingress
+    - group: 'policy'
+      kind: PodDisruptionBudget
+    - group: 'rbac.authorization.k8s.io'
+      kind: Role
+    - group: 'rbac.authorization.k8s.io'
+      kind: RoleBinding

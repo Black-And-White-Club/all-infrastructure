@@ -11,3 +11,9 @@ labels:
     pairs:
       app: frolf-bot-backend
       managed-by: lich-king
+  - pairs:
+      app.kubernetes.io/name: frolf-bot-backend
+      app.kubernetes.io/instance: frolf-bot
+      app.kubernetes.io/component: api
+      app.kubernetes.io/part-of: frolf-bot
+      app.kubernetes.io/managed-by: argocd

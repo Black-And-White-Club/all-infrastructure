@@ -12,6 +12,6 @@ controller:
       cpu: 100m
       memory: 256Mi
   metrics:
-    enabled: false
+    enabled: true
   config:
     resolver: "coredns.kube-system.svc.cluster.local. valid=30s"

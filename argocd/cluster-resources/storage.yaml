@@ -13,7 +13,7 @@ spec:
     path: cluster-resources
     directory:
       recurse: false
-      include: '{storage-class-*,pv-*,pvc-*}.yaml'
+      include: '{storage-class-local.yaml,storage-class-oci.yaml,pv-grafana.yaml,pv-loki-local.yaml,pv-resume-postgres-local.yaml,pv-tempo-ingester-wal.yaml,pvc-resume-postgres.yaml}'
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:

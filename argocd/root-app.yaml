@@ -3,7 +3,10 @@ kind: Application
 metadata:
   name: the-lich-king
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
+  revisionHistoryLimit: 3
   project: platform
 
   source:
@@ -16,6 +19,9 @@ spec:
     namespace: argocd
 
   syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
       - ApplyOutOfSyncOnly=true

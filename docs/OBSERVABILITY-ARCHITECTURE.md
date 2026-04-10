@@ -1,5 +1,9 @@
 # Observability Architecture Decision
 
+Deprecated: this document describes an older split of observability ownership and is preserved for historical context only.
+
+Use [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) for the current shared observability layout managed by this repo.
+
 ## Context
 
 **Resume** uses simple Prometheus (metrics only)

@@ -9,7 +9,7 @@ spec:
   revisionHistoryLimit: 3
   project: apps
   source:
-    repoURL: https://github.com/Black-And-White-Club/all-infrastructure
+    repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
     targetRevision: main
     path: kustomize/resume-frontend/overlays/production
   destination:
