@@ -9,7 +9,7 @@ patches:
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend@sha256:f097b8138f8390e89ccd5a4579c58c1164b2c1b6b8ba12c5d9e875a7ead7e1e9
+        value: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend@sha256:31f9b7622bedd81f25c662921de3c138c2a624617250fddf5126d2c2d53bfa53
       - op: replace
         path: /spec/template/spec/containers/0/env
         value:
@@ -137,4 +137,4 @@ patches:
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend@sha256:f097b8138f8390e89ccd5a4579c58c1164b2c1b6b8ba12c5d9e875a7ead7e1e9
+        value: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend@sha256:31f9b7622bedd81f25c662921de3c138c2a624617250fddf5126d2c2d53bfa53
