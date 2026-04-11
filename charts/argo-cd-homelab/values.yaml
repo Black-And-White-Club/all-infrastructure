@@ -1,0 +1,68 @@
+# ArgoCD Helm values for homelab K3s cluster (emerald-dream)
+# No SOPS/ksops — homelab uses plain k8s secrets only.
+# Conservative resource limits for shared single-node host.
+
+global:
+  service:
+    type: ClusterIP
+
+server:
+  revisionHistoryLimit: 3
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 25m
+      memory: 128Mi
+  replicas: 1
+
+controller:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 256Mi
+  replicas: 1
+
+repoServer:
+  revisionHistoryLimit: 3
+  resources:
+    limits:
+      cpu: 300m
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 256Mi
+  replicas: 1
+
+redis:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+
+applicationSet:
+  revisionHistoryLimit: 3
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+  replicas: 1
+
+notifications:
+  enabled: false
+
+dex:
+  enabled: false
+
+redis-ha:
+  enabled: false

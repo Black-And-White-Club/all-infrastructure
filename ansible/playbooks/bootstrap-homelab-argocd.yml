@@ -1,0 +1,145 @@
+---
+# Bootstrap ArgoCD on the homelab K3s cluster (emerald-dream).
+# Runs from the operator's local machine against a copied kubeconfig.
+#
+# Usage:
+#   ansible-playbook playbooks/bootstrap-homelab-argocd.yml \
+#     -e github_token=<PAT_with_repo_read_on_emerald_dream> \
+#     -e homelab_kubeconfig_path=~/.kube/config-homelab
+#
+# Prerequisites:
+#   - K3s bootstrapped via emerald-dream bootstrap-host.yml
+#   - Kubeconfig copied locally from the homelab host
+#   - github_token has read access to Black-And-White-Club/emerald-dream
+
+- name: Bootstrap homelab ArgoCD + root application
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    kubeconfig_path: "{{ homelab_kubeconfig_path | default(lookup('env','HOME') + '/.kube/config-homelab') }}"
+    argocd_namespace: argocd
+    argocd_values: "{{ playbook_dir }}/../../charts/argo-cd-homelab/values.yaml"
+    root_app_file: "{{ playbook_dir }}/../../../emerald-dream/platform/argocd/root-app.yaml"
+    project_file: "{{ playbook_dir }}/../../../emerald-dream/platform/argocd/projects/homelab-platform-project.yaml"
+    emerald_dream_repo: "https://github.com/Black-And-White-Club/emerald-dream.git"
+
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+  tasks:
+    - name: Display bootstrap plan
+      ansible.builtin.debug:
+        msg:
+          - "======================================================="
+          - "BOOTSTRAP HOMELAB ARGOCD (emerald-dream)"
+          - "======================================================="
+          - "Kubeconfig : {{ kubeconfig_path }}"
+          - "ArgoCD ns  : {{ argocd_namespace }}"
+          - "Values file: {{ argocd_values }}"
+          - "Root app   : {{ root_app_file }}"
+
+    - name: Verify required files exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: required_files
+      failed_when: not required_files.stat.exists
+      loop:
+        - "{{ kubeconfig_path }}"
+        - "{{ argocd_values }}"
+        - "{{ root_app_file }}"
+        - "{{ project_file }}"
+
+    - name: Verify cluster connectivity
+      ansible.builtin.command: kubectl cluster-info
+      register: cluster_info
+      retries: 10
+      delay: 3
+      until: cluster_info.rc == 0
+      changed_when: false
+
+    - name: Check if ArgoCD is already installed
+      ansible.builtin.command: kubectl -n {{ argocd_namespace }} get deployment argocd-server
+      register: argocd_check
+      failed_when: false
+      changed_when: false
+
+    - name: Ensure Argo Helm repo is added
+      ansible.builtin.command: helm repo add argo https://argoproj.github.io/argo-helm
+      failed_when: false
+      changed_when: false
+
+    - name: Update Helm repos
+      ansible.builtin.command: helm repo update
+      failed_when: false
+      changed_when: false
+
+    - name: Install or upgrade ArgoCD via Helm
+      ansible.builtin.command: >
+        helm upgrade --install argocd argo/argo-cd
+        --namespace {{ argocd_namespace }}
+        --create-namespace
+        --values {{ argocd_values }}
+        --wait --timeout 10m
+      register: helm_upgrade
+
+    - name: Wait for ArgoCD server to be ready
+      ansible.builtin.command: >
+        kubectl wait --for=condition=available --timeout=300s
+        deployment/argocd-server -n {{ argocd_namespace }}
+      when: helm_upgrade is succeeded or argocd_check.rc == 0
+      changed_when: false
+
+    - name: Create emerald-dream repo credential secret
+      ansible.builtin.command: >
+        kubectl -n {{ argocd_namespace }} create secret generic emerald-dream-repo
+        --from-literal=type=git
+        --from-literal=url={{ emerald_dream_repo }}
+        --from-literal=password={{ github_token }}
+        --from-literal=username=x-token
+        --dry-run=client -o yaml
+      register: repo_secret_yaml
+      changed_when: false
+      no_log: true
+
+    - name: Apply repo credential secret with ArgoCD label
+      ansible.builtin.shell: |
+        echo '{{ repo_secret_yaml.stdout }}' | \
+          kubectl label --local -f - argocd.argoproj.io/secret-type=repository -o yaml | \
+          kubectl apply -f -
+      changed_when: true
+      no_log: true
+
+    - name: Apply homelab AppProject
+      ansible.builtin.command: kubectl apply -f "{{ project_file }}"
+      register: project_result
+
+    - name: Apply root application
+      ansible.builtin.command: kubectl apply -f "{{ root_app_file }}"
+      register: root_apply
+
+    - name: Wait for root application to sync
+      ansible.builtin.command: >
+        kubectl wait --for=condition=Synced --timeout=10s
+        application/emerald-dream -n {{ argocd_namespace }}
+      register: root_sync
+      retries: 36
+      delay: 10
+      until: root_sync.rc == 0
+      changed_when: false
+
+    - name: List ArgoCD applications
+      ansible.builtin.command: kubectl get applications -n {{ argocd_namespace }}
+      register: apps_final
+      changed_when: false
+
+    - name: Display summary
+      ansible.builtin.debug:
+        msg:
+          - "======================================================="
+          - "HOMELAB ARGOCD BOOTSTRAP COMPLETE!"
+          - "======================================================="
+          - "Next: inject arc-github-app secret in arc-systems namespace"
+          - "Applications:"
+          - "{{ apps_final.stdout }}"
