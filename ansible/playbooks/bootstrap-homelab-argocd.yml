@@ -18,7 +18,7 @@
   gather_facts: false
 
   vars:
-    kubeconfig_path: "{{ homelab_kubeconfig_path | default(lookup('env','HOME') + '/.kube/config-homelab') }}"
+    kubeconfig_path: "{{ (homelab_kubeconfig_path | default(lookup('env','HOME') + '/.kube/config-homelab')) | regex_replace('^~', lookup('env','HOME')) }}"
     argocd_namespace: argocd
     argocd_values: "{{ playbook_dir }}/../../charts/argo-cd-homelab/values.yaml"
     root_app_file: "{{ playbook_dir }}/../../../emerald-dream/platform/argocd/root-app.yaml"
