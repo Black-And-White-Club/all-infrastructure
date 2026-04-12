@@ -111,6 +111,27 @@
       changed_when: true
       no_log: true
 
+    - name: Create GHCR OCI credential secret for ARC charts
+      ansible.builtin.command: >
+        kubectl -n {{ argocd_namespace }} create secret generic ghcr-oci-creds
+        --from-literal=type=helm
+        --from-literal=url=oci://ghcr.io/actions/actions-runner-controller-charts
+        --from-literal=enableOCI=true
+        --from-literal=username=x-access-token
+        --from-literal=password={{ github_token }}
+        --dry-run=client -o yaml
+      register: ghcr_secret_yaml
+      changed_when: false
+      no_log: true
+
+    - name: Apply GHCR credential secret with ArgoCD label
+      ansible.builtin.shell: |
+        echo '{{ ghcr_secret_yaml.stdout }}' | \
+          kubectl label --local -f - argocd.argoproj.io/secret-type=repository -o yaml | \
+          kubectl apply -f -
+      changed_when: true
+      no_log: true
+
     - name: Apply homelab AppProject
       ansible.builtin.command: kubectl apply -f "{{ project_file }}"
       register: project_result
