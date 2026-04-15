@@ -16,8 +16,5 @@ configMapGenerator:
       - PRIVATE_API_HOST_ALLOWLIST=frolf-bot-backend.frolf-bot.svc.cluster.local
 # Image modification - ArgoCD Image Updater will patch this
 images:
-  - name: frolf-bot-pwa
-    newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
-    newTag: v1.0.116
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
-    newTag: v1.0.115
+    newTag: v1.0.116

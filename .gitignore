@@ -56,3 +56,4 @@ scripts/node-ssh.sh
 scripts/bastion-connect.sh
 docs/plans/2026-04-04-private-repos-self-hosted-runner-plan.md
 .worktrees/
+/.remember

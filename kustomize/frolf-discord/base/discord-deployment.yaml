@@ -23,7 +23,7 @@ spec:
         - name: ocir-secret
       containers:
         - name: discord
-          image: frolf-bot-discord
+          image: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false

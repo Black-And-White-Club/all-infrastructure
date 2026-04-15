@@ -56,7 +56,7 @@ spec:
               echo "NATS is ready!"
       containers:
         - name: backend
-          image: frolf-bot-backend
+          image: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
