@@ -3,7 +3,8 @@ kind: Kustomization
 resources:
   - ../../base
 images:
-  - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
+  - name: frolf-bot-discord
+    newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
     newTag: v1.0.197
 patches:
   - target:

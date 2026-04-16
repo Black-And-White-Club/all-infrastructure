@@ -75,6 +75,7 @@ spec:
     spec:
       containers:
         - name: migrate
+          image: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend:v1.0.257
           args:
             - migrate
           env:
@@ -98,6 +99,7 @@ spec:
     spec:
       containers:
         - name: backend
+          image: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend:v1.0.257
           env:
             - name: AUTO_MIGRATE
               value: "false"

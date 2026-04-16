@@ -41,6 +41,7 @@ require_contains() {
 }
 
 failed=0
+expected_image_repo="us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend"
 
 if ! job_doc="$(extract_doc "Job" "frolf-bot-backend-migrate" "$manifest")"; then
 	echo "ERROR: rendered manifest is missing Job/frolf-bot-backend-migrate" >&2
@@ -54,6 +55,7 @@ require_contains "$job_doc" "name: migrate" "migration container" || failed=1
 require_contains "$job_doc" "- migrate" "migration container args" || failed=1
 require_contains "$job_doc" "name: DATABASE_URL" "DATABASE_URL env var" || failed=1
 require_contains "$job_doc" "name: JWT_SECRET" "JWT_SECRET env var" || failed=1
+require_contains "$job_doc" "image: ${expected_image_repo}:" "migration job image" || failed=1
 
 if ! deploy_doc="$(extract_doc "Deployment" "frolf-bot-backend" "$manifest")"; then
 	echo "ERROR: rendered manifest is missing Deployment/frolf-bot-backend" >&2
@@ -69,6 +71,8 @@ if ! printf '%s\n' "$deploy_doc" \
 	echo "ERROR: Deployment/frolf-bot-backend must set AUTO_MIGRATE to \"false\"" >&2
 	failed=1
 fi
+
+require_contains "$deploy_doc" "image: ${expected_image_repo}:" "deployment image" || failed=1
 
 if [[ $failed -ne 0 ]]; then
 	exit 1

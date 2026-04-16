@@ -113,6 +113,9 @@ jobs:
         # fixture manifests only; no cluster access or real kustomize invocations required.
         run: bash scripts/tests/run.sh
 
+      - name: Static manifest policy checks
+        run: bash scripts/validate-runtime-manifest-policies.sh .
+
       - name: Setup kustomize
         uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f
         with:
@@ -142,6 +145,10 @@ jobs:
               FAILED=1
               continue
             fi
+            echo "── image mapping checks: $APP"
+            bash scripts/validate-production-overlay-images.sh \
+              "$overlay"/kustomization.yaml \
+              /tmp/rendered-"$APP".yaml || FAILED=1
             echo "── kube-linter: $APP"
             kube-linter lint /tmp/rendered-"$APP".yaml \
               --config .kube-linter.yaml || FAILED=1

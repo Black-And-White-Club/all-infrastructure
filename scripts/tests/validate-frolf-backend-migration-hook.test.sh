@@ -63,6 +63,46 @@ test_auto_migrate_must_be_false() {
 	rm -rf "$tmpdir"
 }
 
+test_job_image_must_resolve_to_ocir_repo() {
+	local tmpdir manifest
+	tmpdir="$(mktemp -d)"
+	manifest="$tmpdir/manifest.yaml"
+	write_valid_manifest "$manifest"
+	sed 's#us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend:v1.0.257#frolf-bot-backend#' "$manifest" > "$manifest.tmp"
+	mv "$manifest.tmp" "$manifest"
+
+	run_cmd bash "$VALIDATOR_SCRIPT" "$manifest"
+	assert_status 1
+	assert_output_contains "missing migration job image"
+	rm -rf "$tmpdir"
+}
+
+test_deployment_image_must_resolve_to_ocir_repo() {
+	local tmpdir manifest
+	tmpdir="$(mktemp -d)"
+	manifest="$tmpdir/manifest.yaml"
+	write_valid_manifest "$manifest"
+	awk '
+		BEGIN { in_deployment=0 }
+		{
+			if ($0 ~ /^kind:[[:space:]]*Deployment$/) {
+				in_deployment=1
+			}
+			if (in_deployment && $0 ~ /image:[[:space:]]*us-ashburn-1\.ocir\.io\/id2uwn5pyixh\/frolf-bot\/backend:v1\.0\.257/) {
+				sub(/us-ashburn-1\.ocir\.io\/id2uwn5pyixh\/frolf-bot\/backend:v1\.0\.257/, "frolf-bot-backend")
+				in_deployment=0
+			}
+			print
+		}
+	' "$manifest" > "$manifest.tmp"
+	mv "$manifest.tmp" "$manifest"
+
+	run_cmd bash "$VALIDATOR_SCRIPT" "$manifest"
+	assert_status 1
+	assert_output_contains "missing deployment image"
+	rm -rf "$tmpdir"
+}
+
 # Regression test: validator must fail when AUTO_MIGRATE is "true" even if a
 # later env var in the same deployment has value: "false". The original awk
 # state-machine implementation would incorrectly pass in this case.
@@ -126,6 +166,8 @@ tests=(
 	test_valid_manifest_passes
 	test_missing_presync_hook_fails
 	test_auto_migrate_must_be_false
+	test_job_image_must_resolve_to_ocir_repo
+	test_deployment_image_must_resolve_to_ocir_repo
 	test_auto_migrate_true_with_other_false_env_below_must_fail
 )
 
