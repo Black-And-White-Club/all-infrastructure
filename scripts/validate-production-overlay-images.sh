@@ -69,37 +69,78 @@ analysis="$(
 
 images_blocks="$(printf '%s\n' "$analysis" | awk -F= '$1=="images_blocks"{print $2}')"
 entry_count="$(printf '%s\n' "$analysis" | awk -F= '$1=="entry_count"{print $2}')"
-placeholder_name="$(printf '%s\n' "$analysis" | awk -F= '$1=="name_1"{print $2}')"
-new_name="$(printf '%s\n' "$analysis" | awk -F= '$1=="new_name_1"{print $2}')"
-new_tag="$(printf '%s\n' "$analysis" | awk -F= '$1=="new_tag_1"{print $2}')"
 
 if [[ "$images_blocks" -ne 1 ]]; then
 	echo "ERROR: overlay must define exactly one images: block" >&2
 	exit 1
 fi
 
-if [[ "$entry_count" -ne 1 ]]; then
-	echo "ERROR: overlay must define exactly one updater-owned image entry" >&2
+if [[ "$entry_count" -lt 1 || "$entry_count" -gt 2 ]]; then
+	echo "ERROR: overlay must define one bootstrap image entry and at most one updater-owned image entry" >&2
 	exit 1
 fi
 
-if [[ -z "$placeholder_name" ]]; then
-	echo "ERROR: overlay image entry must define name" >&2
+placeholder_count=0
+updater_count=0
+placeholder_name=""
+placeholder_new_name=""
+placeholder_new_tag=""
+effective_image_name=""
+effective_image_tag=""
+
+for ((i = 1; i <= entry_count; i++)); do
+	name="$(printf '%s\n' "$analysis" | awk -F= -v key="name_${i}" '$1==key{print $2}')"
+	new_name="$(printf '%s\n' "$analysis" | awk -F= -v key="new_name_${i}" '$1==key{print $2}')"
+	new_tag="$(printf '%s\n' "$analysis" | awk -F= -v key="new_tag_${i}" '$1==key{print $2}')"
+
+	if [[ -z "$name" ]]; then
+		echo "ERROR: overlay image entry must define name" >&2
+		exit 1
+	fi
+
+	if [[ "$name" == */* ]]; then
+		updater_count=$((updater_count + 1))
+		effective_image_name="$name"
+		effective_image_tag="$new_tag"
+		continue
+	fi
+
+	placeholder_count=$((placeholder_count + 1))
+	placeholder_name="$name"
+	placeholder_new_name="$new_name"
+	placeholder_new_tag="$new_tag"
+done
+
+if [[ "$placeholder_count" -ne 1 ]]; then
+	echo "ERROR: overlay must define exactly one placeholder image entry" >&2
 	exit 1
 fi
 
-if [[ "$placeholder_name" == */* ]]; then
-	echo "ERROR: overlay image name must be a placeholder, not a fully qualified image: $placeholder_name" >&2
+if [[ -z "$placeholder_new_name" ]]; then
+	echo "ERROR: overlay placeholder image entry must define newName" >&2
 	exit 1
 fi
 
-if [[ -z "$new_name" ]]; then
-	echo "ERROR: overlay image entry must define newName" >&2
+if [[ -z "$placeholder_new_tag" ]]; then
+	echo "ERROR: overlay placeholder image entry must define newTag" >&2
 	exit 1
 fi
 
-if [[ -z "$new_tag" ]]; then
-	echo "ERROR: overlay image entry must define newTag" >&2
+if [[ "$updater_count" -gt 1 ]]; then
+	echo "ERROR: overlay must define at most one updater-owned fully qualified image entry" >&2
+	exit 1
+fi
+
+if [[ "$updater_count" -eq 0 ]]; then
+	effective_image_name="$placeholder_new_name"
+	effective_image_tag="$placeholder_new_tag"
+elif [[ "$placeholder_new_name" != "$effective_image_name" ]]; then
+	echo "ERROR: overlay placeholder newName must match updater-owned image entry: $placeholder_new_name vs $effective_image_name" >&2
+	exit 1
+fi
+
+if [[ -z "$effective_image_tag" ]]; then
+	echo "ERROR: effective image entry must define newTag" >&2
 	exit 1
 fi
 
@@ -108,8 +149,8 @@ if grep -Eq "image:[[:space:]]*${placeholder_name}([:@[:space:]]|$)" "$rendered_
 	exit 1
 fi
 
-if ! grep -Eq "image:[[:space:]]*${new_name}([:@][^[:space:]]+)?$" "$rendered_manifest"; then
-	echo "ERROR: rendered manifest does not contain expected mapped image: $new_name" >&2
+if ! grep -Eq "image:[[:space:]]*${effective_image_name}([:@][^[:space:]]+)?$" "$rendered_manifest"; then
+	echo "ERROR: rendered manifest does not contain expected mapped image: $effective_image_name" >&2
 	exit 1
 fi
 
