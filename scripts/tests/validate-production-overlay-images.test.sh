@@ -22,6 +22,22 @@ images:
 YAML
 }
 
+write_valid_two_entry_overlay_fixture() {
+	local overlay_file="$1"
+	cat > "$overlay_file" <<'YAML'
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+images:
+  - name: sample-app
+    newName: us-ashburn-1.ocir.io/id2uwn5pyixh/sample/app
+    newTag: v1.2.2
+  - name: us-ashburn-1.ocir.io/id2uwn5pyixh/sample/app
+    newTag: v1.2.3
+YAML
+}
+
 write_valid_render_fixture() {
 	local render_file="$1"
 	cat > "$render_file" <<'YAML'
@@ -64,6 +80,20 @@ test_valid_overlay_and_render_pass() {
 	rm -rf "$tmpdir"
 }
 
+test_valid_two_entry_overlay_and_render_pass() {
+	local tmpdir overlay render
+	tmpdir="$(mktemp -d)"
+	overlay="$tmpdir/kustomization.yaml"
+	render="$tmpdir/rendered.yaml"
+	write_valid_two_entry_overlay_fixture "$overlay"
+	write_valid_render_fixture "$render"
+
+	run_cmd bash "$VALIDATOR_SCRIPT" "$overlay" "$render"
+	assert_status 0
+	assert_output_contains "production overlay image mapping checks passed"
+	rm -rf "$tmpdir"
+}
+
 test_duplicate_image_entries_fail() {
 	local tmpdir overlay render
 	tmpdir="$(mktemp -d)"
@@ -79,7 +109,7 @@ YAML
 
 	run_cmd bash "$VALIDATOR_SCRIPT" "$overlay" "$render"
 	assert_status 1
-	assert_output_contains "exactly one updater-owned image entry"
+	assert_output_contains "exactly one placeholder image entry"
 	rm -rf "$tmpdir"
 }
 
@@ -135,6 +165,7 @@ tests=(
 	test_usage_requires_two_args
 	test_missing_overlay_file_fails
 	test_valid_overlay_and_render_pass
+	test_valid_two_entry_overlay_and_render_pass
 	test_duplicate_image_entries_fail
 	test_missing_new_name_fails
 	test_fully_qualified_overlay_name_fails
