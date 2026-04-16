@@ -17,22 +17,51 @@ for dir in "${manifest_dirs[@]}"; do
 	fi
 done
 
+search_manifest_matches() {
+	local pattern="$1"
+	shift
+
+	if [[ "$#" -eq 0 ]]; then
+		return 0
+	fi
+
+	grep -RInE --include='*.yaml' --include='*.yml' "$pattern" "$@" || true
+}
+
+list_manifest_files() {
+	local pattern="$1"
+	shift
+
+	if [[ "$#" -eq 0 ]]; then
+		return 0
+	fi
+
+	grep -RIlE --include='*.yaml' --include='*.yml' "$pattern" "$@" || true
+}
+
 if [[ "${#existing_manifest_dirs[@]}" -eq 0 ]]; then
 	echo "ERROR: no manifest directories found under $repo_root" >&2
 	exit 2
 fi
 
-if latest_hits="$(rg -n --glob '*.yaml' --glob '*.yml' 'image:[[:space:]]*[^[:space:]#]+:latest([[:space:]]|$)' "${existing_manifest_dirs[@]}" || true)" && [[ -n "$latest_hits" ]]; then
+if latest_hits="$(search_manifest_matches 'image:[[:space:]]*[^[:space:]#]+:latest([[:space:]]|$)' "${existing_manifest_dirs[@]}")" && [[ -n "$latest_hits" ]]; then
 	echo "ERROR: mutable :latest image refs are not allowed in runtime manifests:" >&2
 	echo "$latest_hits" >&2
 	fail=1
 fi
 
-if library_hits="$(rg -n --glob '*.yaml' --glob '*.yml' 'image:[[:space:]]*docker\.io/library/' "${existing_manifest_dirs[@]}" || true)" && [[ -n "$library_hits" ]]; then
+if library_hits="$(search_manifest_matches 'image:[[:space:]]*docker\.io/library/' "${existing_manifest_dirs[@]}")" && [[ -n "$library_hits" ]]; then
 	echo "ERROR: docker.io/library fallback refs are not allowed in runtime manifests:" >&2
 	echo "$library_hits" >&2
 	fail=1
 fi
+
+deployment_manifest_dirs=()
+for dir in "$repo_root/kustomize" "$repo_root/cluster-resources"; do
+	if [[ -d "$dir" ]]; then
+		deployment_manifest_dirs+=("$dir")
+	fi
+done
 
 while IFS= read -r deployment_file; do
 	[[ -n "$deployment_file" ]] || continue
@@ -40,7 +69,12 @@ while IFS= read -r deployment_file; do
 		echo "ERROR: deployment manifest is missing revisionHistoryLimit: $deployment_file" >&2
 		fail=1
 	fi
-done < <(rg -l --glob '*.yaml' --glob '*.yml' '^kind:[[:space:]]*Deployment$' "$repo_root/kustomize" "$repo_root/cluster-resources" 2>/dev/null || true)
+done < <(list_manifest_files '^kind:[[:space:]]*Deployment$' "${deployment_manifest_dirs[@]}")
+
+cronjob_manifest_dirs=()
+if [[ -d "$repo_root/cluster-resources" ]]; then
+	cronjob_manifest_dirs+=("$repo_root/cluster-resources")
+fi
 
 while IFS= read -r cronjob_file; do
 	[[ -n "$cronjob_file" ]] || continue
@@ -52,7 +86,7 @@ while IFS= read -r cronjob_file; do
 		echo "ERROR: cronjob manifest is missing failedJobsHistoryLimit: $cronjob_file" >&2
 		fail=1
 	fi
-done < <(rg -l --glob '*.yaml' --glob '*.yml' '^kind:[[:space:]]*CronJob$' "$repo_root/cluster-resources" 2>/dev/null || true)
+done < <(list_manifest_files '^kind:[[:space:]]*CronJob$' "${cronjob_manifest_dirs[@]}")
 
 if [[ "$fail" -ne 0 ]]; then
 	exit 1
