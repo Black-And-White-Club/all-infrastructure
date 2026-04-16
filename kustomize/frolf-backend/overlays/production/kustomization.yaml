@@ -130,4 +130,4 @@ patches:
                 key: GOOGLE_OAUTH_REDIRECT_URL
 images:
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    newTag: v1.0.256
+    newTag: v1.0.257
