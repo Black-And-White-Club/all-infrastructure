@@ -112,6 +112,10 @@ for ((i = 1; i <= entry_count; i++)); do
 done
 
 if [[ "$placeholder_count" -ne 1 ]]; then
+	if [[ "$entry_count" -eq 1 && "$updater_count" -eq 1 ]]; then
+		echo "ERROR: overlay image name must be a placeholder, not a fully qualified image: $effective_image_name" >&2
+		exit 1
+	fi
 	echo "ERROR: overlay must define exactly one placeholder image entry" >&2
 	exit 1
 fi
