@@ -133,4 +133,4 @@ images:
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
     newTag: v1.0.257
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    newTag: v1.0.259
+    newTag: v1.0.260
