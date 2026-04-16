@@ -6,3 +6,5 @@ images:
   - name: resume-backend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend
     newTag: ea182a2
+  - name: us-ashburn-1.ocir.io/id2uwn5pyixh/resume/backend
+    newTag: 24822da
