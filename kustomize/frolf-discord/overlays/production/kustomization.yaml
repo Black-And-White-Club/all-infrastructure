@@ -4,7 +4,7 @@ resources:
   - ../../base
 images:
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
-    newTag: v1.0.196
+    newTag: v1.0.197
 patches:
   - target:
       kind: Deployment
