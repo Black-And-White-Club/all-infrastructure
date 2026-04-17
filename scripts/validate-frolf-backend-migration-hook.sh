@@ -40,6 +40,44 @@ require_contains() {
 	return 0
 }
 
+require_optional_env_secret_ref() {
+	local haystack="$1"
+	local env_name="$2"
+	local label="$3"
+
+	if ! grep -Fq -- "name: ${env_name}" <<<"$haystack"; then
+		return 0
+	fi
+
+	if ! awk -v env_name="$env_name" '
+		BEGIN { in_target=0; found=0; ok=0 }
+		/^[[:space:]]*-[[:space:]]*name:[[:space:]]*/ {
+			if (in_target) {
+				exit(ok ? 0 : 1)
+			}
+			if ($0 ~ ("^[[:space:]]*-[[:space:]]*name:[[:space:]]*" env_name "([[:space:]]|$)")) {
+				in_target=1
+				found=1
+			}
+			next
+		}
+		in_target && /^[[:space:]]*optional:[[:space:]]*true([[:space:]]|$)/ {
+			ok=1
+		}
+		END {
+			if (!found || ok) {
+				exit 0
+			}
+			exit 1
+		}
+	' <<<"$haystack"; then
+		echo "ERROR: ${label} must set optional: true" >&2
+		return 1
+	fi
+
+	return 0
+}
+
 failed=0
 expected_image_repo="us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend"
 
@@ -73,6 +111,7 @@ if ! printf '%s\n' "$deploy_doc" \
 fi
 
 require_contains "$deploy_doc" "image: ${expected_image_repo}:" "deployment image" || failed=1
+require_optional_env_secret_ref "$deploy_doc" "TRUSTED_PROXY_CIDRS" "Deployment/frolf-bot-backend TRUSTED_PROXY_CIDRS secret ref" || failed=1
 
 if [[ $failed -ne 0 ]]; then
 	exit 1

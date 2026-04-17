@@ -103,6 +103,12 @@ spec:
           env:
             - name: AUTO_MIGRATE
               value: "false"
+            - name: TRUSTED_PROXY_CIDRS
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: TRUSTED_PROXY_CIDRS
+                  optional: true
 YAML
 }
 

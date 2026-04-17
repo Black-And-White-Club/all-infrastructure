@@ -39,6 +39,39 @@ list_manifest_files() {
 	grep -RIlE --include='*.yaml' --include='*.yml' "$pattern" "$@" || true
 }
 
+find_trusted_proxy_refs_missing_optional() {
+	local file="$1"
+
+	awk '
+		function flush_block() {
+			if (in_target && !saw_optional) {
+				printf "%s:%d\n", FILENAME, start_line
+			}
+			in_target=0
+			saw_optional=0
+			start_line=0
+		}
+		/^[[:space:]]*---[[:space:]]*$/ {
+			flush_block()
+			next
+		}
+		/^[[:space:]]*-[[:space:]]*name:[[:space:]]*/ {
+			flush_block()
+			if ($0 ~ /^[[:space:]]*-[[:space:]]*name:[[:space:]]*TRUSTED_PROXY_CIDRS([[:space:]]|$)/) {
+				in_target=1
+				start_line=FNR
+			}
+			next
+		}
+		in_target && /^[[:space:]]*optional:[[:space:]]*true([[:space:]]|$)/ {
+			saw_optional=1
+		}
+		END {
+			flush_block()
+		}
+	' "$file"
+}
+
 if [[ "${#existing_manifest_dirs[@]}" -eq 0 ]]; then
 	echo "ERROR: no manifest directories found under $repo_root" >&2
 	exit 2
@@ -53,6 +86,24 @@ fi
 if library_hits="$(search_manifest_matches 'image:[[:space:]]*docker\.io/library/' "${existing_manifest_dirs[@]}")" && [[ -n "$library_hits" ]]; then
 	echo "ERROR: docker.io/library fallback refs are not allowed in runtime manifests:" >&2
 	echo "$library_hits" >&2
+	fail=1
+fi
+
+trusted_proxy_hits=""
+while IFS= read -r manifest_file; do
+	[[ -n "$manifest_file" ]] || continue
+	missing_optional_refs="$(find_trusted_proxy_refs_missing_optional "$manifest_file")"
+	if [[ -n "$missing_optional_refs" ]]; then
+		if [[ -n "$trusted_proxy_hits" ]]; then
+			trusted_proxy_hits+=$'\n'
+		fi
+		trusted_proxy_hits+="$missing_optional_refs"
+	fi
+done < <(list_manifest_files '^[[:space:]]*-[[:space:]]*name:[[:space:]]*TRUSTED_PROXY_CIDRS([[:space:]]|$)' "${existing_manifest_dirs[@]}")
+
+if [[ -n "$trusted_proxy_hits" ]]; then
+	echo "ERROR: TRUSTED_PROXY_CIDRS secret refs must set optional: true:" >&2
+	echo "$trusted_proxy_hits" >&2
 	fail=1
 fi
 

@@ -103,6 +103,21 @@ test_deployment_image_must_resolve_to_ocir_repo() {
 	rm -rf "$tmpdir"
 }
 
+test_trusted_proxy_secret_ref_must_be_optional() {
+	local tmpdir manifest
+	tmpdir="$(mktemp -d)"
+	manifest="$tmpdir/manifest.yaml"
+	write_valid_manifest "$manifest"
+	sed '/optional: true/d' "$manifest" > "$manifest.tmp"
+	mv "$manifest.tmp" "$manifest"
+
+	run_cmd bash "$VALIDATOR_SCRIPT" "$manifest"
+	assert_status 1
+	assert_output_contains "TRUSTED_PROXY_CIDRS secret ref"
+	assert_output_contains "must set optional: true"
+	rm -rf "$tmpdir"
+}
+
 # Regression test: validator must fail when AUTO_MIGRATE is "true" even if a
 # later env var in the same deployment has value: "false". The original awk
 # state-machine implementation would incorrectly pass in this case.
@@ -168,6 +183,7 @@ tests=(
 	test_auto_migrate_must_be_false
 	test_job_image_must_resolve_to_ocir_repo
 	test_deployment_image_must_resolve_to_ocir_repo
+	test_trusted_proxy_secret_ref_must_be_optional
 	test_auto_migrate_true_with_other_false_env_below_must_fail
 )
 

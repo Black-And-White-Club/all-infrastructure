@@ -10,6 +10,7 @@ set -euo pipefail
 #   AUTH_CALLOUT_SERVER_PUBLIC_KEY=... \
 #   DISCORD_OAUTH_CLIENT_ID=... DISCORD_OAUTH_CLIENT_SECRET=... \
 #   GOOGLE_OAUTH_CLIENT_ID=... GOOGLE_OAUTH_CLIENT_SECRET=... \
+#   [TRUSTED_PROXY_CIDRS=10.0.0.0/8,192.168.0.0/16] \
 #   ./generate-frolf-backend-secrets.sh [output-file]
 
 OUTPUT_FILE="${1:-${SECRETS_REPO_DIR:-.}/sealed-backend-secrets.yaml}"
@@ -44,6 +45,7 @@ GOOGLE_OAUTH_CLIENT_ID="${GOOGLE_OAUTH_CLIENT_ID:-}"
 GOOGLE_OAUTH_CLIENT_SECRET="${GOOGLE_OAUTH_CLIENT_SECRET:-}"
 GOOGLE_OAUTH_REDIRECT_URL="${GOOGLE_OAUTH_REDIRECT_URL:-https://frolf-bot.duckdns.org/api/auth/google/callback}"
 PWA_BASE_URL="${PWA_BASE_URL:-https://frolf-bot.duckdns.org}"
+TRUSTED_PROXY_CIDRS="${TRUSTED_PROXY_CIDRS:-}"
 
 require_command() {
   local cmd="$1"
@@ -111,6 +113,7 @@ kubectl create secret generic "${SECRET_NAME}" \
   --from-literal=GOOGLE_OAUTH_CLIENT_SECRET="${GOOGLE_OAUTH_CLIENT_SECRET}" \
   --from-literal=GOOGLE_OAUTH_REDIRECT_URL="${GOOGLE_OAUTH_REDIRECT_URL}" \
   --from-literal=PWA_BASE_URL="${PWA_BASE_URL}" \
+  --from-literal=TRUSTED_PROXY_CIDRS="${TRUSTED_PROXY_CIDRS}" \
   --dry-run=client -o yaml > "${RAW_SECRET_FILE}"
 
 kubeseal --format=yaml < "${RAW_SECRET_FILE}" > "${OUTPUT_FILE}"

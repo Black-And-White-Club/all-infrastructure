@@ -23,6 +23,13 @@ spec:
       containers:
         - name: sample-app
           image: us-ashburn-1.ocir.io/id2uwn5pyixh/sample/app:v1.2.3
+          env:
+            - name: TRUSTED_PROXY_CIDRS
+              valueFrom:
+                secretKeyRef:
+                  name: sample-secrets
+                  key: TRUSTED_PROXY_CIDRS
+                  optional: true
 YAML
 	cat > "$repo_root/cluster-resources/jobs/sample-cronjob.yaml" <<'YAML'
 apiVersion: batch/v1
@@ -102,12 +109,25 @@ test_missing_cronjob_history_limits_fail() {
 	rm -rf "$tmpdir"
 }
 
+test_trusted_proxy_secret_ref_must_be_optional() {
+	local tmpdir
+	tmpdir="$(mktemp -d)"
+	write_valid_repo_fixture "$tmpdir"
+	sed -i.bak '/optional: true/d' "$tmpdir/kustomize/sample/base/deployment.yaml"
+
+	run_cmd bash "$VALIDATOR_SCRIPT" "$tmpdir"
+	assert_status 1
+	assert_output_contains "TRUSTED_PROXY_CIDRS secret refs must set optional: true"
+	rm -rf "$tmpdir"
+}
+
 tests=(
 	test_valid_repo_passes
 	test_latest_image_fails
 	test_library_image_fails
 	test_missing_revision_history_limit_fails
 	test_missing_cronjob_history_limits_fail
+	test_trusted_proxy_secret_ref_must_be_optional
 )
 
 for test_fn in "${tests[@]}"; do
