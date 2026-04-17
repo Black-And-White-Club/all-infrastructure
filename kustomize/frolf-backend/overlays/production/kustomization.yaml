@@ -51,6 +51,11 @@ patches:
               secretKeyRef:
                 name: backend-secrets
                 key: PWA_BASE_URL
+          - name: TRUSTED_PROXY_CIDRS
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: TRUSTED_PROXY_CIDRS
           - name: TOKEN_ENCRYPTION_KEY
             valueFrom:
               secretKeyRef:
