@@ -79,6 +79,8 @@ spec:
           args:
             - migrate
           env:
+            - name: POSTGRES_MIGRATION_STATEMENT_TIMEOUT
+              value: "10m"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
@@ -89,6 +91,11 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: JWT_SECRET
+            - name: TOKEN_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: TOKEN_ENCRYPTION_KEY
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -103,6 +110,16 @@ spec:
           env:
             - name: AUTO_MIGRATE
               value: "false"
+            - name: POSTGRES_MAX_OPEN_CONNS
+              value: "25"
+            - name: POSTGRES_MAX_IDLE_CONNS
+              value: "25"
+            - name: POSTGRES_CONN_MAX_LIFETIME
+              value: "5m"
+            - name: POSTGRES_CONN_MAX_IDLE_TIME
+              value: "1m"
+            - name: POSTGRES_STATEMENT_TIMEOUT
+              value: "30s"
             - name: TRUSTED_PROXY_CIDRS
               valueFrom:
                 secretKeyRef:
