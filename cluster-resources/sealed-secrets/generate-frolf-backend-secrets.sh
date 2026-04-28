@@ -10,8 +10,13 @@ set -euo pipefail
 #   AUTH_CALLOUT_SERVER_PUBLIC_KEY=... \
 #   DISCORD_OAUTH_CLIENT_ID=... DISCORD_OAUTH_CLIENT_SECRET=... \
 #   GOOGLE_OAUTH_CLIENT_ID=... GOOGLE_OAUTH_CLIENT_SECRET=... \
+#   [TOKEN_ENCRYPTION_KEY_PREVIOUS=...] \
 #   [TRUSTED_PROXY_CIDRS=10.0.0.0/8,192.168.0.0/16] \
 #   ./generate-frolf-backend-secrets.sh [output-file]
+#
+# TOKEN_ENCRYPTION_KEY must be exactly 32 bytes. TOKEN_ENCRYPTION_KEY_PREVIOUS
+# is optional (used during key rotation) and must also be exactly 32 bytes when
+# set.
 
 OUTPUT_FILE="${1:-${SECRETS_REPO_DIR:-.}/sealed-backend-secrets.yaml}"
 NAMESPACE="${NAMESPACE:-frolf-bot}"
@@ -34,6 +39,7 @@ AUTH_CALLOUT_SERVER_PUBLIC_KEY="${AUTH_CALLOUT_SERVER_PUBLIC_KEY:-}"
 
 JWT_SECRET="${JWT_SECRET:-}"
 TOKEN_ENCRYPTION_KEY="${TOKEN_ENCRYPTION_KEY:-}"
+TOKEN_ENCRYPTION_KEY_PREVIOUS="${TOKEN_ENCRYPTION_KEY_PREVIOUS:-}"
 JWT_ISSUER="${JWT_ISSUER:-frolf-bot}"
 JWT_AUDIENCE="${JWT_AUDIENCE:-frolf-bot-users}"
 
@@ -79,6 +85,22 @@ require_var DISCORD_OAUTH_CLIENT_SECRET
 require_var GOOGLE_OAUTH_CLIENT_ID
 require_var GOOGLE_OAUTH_CLIENT_SECRET
 
+# TOKEN_ENCRYPTION_KEY must be exactly 32 bytes (the backend hard-fails at
+# config-load otherwise). Use byte-length to be UTF-8 safe.
+TOKEN_ENCRYPTION_KEY_BYTES="$(printf %s "${TOKEN_ENCRYPTION_KEY}" | wc -c | tr -d '[:space:]')"
+if [[ "${TOKEN_ENCRYPTION_KEY_BYTES}" -ne 32 ]]; then
+  echo "ERROR: TOKEN_ENCRYPTION_KEY must be exactly 32 bytes (got ${TOKEN_ENCRYPTION_KEY_BYTES})" >&2
+  exit 1
+fi
+
+if [[ -n "${TOKEN_ENCRYPTION_KEY_PREVIOUS}" ]]; then
+  TOKEN_ENCRYPTION_KEY_PREVIOUS_BYTES="$(printf %s "${TOKEN_ENCRYPTION_KEY_PREVIOUS}" | wc -c | tr -d '[:space:]')"
+  if [[ "${TOKEN_ENCRYPTION_KEY_PREVIOUS_BYTES}" -ne 32 ]]; then
+    echo "ERROR: TOKEN_ENCRYPTION_KEY_PREVIOUS must be exactly 32 bytes (got ${TOKEN_ENCRYPTION_KEY_PREVIOUS_BYTES})" >&2
+    exit 1
+  fi
+fi
+
 POSTGRES_DSN="postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
 DATABASE_URL="${POSTGRES_DSN}"
 NATS_URL="nats://${NATS_AUTH_USER}:${NATS_AUTH_PASSWORD}@frolf-nats.frolf-bot.svc.cluster.local:4222"
@@ -103,6 +125,7 @@ kubectl create secret generic "${SECRET_NAME}" \
   --from-literal=AUTH_CALLOUT_SERVER_PUBLIC_KEY="${AUTH_CALLOUT_SERVER_PUBLIC_KEY}" \
   --from-literal=JWT_SECRET="${JWT_SECRET}" \
   --from-literal=TOKEN_ENCRYPTION_KEY="${TOKEN_ENCRYPTION_KEY}" \
+  --from-literal=TOKEN_ENCRYPTION_KEY_PREVIOUS="${TOKEN_ENCRYPTION_KEY_PREVIOUS}" \
   --from-literal=JWT_ISSUER="${JWT_ISSUER}" \
   --from-literal=JWT_AUDIENCE="${JWT_AUDIENCE}" \
   --from-literal=DISCORD_OAUTH_CLIENT_ID="${DISCORD_OAUTH_CLIENT_ID}" \

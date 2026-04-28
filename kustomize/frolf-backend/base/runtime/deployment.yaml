@@ -103,6 +103,16 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: POSTGRES_DSN
+            - name: POSTGRES_MAX_OPEN_CONNS
+              value: "25"
+            - name: POSTGRES_MAX_IDLE_CONNS
+              value: "25"
+            - name: POSTGRES_CONN_MAX_LIFETIME
+              value: "5m"
+            - name: POSTGRES_CONN_MAX_IDLE_TIME
+              value: "1m"
+            - name: POSTGRES_STATEMENT_TIMEOUT
+              value: "30s"
             - name: NATS_URL
               valueFrom:
                 secretKeyRef:

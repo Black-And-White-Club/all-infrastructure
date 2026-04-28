@@ -16,8 +16,20 @@ spec:
   # backoffLimit: assumes migrations are idempotent — the backend migration framework must track
   # applied migrations and skip already-applied ones so retries are safe.
   backoffLimit: 4
-  # activeDeadlineSeconds caps total Job runtime across all retries; fail fast rather than hanging.
-  activeDeadlineSeconds: 300
+  # CONCURRENTLY index migrations run outside a transaction. If the
+  # migrator is killed mid-CREATE INDEX CONCURRENTLY, the index is left
+  # in INVALID state and future migration runs will skip it.
+  #
+  # Recovery: connect to the DB and run
+  #   SELECT i.relname, c.relname AS table FROM pg_index x
+  #   JOIN pg_class i ON i.oid = x.indexrelid
+  #   JOIN pg_class c ON c.oid = x.indrelid
+  #   WHERE NOT x.indisvalid;
+  #   DROP INDEX CONCURRENTLY <invalid_index_name>;
+  # then re-run the migration job. POSTGRES_MIGRATION_STATEMENT_TIMEOUT
+  # caps any single statement; the 900s activeDeadlineSeconds caps the
+  # whole job (all migrations).
+  activeDeadlineSeconds: 900
   # ttlSecondsAfterFinished retains the Job (and its logs) for 10 minutes after completion.
   ttlSecondsAfterFinished: 600
   template:
@@ -70,6 +82,12 @@ spec:
               drop:
                 - ALL
           env:
+            # Per-statement cap so a stuck CREATE INDEX CONCURRENTLY can't burn
+            # the whole activeDeadlineSeconds window. The backend reads this and
+            # applies it via pgdriver.WithConnParams (bun's pgdriver does not
+            # honor the libpq PGOPTIONS env var, which was a no-op here).
+            - name: POSTGRES_MIGRATION_STATEMENT_TIMEOUT
+              value: "10m"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:

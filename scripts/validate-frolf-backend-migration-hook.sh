@@ -93,6 +93,7 @@ require_contains "$job_doc" "name: migrate" "migration container" || failed=1
 require_contains "$job_doc" "- migrate" "migration container args" || failed=1
 require_contains "$job_doc" "name: DATABASE_URL" "DATABASE_URL env var" || failed=1
 require_contains "$job_doc" "name: JWT_SECRET" "JWT_SECRET env var" || failed=1
+require_contains "$job_doc" "name: POSTGRES_MIGRATION_STATEMENT_TIMEOUT" "POSTGRES_MIGRATION_STATEMENT_TIMEOUT env var" || failed=1
 require_contains "$job_doc" "image: ${expected_image_repo}:" "migration job image" || failed=1
 
 if ! deploy_doc="$(extract_doc "Deployment" "frolf-bot-backend" "$manifest")"; then
@@ -112,6 +113,11 @@ fi
 
 require_contains "$deploy_doc" "image: ${expected_image_repo}:" "deployment image" || failed=1
 require_optional_env_secret_ref "$deploy_doc" "TRUSTED_PROXY_CIDRS" "Deployment/frolf-bot-backend TRUSTED_PROXY_CIDRS secret ref" || failed=1
+require_contains "$deploy_doc" "name: POSTGRES_MAX_OPEN_CONNS" "POSTGRES_MAX_OPEN_CONNS env var" || failed=1
+require_contains "$deploy_doc" "name: POSTGRES_MAX_IDLE_CONNS" "POSTGRES_MAX_IDLE_CONNS env var" || failed=1
+require_contains "$deploy_doc" "name: POSTGRES_CONN_MAX_LIFETIME" "POSTGRES_CONN_MAX_LIFETIME env var" || failed=1
+require_contains "$deploy_doc" "name: POSTGRES_CONN_MAX_IDLE_TIME" "POSTGRES_CONN_MAX_IDLE_TIME env var" || failed=1
+require_contains "$deploy_doc" "name: POSTGRES_STATEMENT_TIMEOUT" "POSTGRES_STATEMENT_TIMEOUT env var" || failed=1
 
 if [[ $failed -ne 0 ]]; then
 	exit 1

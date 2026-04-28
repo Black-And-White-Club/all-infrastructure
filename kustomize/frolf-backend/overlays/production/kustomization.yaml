@@ -3,6 +3,21 @@ kind: Kustomization
 resources:
   - ../../base
 patches:
+  # Recreate strategy for the v2 backend cutover: the upcoming release renames
+  # outbox repo methods (PollAndLock* → Claim*); old and new pods cannot
+  # co-exist. RollingUpdate would briefly run both, and the old pod's calls
+  # against the new code path would fail. Recreate stops the old pod first,
+  # accepts ~30s of API downtime, then starts the new pod on a coherent
+  # schema. After the cutover release stabilizes, this patch should be
+  # reverted (or the field removed) so subsequent deploys are zero-downtime.
+  - target:
+      kind: Deployment
+      name: frolf-bot-backend
+    patch: |-
+      - op: add
+        path: /spec/strategy
+        value:
+          type: Recreate
   - target:
       kind: Deployment
       name: frolf-bot-backend
@@ -20,6 +35,16 @@ patches:
               secretKeyRef:
                 name: backend-secrets
                 key: NATS_URL
+          - name: POSTGRES_MAX_OPEN_CONNS
+            value: "25"
+          - name: POSTGRES_MAX_IDLE_CONNS
+            value: "25"
+          - name: POSTGRES_CONN_MAX_LIFETIME
+            value: "5m"
+          - name: POSTGRES_CONN_MAX_IDLE_TIME
+            value: "1m"
+          - name: POSTGRES_STATEMENT_TIMEOUT
+            value: "30s"
           - name: ENV
             value: "production"
           - name: ENVIRONMENT
@@ -135,8 +160,12 @@ patches:
                 name: backend-secrets
                 key: GOOGLE_OAUTH_REDIRECT_URL
 images:
+  # Single source of truth for the backend image: rewrites the
+  # `frolf-bot-backend` placeholder in base manifests AND carries the tag.
+  # Image Updater (argocd/image-updaters/frolf-backend.yaml) targets this
+  # entry via manifestTargets.kustomize.name=frolf-bot-backend, so automated
+  # bumps land here. Do not split into two entries — that's how the
+  # placeholder-rewrite and tag-bump rows drift apart.
   - name: frolf-bot-backend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    newTag: v1.0.257
-  - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    newTag: v1.0.267
+    newTag: v1.0.265

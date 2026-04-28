@@ -6,14 +6,19 @@ set -euo pipefail
 #
 # Usage:
 #   TOKEN_ENCRYPTION_KEY=... AUTH_CALLOUT_SERVER_PUBLIC_KEY=... \
+#   [TOKEN_ENCRYPTION_KEY_PREVIOUS=...] \
 #   [TRUSTED_PROXY_CIDRS=10.0.0.0/8,192.168.0.0/16] \
 #   ./patch-frolf-backend-secrets.sh [sealed-secret-file]
+#
+# TOKEN_ENCRYPTION_KEY (and TOKEN_ENCRYPTION_KEY_PREVIOUS, when set for key
+# rotation) must each be exactly 32 bytes; the backend hard-fails otherwise.
 
 SEALED_SECRET_FILE="${1:-sealed-backend-secrets.yaml}"
 NAMESPACE="${NAMESPACE:-frolf-bot}"
 SECRET_NAME="${SECRET_NAME:-backend-secrets}"
 
 TOKEN_ENCRYPTION_KEY="${TOKEN_ENCRYPTION_KEY:-}"
+TOKEN_ENCRYPTION_KEY_PREVIOUS="${TOKEN_ENCRYPTION_KEY_PREVIOUS:-}"
 AUTH_CALLOUT_SERVER_PUBLIC_KEY="${AUTH_CALLOUT_SERVER_PUBLIC_KEY:-}"
 DISCORD_OAUTH_ACTIVITY_REDIRECT_URL="${DISCORD_OAUTH_ACTIVITY_REDIRECT_URL:-}"
 TRUSTED_PROXY_CIDRS="${TRUSTED_PROXY_CIDRS:-}"
@@ -53,9 +58,26 @@ seal_value() {
 PATCHED=0
 
 if [[ -n "${TOKEN_ENCRYPTION_KEY}" ]]; then
+  TOKEN_ENCRYPTION_KEY_BYTES="$(printf %s "${TOKEN_ENCRYPTION_KEY}" | wc -c | tr -d '[:space:]')"
+  if [[ "${TOKEN_ENCRYPTION_KEY_BYTES}" -ne 32 ]]; then
+    echo "ERROR: TOKEN_ENCRYPTION_KEY must be exactly 32 bytes (got ${TOKEN_ENCRYPTION_KEY_BYTES})" >&2
+    exit 1
+  fi
   echo "Sealing TOKEN_ENCRYPTION_KEY..."
   SEALED_TOKEN_ENCRYPTION_KEY=$(seal_value "${TOKEN_ENCRYPTION_KEY}")
   yq -i ".spec.encryptedData.TOKEN_ENCRYPTION_KEY = \"${SEALED_TOKEN_ENCRYPTION_KEY}\"" "${SEALED_SECRET_FILE}"
+  PATCHED=$((PATCHED + 1))
+fi
+
+if [[ -n "${TOKEN_ENCRYPTION_KEY_PREVIOUS}" ]]; then
+  TOKEN_ENCRYPTION_KEY_PREVIOUS_BYTES="$(printf %s "${TOKEN_ENCRYPTION_KEY_PREVIOUS}" | wc -c | tr -d '[:space:]')"
+  if [[ "${TOKEN_ENCRYPTION_KEY_PREVIOUS_BYTES}" -ne 32 ]]; then
+    echo "ERROR: TOKEN_ENCRYPTION_KEY_PREVIOUS must be exactly 32 bytes (got ${TOKEN_ENCRYPTION_KEY_PREVIOUS_BYTES})" >&2
+    exit 1
+  fi
+  echo "Sealing TOKEN_ENCRYPTION_KEY_PREVIOUS..."
+  SEALED_TOKEN_ENCRYPTION_KEY_PREVIOUS=$(seal_value "${TOKEN_ENCRYPTION_KEY_PREVIOUS}")
+  yq -i ".spec.encryptedData.TOKEN_ENCRYPTION_KEY_PREVIOUS = \"${SEALED_TOKEN_ENCRYPTION_KEY_PREVIOUS}\"" "${SEALED_SECRET_FILE}"
   PATCHED=$((PATCHED + 1))
 fi
 
