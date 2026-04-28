@@ -42,6 +42,10 @@ spec:
           env:
             - name: BODY_SIZE_LIMIT
               value: "10M"
+            - name: IDLE_TIMEOUT
+              value: "75"
+            - name: SHUTDOWN_TIMEOUT
+              value: "30"
             - name: PRIVATE_API_URL
               value: "http://frolf-bot-backend.frolf-bot.svc.cluster.local"
             - name: PRIVATE_OTEL_ENDPOINT
