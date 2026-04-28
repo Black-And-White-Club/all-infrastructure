@@ -103,6 +103,20 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: NATS_URL
+            # config.Validate() runs on every command path (including `migrate`)
+            # and requires TOKEN_ENCRYPTION_KEY (32B, AES-256). _PREVIOUS is the
+            # optional rotation slot — same validation if set.
+            - name: TOKEN_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: TOKEN_ENCRYPTION_KEY
+            - name: TOKEN_ENCRYPTION_KEY_PREVIOUS
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: TOKEN_ENCRYPTION_KEY_PREVIOUS
+                  optional: true
           resources:
             requests:
               memory: "64Mi"
