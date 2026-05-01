@@ -83,7 +83,10 @@ service:
       name: websocket
 
 ingress:
-  enabled: true
+  # Disabled: the NATS WebSocket Ingress is owned by the kustomize-managed
+  # PWA app at kustomize/frolf-bot-pwa/base/ingress-nats.yaml (single source
+  # of truth). Keeping the rest of this block as reference/docs only.
+  enabled: false
   className: nginx
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
