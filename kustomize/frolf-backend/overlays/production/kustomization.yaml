@@ -3,162 +3,31 @@ kind: Kustomization
 resources:
   - ../../base
 patches:
-  # Recreate strategy for the v2 backend cutover: the upcoming release renames
-  # outbox repo methods (PollAndLock* → Claim*); old and new pods cannot
-  # co-exist. RollingUpdate would briefly run both, and the old pod's calls
-  # against the new code path would fail. Recreate stops the old pod first,
-  # accepts ~30s of API downtime, then starts the new pod on a coherent
-  # schema. After the cutover release stabilizes, this patch should be
-  # reverted (or the field removed) so subsequent deploys are zero-downtime.
+  # Add env vars that are not in base: OTLP_LOGS_ENABLED (observability),
+  # DISCORD_OAUTH_ACTIVITY_REDIRECT_URL and DISCORD_BOT_INSTALL_REDIRECT_URL
+  # (standalone-PWA activity flow). All other env vars are defined in base.
   - target:
       kind: Deployment
       name: frolf-bot-backend
     patch: |-
       - op: add
-        path: /spec/strategy
+        path: /spec/template/spec/containers/0/env/-
         value:
-          type: Recreate
-  - target:
-      kind: Deployment
-      name: frolf-bot-backend
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/env
+          name: OTLP_LOGS_ENABLED
+          value: "true"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
         value:
-          - name: DATABASE_URL
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: DATABASE_URL
-          - name: NATS_URL
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: NATS_URL
-          - name: POSTGRES_MAX_OPEN_CONNS
-            value: "25"
-          - name: POSTGRES_MAX_IDLE_CONNS
-            value: "25"
-          - name: POSTGRES_CONN_MAX_LIFETIME
-            value: "5m"
-          - name: POSTGRES_CONN_MAX_IDLE_TIME
-            value: "1m"
-          - name: POSTGRES_STATEMENT_TIMEOUT
-            value: "30s"
-          - name: ENV
-            value: "production"
-          - name: ENVIRONMENT
-            value: "production"
-          - name: LOG_LEVEL
-            value: "info"
-          - name: CONFIG_FILE
-            value: ""
-          - name: AUTO_MIGRATE
-            value: "false"
-          - name: METRICS_ADDRESS
-            value: "alloy.observability.svc.cluster.local:4317"
-          - name: METRICS_ENABLED
-            value: "true"
-          - name: LOKI_URL
-            value: "http://loki.observability.svc.cluster.local:3100"
-          - name: TEMPO_ENDPOINT
-            value: "alloy.observability.svc.cluster.local:4317"
-          - name: TEMPO_INSECURE
-            value: "true"
-          - name: OTLP_ENDPOINT
-            value: "alloy.observability.svc.cluster.local:4317"
-          - name: OTLP_TRANSPORT
-            value: "grpc"
-          - name: OTLP_LOGS_ENABLED
-            value: "true"
-          - name: PWA_BASE_URL
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: PWA_BASE_URL
-          - name: TRUSTED_PROXY_CIDRS
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: TRUSTED_PROXY_CIDRS
-                optional: true
-          - name: TOKEN_ENCRYPTION_KEY
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: TOKEN_ENCRYPTION_KEY
-          - name: JWT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: JWT_SECRET
-          - name: JWT_ISSUER
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: JWT_ISSUER
-          - name: JWT_AUDIENCE
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: JWT_AUDIENCE
-          - name: AUTH_CALLOUT_ENABLED
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: AUTH_CALLOUT_ENABLED
-          - name: AUTH_CALLOUT_SUBJECT
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: AUTH_CALLOUT_SUBJECT
-          - name: AUTH_CALLOUT_ISSUER_NKEY
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: AUTH_CALLOUT_ISSUER_NKEY
-          - name: AUTH_CALLOUT_SIGNING_NKEY
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: AUTH_CALLOUT_SIGNING_NKEY
-          - name: DISCORD_OAUTH_CLIENT_ID
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: DISCORD_OAUTH_CLIENT_ID
-          - name: DISCORD_OAUTH_CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: DISCORD_OAUTH_CLIENT_SECRET
-          - name: DISCORD_OAUTH_REDIRECT_URL
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: DISCORD_OAUTH_REDIRECT_URL
-          - name: DISCORD_OAUTH_ACTIVITY_REDIRECT_URL
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: DISCORD_OAUTH_ACTIVITY_REDIRECT_URL
-          - name: DISCORD_BOT_INSTALL_REDIRECT_URL
-            value: "https://frolf-bot.duckdns.org/api/install/callback"
-          - name: GOOGLE_OAUTH_CLIENT_ID
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: GOOGLE_OAUTH_CLIENT_ID
-          - name: GOOGLE_OAUTH_CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: GOOGLE_OAUTH_CLIENT_SECRET
-          - name: GOOGLE_OAUTH_REDIRECT_URL
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: GOOGLE_OAUTH_REDIRECT_URL
+          name: DISCORD_OAUTH_ACTIVITY_REDIRECT_URL
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: DISCORD_OAUTH_ACTIVITY_REDIRECT_URL
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: DISCORD_BOT_INSTALL_REDIRECT_URL
+          value: "https://frolf-bot.duckdns.org/api/install/callback"
 images:
   # Single source of truth for the backend image: rewrites the
   # `frolf-bot-backend` placeholder in base manifests AND carries the tag.
@@ -168,6 +37,4 @@ images:
   # placeholder-rewrite and tag-bump rows drift apart.
   - name: frolf-bot-backend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    newTag: v1.0.265
-  - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
     newTag: v1.0.269
