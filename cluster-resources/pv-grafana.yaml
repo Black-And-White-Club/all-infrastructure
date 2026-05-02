@@ -22,4 +22,11 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - worker-1 # change to the node hostname where this data directory exists
+                # `worker-1` is the OCI cluster's node hostname (matches
+                # pv-loki-local.yaml, pv-tempo-ingester-wal.yaml,
+                # pv-resume-postgres-local.yaml). Confirm with:
+                #   kubectl get nodes -o wide
+                # TODO: migrate to a dynamic `oci-block-storage` PVC to
+                # remove the manual node pin (see docs/ARCHITECTURE.md
+                # storage section).
+                - worker-1
