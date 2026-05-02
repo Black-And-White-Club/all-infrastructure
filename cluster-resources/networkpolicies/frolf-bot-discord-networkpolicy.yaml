@@ -18,14 +18,12 @@ spec:
       ports:
         - protocol: TCP
           port: 4222
-    # Backend HTTP API
-    - to:
-        - podSelector:
-            matchLabels:
-              app: frolf-bot-backend
-      ports:
-        - protocol: TCP
-          port: 8080
+    # NOTE: No HTTP egress to frolf-bot-backend on TCP/8080. The Discord
+    # bot communicates with the backend exclusively via NATS (EDA-first
+    # — see /Users/jace/Dev/CLAUDE.md). The bot's only outbound
+    # `*http.Client` is in app/round/discord/scorecard_upload/ for
+    # downloading user-uploaded attachments from Discord's CDN, which
+    # uses the TCP/443 external egress rule below.
     # OTLP gRPC (Alloy) for traces/metrics/logs
     - to:
         - namespaceSelector:

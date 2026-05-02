@@ -22,7 +22,12 @@ spec:
         - protocol: TCP
           port: 3000
   egress:
-    # Server-side requests to the backend API
+    # Server-side requests to the backend API. SvelteKit SSR
+    # (src/hooks.server.ts) calls `${backendUrl}/api/auth/ticket` to
+    # rotate session tickets, and the /api/* SvelteKit proxy routes
+    # forward requests from the browser to the backend over HTTP. This
+    # is one of the narrow EDA exceptions — pre-session auth handshake
+    # and SvelteKit SSR (see /Users/jace/Dev/CLAUDE.md).
     - to:
         - podSelector:
             matchLabels:
@@ -41,3 +46,10 @@ spec:
       ports:
         - protocol: TCP
           port: 4318
+    # NOTE: No server-side NATS egress (TCP/4222) is required. The PWA
+    # is purely client-side NATS — browsers open the NATS-WS connection
+    # directly through the `frolf-nats-ingress` (kustomize/frolf-bot-pwa
+    # /base/ingress-nats.yaml) and src/lib/server/ contains no NATS
+    # client code. If SSR ever needs to publish NATS events, add an
+    # egress rule here selecting `app.kubernetes.io/name: nats` on
+    # TCP/4222.
