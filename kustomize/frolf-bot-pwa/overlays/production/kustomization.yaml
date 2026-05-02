@@ -14,6 +14,11 @@ configMapGenerator:
       - PUBLIC_DEBUG=false
       - PUBLIC_API_HOST_ALLOWLIST=frolf-bot.duckdns.org
       - PRIVATE_API_HOST_ALLOWLIST=frolf-bot-backend.frolf-bot.svc.cluster.local
+      # Mock-mode flags must be explicit "false" in production.
+      # PUBLIC_USE_MOCK is consumed by client and SSR code; PRIVATE_ALLOW_MOCK_PROD
+      # is a server-only diagnostic override that gates mock mode outside dev.
+      - PUBLIC_USE_MOCK=false
+      - PRIVATE_ALLOW_MOCK_PROD=false
 # Image modification - ArgoCD Image Updater will patch this
 images:
   # Single source of truth for the PWA image: rewrites the `frolf-bot-pwa`

@@ -80,6 +80,22 @@ spec:
                 configMapKeyRef:
                   name: frolf-pwa-config
                   key: PRIVATE_API_HOST_ALLOWLIST
+            # Mock-mode flags. PUBLIC_USE_MOCK is read by src/lib/config.ts
+            # and src/lib/stores/init.svelte.ts. PRIVATE_ALLOW_MOCK_PROD is
+            # a server-only diagnostic override read by
+            # src/routes/+layout.server.ts. Both must be "false" in
+            # production. Production overlay sets these via configMap to
+            # keep the value explicit at the overlay level.
+            - name: PUBLIC_USE_MOCK
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_USE_MOCK
+            - name: PRIVATE_ALLOW_MOCK_PROD
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PRIVATE_ALLOW_MOCK_PROD
           readinessProbe:
             httpGet:
               path: /health
