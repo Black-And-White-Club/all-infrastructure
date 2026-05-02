@@ -6,6 +6,16 @@ patches:
   # Add env vars that are not in base: OTLP_LOGS_ENABLED (observability),
   # DISCORD_OAUTH_ACTIVITY_REDIRECT_URL and DISCORD_BOT_INSTALL_REDIRECT_URL
   # (standalone-PWA activity flow). All other env vars are defined in base.
+  #
+  # INVARIANT: OAuth redirect URLs MUST agree across the platform.
+  #   DISCORD_OAUTH_ACTIVITY_REDIRECT_URL  ==  ${PWA_BASE_URL}/api/install/callback
+  #   DISCORD_BOT_INSTALL_REDIRECT_URL     ==  https://frolf-bot.duckdns.org/api/install/callback
+  # Both must also match the redirect URI(s) registered on the Discord
+  # application. PWA_BASE_URL is sealed in `backend-secrets` (see
+  # cluster-resources/sealed-secrets/generate-frolf-backend-secrets.sh
+  # and base/runtime/deployment.yaml). A mismatch silently breaks the
+  # OAuth install flow with NO backend-side error — Discord just
+  # rejects the redirect and the user lands on a generic error page.
   - target:
       kind: Deployment
       name: frolf-bot-backend

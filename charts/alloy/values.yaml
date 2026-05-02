@@ -292,8 +292,11 @@ alloy:
       port: 4318
       targetPort: 4318
       protocol: TCP
+    # Alloy's internal HTTP/UI server listens on 12345 by default. Align
+    # service port and targetPort — no consumer in this repo references
+    # 12347 (verified via repo-wide grep).
     - name: internal-http
-      port: 12347
+      port: 12345
       targetPort: 12345
       protocol: TCP
 
