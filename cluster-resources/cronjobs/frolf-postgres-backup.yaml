@@ -31,6 +31,19 @@ spec:
                     secretKeyRef:
                       name: backend-secrets
                       key: DATABASE_URL
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 999  # postgres user in the official postgres image
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
               volumeMounts:
                 - name: backup
                   mountPath: /backup
@@ -66,6 +79,19 @@ spec:
                     secretKeyRef:
                       name: frolf-postgres-backup-creds
                       key: s3-endpoint
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000  # generic non-root for amazon/aws-cli image
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
               volumeMounts:
                 - name: backup
                   mountPath: /backup
