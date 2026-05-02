@@ -322,10 +322,10 @@ ingress:
           name: alloy
           port:
             number: 4318
-  tls:
-    - secretName: frolf-bot-pwa-tls
-      hosts:
-        - frolf-bot.duckdns.org
+  # TLS is owned by kustomize/frolf-bot-pwa/base/ingress.yaml — all four
+  # ingresses share the host `frolf-bot.duckdns.org`, and cert-manager
+  # only needs one source of truth for the `frolf-bot-pwa-tls` secret.
+  tls: []
 
 controller:
   type: deployment

@@ -13,13 +13,12 @@ spec:
     - host: frolf-bot.duckdns.org
       http:
         paths:
-          - path: /v1/traces
-            pathType: Prefix
-            backend:
-              service:
-                name: tempo-distributor-external
-                port:
-                  number: 4318
+          # OTLP HTTP traces from browsers go through Alloy at `/v1`
+          # (see charts/alloy/values.yaml). The previous `/v1/traces` rule
+          # routing to tempo-distributor-external was removed: it overlapped
+          # with Alloy's `/v1` prefix in a different namespace, making
+          # routing non-deterministic, and skipped the Alloy enrichment
+          # pipeline (cluster.name attributes, batch processing).
           - path: /
             pathType: Prefix
             backend:
