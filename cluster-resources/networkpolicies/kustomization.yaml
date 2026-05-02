@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Explicitly listing every NetworkPolicy file so `kustomize build`
+# on this directory succeeds. ArgoCD also reads this path directly
+# (see argocd/cluster-resources/network-policies.yaml), so the
+# entries here must stay in sync with the files on disk.
+resources:
+  # frolf-bot namespace
+  - frolf-bot-default-deny.yaml
+  - frolf-bot-allow-dns-egress.yaml
+  - frolf-bot-backend-networkpolicy.yaml
+  - frolf-bot-discord-networkpolicy.yaml
+  - frolf-bot-pwa-networkpolicy.yaml
+  - frolf-bot-internal-services-networkpolicy.yaml
+  # resume-db namespace
+  - resume-db-default-deny.yaml
+  - resume-db-allow-dns-egress.yaml
+  - resume-db-networkpolicy.yaml
