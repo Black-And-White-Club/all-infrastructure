@@ -1,0 +1,54 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frolf-bot-discord-policy
+  namespace: frolf-bot
+spec:
+  podSelector:
+    matchLabels:
+      app: frolf-bot-discord
+  policyTypes:
+    - Egress
+  egress:
+    # NATS internal client port
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nats
+      ports:
+        - protocol: TCP
+          port: 4222
+    # Backend HTTP API
+    - to:
+        - podSelector:
+            matchLabels:
+              app: frolf-bot-backend
+      ports:
+        - protocol: TCP
+          port: 8080
+    # OTLP gRPC (Alloy) for traces/metrics/logs
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: alloy
+      ports:
+        - protocol: TCP
+          port: 4317
+    # Discord API (external) — both gateway.discord.gg (websocket) and
+    # discord.com (REST) require open egress on TCP/443. NetworkPolicy v1
+    # cannot restrict by FQDN, so we permit any external destination on
+    # TLS port 443. DNS egress is provided by the namespace-wide
+    # frolf-bot-allow-dns-egress policy.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
