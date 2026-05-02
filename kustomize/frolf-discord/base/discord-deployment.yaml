@@ -45,8 +45,6 @@ spec:
                 secretKeyRef:
                   name: discord-secrets
                   key: app-id
-            - name: BACKEND_URL
-              value: "http://frolf-bot-backend.frolf-bot.svc.cluster.local"
             - name: NATS_URL
               valueFrom:
                 secretKeyRef:
