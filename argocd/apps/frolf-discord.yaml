@@ -4,7 +4,7 @@ metadata:
   name: frolf-discord
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "21"
+    argocd.argoproj.io/sync-wave: "22"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
