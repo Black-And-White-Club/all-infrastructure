@@ -73,8 +73,19 @@ spec:
       ports:
         - protocol: TCP
           port: 3100
-    # SMTP egress for magic-link email delivery (no `to:` — allows any external provider)
-    - ports:
+    # SMTP egress for magic-link email delivery. NetworkPolicy v1 cannot
+    # restrict by FQDN, so we allow any external destination on the
+    # submission ports while excluding RFC1918 ranges to prevent
+    # in-cluster lateral reach via 587/465. Mirrors the discord
+    # NetworkPolicy pattern for external HTTPS egress.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
         - port: 587
           protocol: TCP
         - port: 465
