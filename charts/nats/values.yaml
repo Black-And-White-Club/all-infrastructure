@@ -37,6 +37,16 @@ config:
     system_account: SYS
 
     authorization:
+      # discord-bot connects via auth-callout — its NATS_URL secret
+      # (discord-secrets in all-infrastructure-secrets/) must carry a
+      # token/NKey credential the callout handler issues. The static
+      # password entry under accounts.users was removed in commit bf40dad
+      # ("fix: SMTP config, ArgoCD finalizers, NATS auth bypass, ..."),
+      # so any non-callout discord login path is dead. If the bot fails
+      # to connect after this change, verify the discord-secrets
+      # NATS_URL credential is callout-compatible before re-adding a
+      # static user — re-adding the static user would silently bypass
+      # the callout authorization.
       auth_callout:
         account: ACFZCYMXEOZSYNMEEGHGDOGN4PFYWLZEHIGHBBYPMQ3UFH4PZJ44QIAP
         issuer: "ACFZCYMXEOZSYNMEEGHGDOGN4PFYWLZEHIGHBBYPMQ3UFH4PZJ44QIAP"
