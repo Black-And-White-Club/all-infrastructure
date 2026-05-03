@@ -10,6 +10,8 @@ set -euo pipefail
 #   AUTH_CALLOUT_SERVER_PUBLIC_KEY=... \
 #   DISCORD_OAUTH_CLIENT_ID=... DISCORD_OAUTH_CLIENT_SECRET=... \
 #   GOOGLE_OAUTH_CLIENT_ID=... GOOGLE_OAUTH_CLIENT_SECRET=... \
+#   SMTP_HOST=... SMTP_USER=... SMTP_PASSWORD=... SMTP_FROM=... \
+#   [SMTP_PORT=587] \
 #   [TOKEN_ENCRYPTION_KEY_PREVIOUS=...] \
 #   [TRUSTED_PROXY_CIDRS=10.0.0.0/8,192.168.0.0/16] \
 #   ./generate-frolf-backend-secrets.sh [output-file]
@@ -53,11 +55,12 @@ GOOGLE_OAUTH_REDIRECT_URL="${GOOGLE_OAUTH_REDIRECT_URL:-https://frolf-bot.duckdn
 PWA_BASE_URL="${PWA_BASE_URL:-https://frolf-bot.duckdns.org}"
 TRUSTED_PROXY_CIDRS="${TRUSTED_PROXY_CIDRS:-}"
 
-SMTP_HOST="${SMTP_HOST:-<SMTP_HOST_PLACEHOLDER>}"  # e.g. smtp.mailgun.org
+SMTP_HOST="${SMTP_HOST:-}"
+# 587 (STARTTLS submission) is the well-known default; safe to keep without operator input.
 SMTP_PORT="${SMTP_PORT:-587}"
-SMTP_USER="${SMTP_USER:-<SMTP_USER_PLACEHOLDER>}"
-SMTP_PASSWORD="${SMTP_PASSWORD:-<SMTP_PASSWORD_PLACEHOLDER>}"
-SMTP_FROM="${SMTP_FROM:-noreply@frolf-bot.duckdns.org}"
+SMTP_USER="${SMTP_USER:-}"
+SMTP_PASSWORD="${SMTP_PASSWORD:-}"
+SMTP_FROM="${SMTP_FROM:-}"
 
 require_command() {
   local cmd="$1"
@@ -90,6 +93,10 @@ require_var DISCORD_OAUTH_CLIENT_ID
 require_var DISCORD_OAUTH_CLIENT_SECRET
 require_var GOOGLE_OAUTH_CLIENT_ID
 require_var GOOGLE_OAUTH_CLIENT_SECRET
+require_var SMTP_HOST
+require_var SMTP_USER
+require_var SMTP_PASSWORD
+require_var SMTP_FROM
 
 # TOKEN_ENCRYPTION_KEY must be exactly 32 bytes (the backend hard-fails at
 # config-load otherwise). Use byte-length to be UTF-8 safe.
