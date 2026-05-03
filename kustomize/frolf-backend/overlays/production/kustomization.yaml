@@ -48,3 +48,5 @@ images:
   - name: frolf-bot-backend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
     newTag: v1.0.269
+  - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
+    newTag: v1.0.270
