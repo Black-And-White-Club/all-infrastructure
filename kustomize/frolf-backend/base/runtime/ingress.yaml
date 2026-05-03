@@ -21,7 +21,7 @@ spec:
               service:
                 name: frolf-bot-backend
                 port:
-                  number: 8080
+                  number: 80
   # TLS is owned by kustomize/frolf-bot-pwa/base/ingress.yaml — all four
   # ingresses share the host `frolf-bot.duckdns.org`, and cert-manager
   # only needs one source of truth for the `frolf-bot-pwa-tls` secret.

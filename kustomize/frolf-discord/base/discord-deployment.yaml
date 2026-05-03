@@ -99,14 +99,16 @@ spec:
             - name: HEALTH_PORT
               value: ":8081"
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /health
               port: 8081
             initialDelaySeconds: 15
             periodSeconds: 20
             timeoutSeconds: 3
             failureThreshold: 5
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /health
               port: 8081
             initialDelaySeconds: 5
             periodSeconds: 10
