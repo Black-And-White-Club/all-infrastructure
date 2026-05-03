@@ -10,10 +10,18 @@ spec:
   policyTypes:
     - Ingress
   ingress:
+    # Allow both the long-running backend and the PreSync migration Job
+    # (kustomize/frolf-backend/base/hooks/migration-job.yaml uses
+    # `app: frolf-bot-backend-migrate`). Without the migrate label here the
+    # Job is blocked under default-deny and PreSync hangs forever.
     - from:
         - podSelector:
-            matchLabels:
-              app: frolf-bot-backend
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - frolf-bot-backend
+                  - frolf-bot-backend-migrate
       ports:
         - protocol: TCP
           port: 5432
