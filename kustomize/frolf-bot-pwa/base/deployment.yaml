@@ -47,7 +47,10 @@ spec:
             - name: SHUTDOWN_TIMEOUT
               value: "30"
             - name: PRIVATE_API_URL
-              value: "http://frolf-bot-backend.frolf-bot.svc.cluster.local"
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PRIVATE_API_URL
             - name: PRIVATE_OTEL_ENDPOINT
               value: "http://alloy.observability.svc.cluster.local:4318"
             - name: PUBLIC_NATS_URL

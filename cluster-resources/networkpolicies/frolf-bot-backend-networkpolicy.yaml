@@ -47,7 +47,8 @@ spec:
       ports:
         - protocol: TCP
           port: 4222
-    # OTLP gRPC (Alloy) and OTLP HTTP (Alloy) + Loki
+    # OTLP gRPC (Alloy) and OTLP HTTP (Alloy) — METRICS_ADDRESS and TEMPO_ENDPOINT
+    # point to alloy.observability.svc.cluster.local:4317
     - to:
         - namespaceSelector:
             matchLabels:
@@ -60,5 +61,21 @@ spec:
           port: 4317
         - protocol: TCP
           port: 4318
+    # Loki direct push — LOKI_URL points to loki.observability.svc.cluster.local:3100
+    # (not through Alloy), so Loki needs its own egress rule
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: loki
+      ports:
         - protocol: TCP
           port: 3100
+    # SMTP egress for magic-link email delivery (no `to:` — allows any external provider)
+    - ports:
+        - port: 587
+          protocol: TCP
+        - port: 465
+          protocol: TCP

@@ -53,6 +53,12 @@ GOOGLE_OAUTH_REDIRECT_URL="${GOOGLE_OAUTH_REDIRECT_URL:-https://frolf-bot.duckdn
 PWA_BASE_URL="${PWA_BASE_URL:-https://frolf-bot.duckdns.org}"
 TRUSTED_PROXY_CIDRS="${TRUSTED_PROXY_CIDRS:-}"
 
+SMTP_HOST="${SMTP_HOST:-<SMTP_HOST_PLACEHOLDER>}"  # e.g. smtp.mailgun.org
+SMTP_PORT="${SMTP_PORT:-587}"
+SMTP_USER="${SMTP_USER:-<SMTP_USER_PLACEHOLDER>}"
+SMTP_PASSWORD="${SMTP_PASSWORD:-<SMTP_PASSWORD_PLACEHOLDER>}"
+SMTP_FROM="${SMTP_FROM:-noreply@frolf-bot.duckdns.org}"
+
 require_command() {
   local cmd="$1"
   if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -137,6 +143,11 @@ kubectl create secret generic "${SECRET_NAME}" \
   --from-literal=GOOGLE_OAUTH_REDIRECT_URL="${GOOGLE_OAUTH_REDIRECT_URL}" \
   --from-literal=PWA_BASE_URL="${PWA_BASE_URL}" \
   --from-literal=TRUSTED_PROXY_CIDRS="${TRUSTED_PROXY_CIDRS}" \
+  --from-literal=SMTP_HOST="${SMTP_HOST}" \
+  --from-literal=SMTP_PORT="${SMTP_PORT}" \
+  --from-literal=SMTP_USER="${SMTP_USER}" \
+  --from-literal=SMTP_PASSWORD="${SMTP_PASSWORD}" \
+  --from-literal=SMTP_FROM="${SMTP_FROM}" \
   --dry-run=client -o yaml > "${RAW_SECRET_FILE}"
 
 kubeseal --format=yaml < "${RAW_SECRET_FILE}" > "${OUTPUT_FILE}"
