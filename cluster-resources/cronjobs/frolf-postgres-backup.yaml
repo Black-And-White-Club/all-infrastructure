@@ -13,6 +13,9 @@ spec:
       activeDeadlineSeconds: 3600
       backoffLimit: 2
       template:
+        metadata:
+          labels:
+            app: frolf-postgres-backup
         spec:
           restartPolicy: OnFailure
           volumes:

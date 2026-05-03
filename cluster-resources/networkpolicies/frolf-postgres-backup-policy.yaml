@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frolf-postgres-backup-policy
+  namespace: frolf-bot
+spec:
+  podSelector:
+    matchLabels:
+      app: frolf-postgres-backup
+  policyTypes:
+    - Egress
+  egress:
+    # PostgreSQL dump (initContainer) — Bitnami Helm chart labels
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    # S3 upload (main container) — external HTTPS. NetworkPolicy v1 cannot
+    # restrict by FQDN so we allow any external destination on TCP/443,
+    # excluding RFC1918 ranges to prevent in-cluster lateral reach.
+    # DNS egress is provided by the namespace-wide frolf-bot-allow-dns-egress policy.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443

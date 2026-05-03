@@ -14,6 +14,8 @@ spec:
     # (kustomize/frolf-backend/base/hooks/migration-job.yaml uses
     # `app: frolf-bot-backend-migrate`). Without the migrate label here the
     # Job is blocked under default-deny and PreSync hangs forever.
+    # Also allow the daily backup CronJob pods (app: frolf-postgres-backup)
+    # which run pg_dump and must reach Postgres on 5432.
     - from:
         - podSelector:
             matchExpressions:
@@ -22,6 +24,7 @@ spec:
                 values:
                   - frolf-bot-backend
                   - frolf-bot-backend-migrate
+                  - frolf-postgres-backup
       ports:
         - protocol: TCP
           port: 5432

@@ -12,6 +12,7 @@ resources:
   - frolf-bot-discord-networkpolicy.yaml
   - frolf-bot-pwa-networkpolicy.yaml
   - frolf-bot-internal-services-networkpolicy.yaml
+  - frolf-postgres-backup-policy.yaml
   # resume-db namespace
   - resume-db-default-deny.yaml
   - resume-db-allow-dns-egress.yaml
