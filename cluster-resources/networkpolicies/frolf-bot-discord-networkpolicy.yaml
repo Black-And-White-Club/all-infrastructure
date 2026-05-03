@@ -24,6 +24,10 @@ spec:
     # `*http.Client` is in app/round/discord/scorecard_upload/ for
     # downloading user-uploaded attachments from Discord's CDN, which
     # uses the TCP/443 external egress rule below.
+    # NOTE: No direct Loki push egress (TCP/3100). The discord bot routes all
+    # logs through Alloy on TCP/4317 (OTLP) — it has no LOKI_URL env var and
+    # does not use the Loki push API. If LOKI_URL is ever added to the base
+    # deployment, a TCP/3100 egress rule to the Loki pod must be added here.
     # OTLP gRPC (Alloy) for traces/metrics/logs
     - to:
         - namespaceSelector:

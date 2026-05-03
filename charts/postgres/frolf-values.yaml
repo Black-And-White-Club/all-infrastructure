@@ -23,6 +23,9 @@ primary:
     storageClass: oci-block-storage
     size: 50Gi
     mountPath: /var/lib/postgresql
+    # Retain the OCI block volume even if the PVC is deleted (e.g., accidental
+    # ArgoCD app deletion). Prevents silent data loss on cascade-delete.
+    reclaimPolicy: Retain
   resources:
     requests:
       memory: 512Mi

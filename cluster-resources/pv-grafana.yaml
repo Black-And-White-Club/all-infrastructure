@@ -27,6 +27,6 @@ spec:
                 # pv-resume-postgres-local.yaml). Confirm with:
                 #   kubectl get nodes -o wide
                 # TODO: migrate to a dynamic `oci-block-storage` PVC to
-                # remove the manual node pin (see docs/ARCHITECTURE.md
-                # storage section).
+                # remove the manual node pin (same as pv-loki-local.yaml and
+                # pv-tempo-ingester-wal.yaml which share this pattern).
                 - worker-1

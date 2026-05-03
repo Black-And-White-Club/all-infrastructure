@@ -5,8 +5,10 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "15"
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
+  # No resources-finalizer: intentionally omitted to prevent cascade deletion
+  # of the Postgres PVC and OCI block volume (production data) if this
+  # ArgoCD app is accidentally deleted. reclaimPolicy: Retain in chart values
+  # provides an additional safety net.
 spec:
   revisionHistoryLimit: 3
   project: apps

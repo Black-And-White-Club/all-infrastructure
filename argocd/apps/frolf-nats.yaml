@@ -5,8 +5,9 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "15"
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
+  # No resources-finalizer: intentionally omitted to prevent cascade deletion
+  # of the JetStream PVC (KV store, message history) if this ArgoCD app is
+  # accidentally deleted.
 spec:
   revisionHistoryLimit: 3
   project: apps

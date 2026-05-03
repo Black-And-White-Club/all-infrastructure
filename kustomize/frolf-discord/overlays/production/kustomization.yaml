@@ -17,7 +17,8 @@ patches:
   # All other env vars are defined in base — using op:replace on the entire
   # env array clobbered base-only keys (DISCORD_COMMAND_SYNC_DELAY_MS,
   # DISCORD_COMMAND_SYNC_WORKERS, DISCORD_COMMAND_SYNC_RETRY_MS, OTLP_INSECURE,
-  # PPROF_ADDR). Mirrors the C6 fix applied to the backend overlay.
+  # PPROF_ADDR). Use op:add per-var (not op:replace on the array) to avoid
+  # this; the backend overlay uses the same pattern for the same reason.
   - target:
       kind: Deployment
       name: frolf-bot-discord
