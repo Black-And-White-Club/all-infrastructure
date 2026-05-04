@@ -1,4 +1,20 @@
 controller:
+  # Workloads belong on worker nodes, not the control plane. The control-plane
+  # node has its NoSchedule taint removed so platform pods (csi-oci-controller,
+  # metrics-server, etc.) can fit on the small Always-Free footprint, which
+  # means the scheduler is free to place nginx-ingress on either node. The OCI
+  # LB resume-ingress's backend-set targets worker-1's private IP (see
+  # terraform/main.tf:256 — `backend_ip_addresses = [module.compute.private_ips[1]]`),
+  # so when nginx-ingress lands on control-plane the LB has no healthy backend
+  # and every external TLS handshake RSTs. This affinity forces it onto a
+  # non-control-plane node.
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
   revisionHistoryLimit: 3
   hostNetwork: true
   dnsPolicy: ClusterFirstWithHostNet
