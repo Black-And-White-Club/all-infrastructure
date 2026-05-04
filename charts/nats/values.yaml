@@ -42,8 +42,14 @@ config:
       auth_callout:
         account: ACFZCYMXEOZSYNMEEGHGDOGN4PFYWLZEHIGHBBYPMQ3UFH4PZJ44QIAP
         issuer: "ACFZCYMXEOZSYNMEEGHGDOGN4PFYWLZEHIGHBBYPMQ3UFH4PZJ44QIAP"
+        # auth_users bypass the callout and authenticate statically against
+        # accounts.users above. discord-bot uses static password auth (it has
+        # no JWT to present), so it MUST be listed here — otherwise NATS
+        # routes it through the callout, the backend auth-service tries to
+        # parse the password as a JWT, and rejects it as malformed.
         auth_users:
           - "auth-service"
+          - "discord-bot"
 
 natsBox:
   enabled: false
