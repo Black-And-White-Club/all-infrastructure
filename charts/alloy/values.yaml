@@ -318,14 +318,15 @@ ingress:
     nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type, traceparent, tracestate"
   hosts:
     - frolf-bot.duckdns.org
-  extraPaths:
-    - path: /v1
-      pathType: Prefix
-      backend:
-        service:
-          name: alloy
-          port:
-            number: 4318
+  # The chart always renders a main `path` block from `path` + `faroPort`
+  # (see templates/ingress.yaml). Override both so it points at the OTLP
+  # HTTP receiver on the existing `/v1` prefix instead of the chart default
+  # (`/` → port 12347, which doesn't exist on this svc and previously
+  # produced `503 Service Unavailable` on `/v1/traces` for browser OTLP
+  # exports). `extraPaths` removed because the main path now covers it.
+  path: /v1
+  pathType: Prefix
+  faroPort: 4318
   # TLS is owned by kustomize/frolf-bot-pwa/base/ingress.yaml — all four
   # ingresses share the host `frolf-bot.duckdns.org`, and cert-manager
   # only needs one source of truth for the `frolf-bot-pwa-tls` secret.
