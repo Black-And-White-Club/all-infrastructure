@@ -29,7 +29,10 @@ controller:
     type: ClusterIP
   resources:
     requests:
-      cpu: 50m
+      # Worker-1 runs the full app + observability stack and sits at ~97% CPU
+      # requests. nginx-ingress is mostly idle (a few req/s), so a 25m request
+      # is plenty; the limit stays at 200m for traffic spikes.
+      cpu: 25m
       memory: 128Mi
     limits:
       cpu: 200m
