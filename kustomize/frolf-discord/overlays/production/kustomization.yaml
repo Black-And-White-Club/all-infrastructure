@@ -13,7 +13,7 @@ images:
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
     newTag: v1.0.197
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
-    newTag: v1.0.209
+    newTag: v1.0.210
 patches:
   # Add env vars that are not in base: OTLP_LOGS_ENABLED (observability).
   # All other env vars are defined in base — using op:replace on the entire
