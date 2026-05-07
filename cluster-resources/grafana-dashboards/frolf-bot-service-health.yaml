@@ -1,0 +1,155 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-frolf-service-health
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  frolf-bot-service-health.json: |
+    {
+      "id": null,
+      "uid": "frolf-service-health",
+      "title": "Frolf Bot — Service Health",
+      "description": "HTTP request rate, error rate, and latency by endpoint for frolf-bot",
+      "tags": ["frolf-bot", "service-health"],
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "30s",
+      "time": { "from": "now-1h", "to": "now" },
+      "templating": {
+        "list": [
+          {
+            "name": "route",
+            "label": "Route",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(http_server_request_duration_seconds_count{service_name=\"frolf-bot\"}, http_route)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "refresh": 2,
+            "sort": 1
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Rate (RPS)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum by (http_route) (rate(http_server_request_duration_seconds_count{service_name=\"frolf-bot\", http_route=~\"$route\"}[5m]))",
+              "legendFormat": "{{http_route}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": { "lineWidth": 2 }
+            }
+          }
+        },
+        {
+          "id": 2,
+          "title": "Error Rate (5xx)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum by (http_route) (rate(http_server_request_duration_seconds_count{service_name=\"frolf-bot\", http_route=~\"$route\", http_response_status_code=~\"5..\"}[5m]))",
+              "legendFormat": "{{http_route}} errors",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": { "fixedColor": "red", "mode": "fixed" },
+              "custom": { "lineWidth": 2 }
+            }
+          }
+        },
+        {
+          "id": 3,
+          "title": "Latency — p50 / p95 / p99",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum by (http_route, le) (rate(http_server_request_duration_seconds_bucket{service_name=\"frolf-bot\", http_route=~\"$route\"}[5m])))",
+              "legendFormat": "p50 {{http_route}}",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (http_route, le) (rate(http_server_request_duration_seconds_bucket{service_name=\"frolf-bot\", http_route=~\"$route\"}[5m])))",
+              "legendFormat": "p95 {{http_route}}",
+              "refId": "B"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (http_route, le) (rate(http_server_request_duration_seconds_bucket{service_name=\"frolf-bot\", http_route=~\"$route\"}[5m])))",
+              "legendFormat": "p99 {{http_route}}",
+              "refId": "C"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": { "lineWidth": 2 }
+            }
+          }
+        },
+        {
+          "id": 4,
+          "title": "Status Code Breakdown",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum by (http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=\"frolf-bot\", http_route=~\"$route\"}[5m]))",
+              "legendFormat": "HTTP {{http_response_status_code}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": { "lineWidth": 2 }
+            }
+          }
+        },
+        {
+          "id": 5,
+          "title": "Request Volume (24h total)",
+          "type": "stat",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=\"frolf-bot\"}[24h]))",
+              "legendFormat": "Total requests",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }

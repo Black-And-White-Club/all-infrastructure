@@ -1,0 +1,198 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-frolf-business
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  frolf-bot-business.json: |
+    {
+      "id": null,
+      "uid": "frolf-business",
+      "title": "Frolf Bot — Business Metrics",
+      "description": "Usage trends: rounds, scores, betting activity, active players over time",
+      "tags": ["frolf-bot", "business"],
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "5m",
+      "time": { "from": "now-7d", "to": "now" },
+      "templating": {
+        "list": [
+          {
+            "name": "club_id",
+            "label": "Club",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(frolf_bot_round_created_total{job=\"frolf-bot\"}, club_id)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": false,
+            "refresh": 2,
+            "sort": 1
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Rounds Created per Day",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(increase(frolf_bot_round_created_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[1d]))",
+              "legendFormat": "Rounds created",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          }
+        },
+        {
+          "id": 2,
+          "title": "Rounds Finalized per Day",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(increase(frolf_bot_round_finalized_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[1d]))",
+              "legendFormat": "Rounds finalized",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          }
+        },
+        {
+          "id": 3,
+          "title": "Scores Submitted per Day",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(increase(frolf_bot_score_processing_success_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[1d]))",
+              "legendFormat": "Scores submitted",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          }
+        },
+        {
+          "id": 4,
+          "title": "Tag Movements per Day",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(increase(frolf_bot_score_tag_movement_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[1d]))",
+              "legendFormat": "Tag movements",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          }
+        },
+        {
+          "id": 5,
+          "title": "Bets Placed per Day",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum by (market_type) (increase(frolf_bot_betting_bets_placed_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[1d]))",
+              "legendFormat": "{{market_type}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          }
+        },
+        {
+          "id": 6,
+          "title": "Users Created (cumulative)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(frolf_bot_user_creation_success_total{job=\"frolf-bot\"})",
+              "legendFormat": "Users created",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          }
+        },
+        {
+          "id": 7,
+          "title": "Activity Summary (7d)",
+          "type": "stat",
+          "gridPos": { "h": 6, "w": 24, "x": 0, "y": 24 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(increase(frolf_bot_round_created_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[7d]))",
+              "legendFormat": "Rounds (7d)",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(increase(frolf_bot_score_processing_success_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[7d]))",
+              "legendFormat": "Scores (7d)",
+              "refId": "B"
+            },
+            {
+              "expr": "sum(increase(frolf_bot_betting_bet_placed_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[7d]))",
+              "legendFormat": "Bets (7d)",
+              "refId": "C"
+            },
+            {
+              "expr": "sum(increase(frolf_bot_tag_movement_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[7d]))",
+              "legendFormat": "Tag moves (7d)",
+              "refId": "D"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [{ "color": "green", "value": null }]
+              }
+            }
+          },
+          "options": { "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] } }
+        }
+      ]
+    }

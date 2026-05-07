@@ -67,7 +67,7 @@ compactor:
     - -config.expand-env=true
   config:
     compaction:
-      block_retention: 48h
+      block_retention: 168h
       compacted_block_retention: 10m
       compaction_window: 1h
       max_block_bytes: 107374182400
@@ -170,6 +170,9 @@ metricsGenerator:
           - http.method
           - http.status_code
           - http.route
+          - db.system
+          - db.operation
+          - db.sql.table
     storage:
       path: /var/tempo/wal
       # Remote write to Mimir for metrics storage
