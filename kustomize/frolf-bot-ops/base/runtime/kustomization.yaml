@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app: frolf-bot-ops
+      managed-by: lich-king
+  - pairs:
+      app.kubernetes.io/name: frolf-bot-ops
+      app.kubernetes.io/instance: frolf-bot
+      app.kubernetes.io/component: ops-console
+      app.kubernetes.io/part-of: frolf-bot
+      app.kubernetes.io/managed-by: argocd

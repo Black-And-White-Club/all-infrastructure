@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frolf-bot-ops
+  labels:
+    app.kubernetes.io/component: ops-console
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: frolf-bot-ops
+  template:
+    metadata:
+      labels:
+        app: frolf-bot-ops
+        app.kubernetes.io/component: ops-console
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      imagePullSecrets:
+        - name: ocir-secret
+      containers:
+        - name: frolf-bot-ops
+          image: frolf-bot-ops
+          ports:
+            - containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          env:
+            - name: PORT
+              value: "8080"
+            - name: OPS_BASE_URL
+              value: "https://ops.frolf-bot.ts.net"
+            - name: OPS_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-bot-ops-secrets
+                  key: OPS_DB_URL
+            - name: TOTP_ENCRYPTION_KEY_B64
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-bot-ops-secrets
+                  key: TOTP_ENCRYPTION_KEY_B64
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-bot-ops-secrets
+                  key: SMTP_HOST
+            - name: SMTP_FROM
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-bot-ops-secrets
+                  key: SMTP_FROM
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-bot-ops-secrets
+                  key: SMTP_USER
+            - name: SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-bot-ops-secrets
+                  key: SMTP_PASS
