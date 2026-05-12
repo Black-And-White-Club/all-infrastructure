@@ -15,7 +15,8 @@ spec:
           commonUpdateSettings:
             updateStrategy: "newest-build"
             allowTags: 'regexp:^[0-9a-f]{7}$'
-            ignoreTags: 'regexp:^latest$'
+            ignoreTags:
+              - 'latest'
             pullSecret: "pullsecret:argocd/ocir-secret"
           manifestTargets:
             kustomize:
