@@ -10,20 +10,21 @@ spec:
       app: frolf-bot-ops
   policyTypes:
     - Ingress
-  # Default-deny ingress: an empty `ingress:` block (no rules) denies all
-  # incoming traffic to pods matching the selector above. The Tailscale
-  # operator's sidecar proxy fronts this service (see service.yaml
-  # `loadBalancerClass: tailscale` + `tailscale.com/expose` annotation),
-  # so external traffic enters via the Tailscale operator-managed proxy
-  # pods, not directly to these pods.
-  #
-  # TODO: once the Tailscale operator's pod selector / namespace label is
-  # confirmed (e.g. `kubernetes.io/metadata.name: tailscale` + a known
-  # operator pod label), add an explicit `ingress:` rule allowing TCP/8080
-  # from those pods so the operator's StatefulSet-managed proxy can reach
-  # the container. Until then this policy is intentionally restrictive to
-  # avoid accidentally allowing in-namespace lateral access.
+  # The ops console authenticates partly via the Tailscale-User-Login header
+  # injected by the operator's HTTPS Ingress proxy. That header is a trust
+  # signal ONLY when the request originates from a Tailscale proxy pod —
+  # otherwise any in-cluster pod could forge an identity. This NetworkPolicy
+  # is the L3 trust boundary: ingress to the ops Service is restricted to
+  # pods in the `tailscale` namespace (operator + its operator-managed proxy
+  # StatefulSets), denying everything else.
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tailscale
+      ports:
+        - protocol: TCP
+          port: 8080
   # TODO: scope egress (NATS 4222, Postgres 5432, SMTP 587/465, Alloy 4317/4318)
   # by adding `Egress` to policyTypes with explicit allow rules — mirror the
   # frolf-bot-backend-policy pattern in cluster-resources/networkpolicies/.
-  ingress: []
