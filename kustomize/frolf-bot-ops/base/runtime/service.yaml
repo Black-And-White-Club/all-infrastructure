@@ -4,24 +4,10 @@ metadata:
   name: frolf-bot-ops
   labels:
     app.kubernetes.io/component: ops-console
-  annotations:
-    # Tailscale operator MagicDNS hostname for the proxy. Final DNS is
-    # <hostname>.<tailnet>.ts.net — our tailnet is `frolf-bot`, so this
-    # resolves to ops.frolf-bot.ts.net. Do NOT include the tailnet name
-    # here or Tailscale's `.`→`-` normalization yields ops-frolf-bot...
-    tailscale.com/hostname: "ops"
-    # The exposed-services check forbids LoadBalancer globally; the Tailscale
-    # operator requires LoadBalancer + loadBalancerClass=tailscale to provision
-    # its proxy pod. This service is only reachable inside the tailnet, never
-    # the public internet, so the spirit of the check (no public exposure) is
-    # honored. tailscale.com/expose annotation is redundant when using
-    # loadBalancerClass and was removed.
-    ignore-check.kube-linter.io/exposed-services: "Tailscale operator requires LoadBalancer type; service only reachable over the tailnet"
 spec:
   selector:
     app: frolf-bot-ops
   ports:
     - port: 80
       targetPort: 8080
-  type: LoadBalancer
-  loadBalancerClass: tailscale
+  type: ClusterIP

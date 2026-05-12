@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frolf-bot-ops
+  labels:
+    app.kubernetes.io/component: ops-console
+  annotations:
+    # Tailscale operator uses tls.hosts[0] as the proxy's tailnet hostname.
+    # Setting `ops` here yields the MagicDNS name `ops.frolf-bot.ts.net`
+    # (operator appends the tailnet suffix). HTTPS Certificates must be
+    # enabled in the tailnet admin for the operator to issue a TLS cert.
+    tailscale.com/hostname: "ops"
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - ops
+  defaultBackend:
+    service:
+      name: frolf-bot-ops
+      port:
+        number: 80
