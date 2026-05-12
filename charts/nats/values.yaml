@@ -31,6 +31,8 @@ config:
             password: "<< $NATS_AUTH_SERVICE_PASSWORD >>"
           - user: "discord-bot"
             password: "<< $NATS_DISCORD_BOT_PASSWORD >>"
+          - user: "ops-console"
+            password: "<< $NATS_OPS_CONSOLE_PASSWORD >>"
       SYS:
         users:
           - user: "sys"
@@ -50,6 +52,7 @@ config:
         auth_users:
           - "auth-service"
           - "discord-bot"
+          - "ops-console"
 
 natsBox:
   enabled: false
@@ -79,6 +82,11 @@ container:
         secretKeyRef:
           name: nats-secrets
           key: NATS_DISCORD_BOT_PASSWORD
+    NATS_OPS_CONSOLE_PASSWORD:
+      valueFrom:
+        secretKeyRef:
+          name: nats-secrets
+          key: NATS_OPS_CONSOLE_PASSWORD
 
 service:
   type: ClusterIP

@@ -88,11 +88,13 @@ spec:
                 secretKeyRef:
                   name: frolf-bot-ops-secrets
                   key: SMTP_USER
+                  optional: true
             - name: SMTP_PASS
               valueFrom:
                 secretKeyRef:
                   name: frolf-bot-ops-secrets
                   key: SMTP_PASS
+                  optional: true
             - name: NATS_URL
               valueFrom:
                 secretKeyRef:
@@ -103,6 +105,12 @@ spec:
                 secretKeyRef:
                   name: frolf-bot-ops-secrets
                   key: OPS_HMAC_KEY_JSON
+            - name: PROD_RO_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-bot-ops-secrets
+                  key: PROD_RO_DSN
+                  optional: true
       volumes:
         - name: tmp
           emptyDir: {}
