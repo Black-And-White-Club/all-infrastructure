@@ -5,8 +5,15 @@ metadata:
   labels:
     app.kubernetes.io/component: ops-console
   annotations:
-    tailscale.com/expose: "true"
+    # Tailscale operator MagicDNS hostname for the proxy; resolves to ops.frolf-bot.ts.net.
     tailscale.com/hostname: "ops.frolf-bot"
+    # The exposed-services check forbids LoadBalancer globally; the Tailscale
+    # operator requires LoadBalancer + loadBalancerClass=tailscale to provision
+    # its proxy pod. This service is only reachable inside the tailnet, never
+    # the public internet, so the spirit of the check (no public exposure) is
+    # honored. tailscale.com/expose annotation is redundant when using
+    # loadBalancerClass and was removed.
+    ignore-check.kube-linter.io/exposed-services: "Tailscale operator requires LoadBalancer type; service only reachable over the tailnet"
 spec:
   selector:
     app: frolf-bot-ops
