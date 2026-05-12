@@ -39,14 +39,8 @@ patches:
           name: DISCORD_BOT_INSTALL_REDIRECT_URL
           value: "https://frolf-bot.duckdns.org/api/install/callback"
 images:
-  # Single source of truth for the backend image: rewrites the
-  # `frolf-bot-backend` placeholder in base manifests AND carries the tag.
-  # Image Updater (argocd/image-updaters/frolf-backend.yaml) targets this
-  # entry via manifestTargets.kustomize.name=frolf-bot-backend, so automated
-  # bumps land here. Do not split into two entries — that's how the
-  # placeholder-rewrite and tag-bump rows drift apart.
   - name: frolf-bot-backend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
-    newTag: v1.0.269
+    newTag: v1.0.288
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend
     newTag: v1.0.288
