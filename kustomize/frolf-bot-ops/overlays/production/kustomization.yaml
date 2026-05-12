@@ -7,3 +7,5 @@ images:
   - name: frolf-bot-ops
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/ops
     newTag: v1.0.3
+  - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/ops
+    newTag: v1.0.3
