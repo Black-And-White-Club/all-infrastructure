@@ -1,0 +1,27 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: frolf-bot-ops-image-updater
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "21"
+spec:
+  namespace: argocd
+  applicationRefs:
+    - namePattern: "frolf-bot-ops"
+      images:
+        - alias: "frolf-bot-ops"
+          imageName: "us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/ops"
+          commonUpdateSettings:
+            updateStrategy: "semver"
+            allowTags: 'regexp:^v[0-9]+\.[0-9]+\.[0-9]+$'
+            ignoreTags: 'regexp:^latest$'
+            pullSecret: "pullsecret:argocd/ocir-secret"
+          manifestTargets:
+            kustomize:
+              name: "frolf-bot-ops"
+  writeBackConfig:
+    method: "git:secret:argocd/repo-all-infrastructure"
+    gitConfig:
+      branch: "main"
+      writeBackTarget: "kustomization"

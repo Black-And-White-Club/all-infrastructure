@@ -6,3 +6,4 @@ resources:
   - frolf-backend.yaml
   - frolf-discord.yaml
   - frolf-bot-pwa.yaml
+  - frolf-bot-ops.yaml
