@@ -3,15 +3,9 @@ kind: Kustomization
 resources:
   - ../../base
 images:
-  # Single source of truth for the discord image: rewrites the
-  # `frolf-bot-discord` placeholder in base manifests AND carries the tag.
-  # Image Updater (argocd/image-updaters/frolf-discord.yaml) targets this
-  # entry via manifestTargets.kustomize.name=frolf-bot-discord, so automated
-  # bumps land here. Do not split into two entries — that's how the
-  # placeholder-rewrite and tag-bump rows drift apart.
   - name: frolf-bot-discord
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
-    newTag: v1.0.197
+    newTag: v1.0.217
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/discord
     newTag: v1.0.216
 patches:
