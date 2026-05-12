@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tailscale-operator
+  namespace: argocd
+  annotations:
+    # Sync after sealed-secrets (wave -4) so the operator-oauth Secret
+    # exists by the time the operator pod boots. Before app workloads
+    # (frolf-bot apps at wave 15+) that depend on the Tailscale Service
+    # being claimed.
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  project: platform
+  sources:
+    - repoURL: https://pkgs.tailscale.com/helmcharts
+      chart: tailscale-operator
+      targetRevision: 1.96.5
+      helm:
+        releaseName: tailscale-operator
+        valueFiles:
+          - $values/charts/tailscale-operator/values.yaml
+    - repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
+      targetRevision: main
+      path: charts/tailscale-operator
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tailscale
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true

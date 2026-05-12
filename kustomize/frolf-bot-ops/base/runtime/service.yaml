@@ -5,8 +5,11 @@ metadata:
   labels:
     app.kubernetes.io/component: ops-console
   annotations:
-    # Tailscale operator MagicDNS hostname for the proxy; resolves to ops.frolf-bot.ts.net.
-    tailscale.com/hostname: "ops.frolf-bot"
+    # Tailscale operator MagicDNS hostname for the proxy. Final DNS is
+    # <hostname>.<tailnet>.ts.net — our tailnet is `frolf-bot`, so this
+    # resolves to ops.frolf-bot.ts.net. Do NOT include the tailnet name
+    # here or Tailscale's `.`→`-` normalization yields ops-frolf-bot...
+    tailscale.com/hostname: "ops"
     # The exposed-services check forbids LoadBalancer globally; the Tailscale
     # operator requires LoadBalancer + loadBalancerClass=tailscale to provision
     # its proxy pod. This service is only reachable inside the tailnet, never

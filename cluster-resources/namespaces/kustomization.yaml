@@ -6,6 +6,7 @@ resources:
   - observability.yaml
   - resume-app.yaml
   - resume-db.yaml
+  - tailscale.yaml
   - frolf-bot-limits.yaml
   - resume-app-limits.yaml
   - resume-db-limits.yaml

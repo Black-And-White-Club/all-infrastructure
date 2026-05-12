@@ -1,0 +1,55 @@
+# Tailscale Kubernetes Operator values
+# Chart: https://pkgs.tailscale.com/helmcharts tailscale-operator (pinned in argocd/platform/tailscale-operator.yaml)
+#
+# OAuth credentials are NOT inlined here. We pre-create a Secret named
+# `operator-oauth` in the tailscale namespace via the sibling
+# all-infrastructure-secrets repo (sealed-tailscale-operator-oauth.sops.yaml,
+# kubeseal+sops). The chart auto-detects that Secret when oauth.clientId is
+# empty. Rotation: re-seal the Secret; the operator picks up the new value
+# on next pod restart (kubectl rollout restart -n tailscale deploy/operator).
+#
+# Free-tier note: each Service annotated `loadBalancerClass: tailscale` causes
+# the operator to create one tagged-device proxy pod. Tailscale Personal plan
+# caps tagged resources at 50. Operator itself is 1 device; first exposed
+# Service is the 2nd. See plan: docs/runbooks/.. (none yet — track usage in
+# https://login.tailscale.com/admin/machines).
+
+oauth:
+  clientId: ""
+  clientSecret: ""
+
+installCRDs: true
+
+operatorConfig:
+  defaultTags:
+    - "tag:k8s-operator"
+  hostname: "tailscale-operator"
+  logging: "info"
+  image:
+    repository: tailscale/k8s-operator
+    pullPolicy: IfNotPresent
+  nodeSelector:
+    kubernetes.io/os: linux
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+proxyConfig:
+  defaultTags: "tag:k8s"
+  image:
+    repository: tailscale/tailscale
+  firewallMode: auto
+
+apiServerProxyConfig:
+  # Disabled — we don't need Tailscale-fronted kubectl. Bastion-connect.sh
+  # remains the path for cluster admin. Enable later if dropping the bastion.
+  mode: "false"
+  allowImpersonation: "false"
+
+ingressClass:
+  enabled: true
+  name: "tailscale"

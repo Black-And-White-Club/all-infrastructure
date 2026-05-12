@@ -11,4 +11,5 @@ resources:
   - oci-csi-driver.yaml
   - nginx-ingress-app.yaml
   - argo-rollouts.yaml
+  - tailscale-operator.yaml
   - platform-cronjobs.yaml
