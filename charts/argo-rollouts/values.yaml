@@ -3,7 +3,7 @@ controller:
   # Resource limits for the Rollouts controller
   resources:
     requests:
-      cpu: 100m
+      cpu: 50m
       memory: 128Mi
     limits:
       cpu: 500m
@@ -27,7 +27,7 @@ dashboard:
     port: 3100
   resources:
     requests:
-      cpu: 50m
+      cpu: 10m
       memory: 64Mi
     limits:
       cpu: 200m

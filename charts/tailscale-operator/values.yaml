@@ -30,9 +30,17 @@ operatorConfig:
     pullPolicy: IfNotPresent
   nodeSelector:
     kubernetes.io/os: linux
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
   resources:
     requests:
-      cpu: "50m"
+      cpu: "25m"
       memory: "128Mi"
     limits:
       cpu: "200m"
