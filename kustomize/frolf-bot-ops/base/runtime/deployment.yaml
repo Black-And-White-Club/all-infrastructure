@@ -62,7 +62,7 @@ spec:
             - name: PORT
               value: "8080"
             - name: OPS_BASE_URL
-              value: "https://ops.frolf-bot.ts.net"
+              value: "https://ops.macaw-ionian.ts.net"
             - name: OPS_DB_URL
               valueFrom:
                 secretKeyRef:
