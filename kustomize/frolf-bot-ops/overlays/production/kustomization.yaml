@@ -1,6 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: frolf-bot
+
 resources:
   - ../../base
 
@@ -8,3 +10,13 @@ images:
   - name: frolf-bot-ops
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/ops
     newTag: v0.0.1
+
+# TODO: the deployment references a `frolf-bot-ops-secrets` Secret that is
+# not yet declared in the sibling all-infrastructure-secrets repo's
+# ksops-generator.yaml. Add a `sealed-frolf-bot-ops-secrets.sops.yaml`
+# (encrypted SOPS file) with keys: OPS_DB_URL, TOTP_ENCRYPTION_KEY_B64,
+# SMTP_HOST, SMTP_FROM, SMTP_USER, SMTP_PASS, NATS_URL, OPS_HMAC_KEY_JSON.
+# Peer overlays do not inline generators (the secrets repo is wired in
+# centrally via KSOPS), so this overlay should NOT add a `generators:`
+# entry — register the new sealed file in
+# all-infrastructure-secrets/ksops-generator.yaml instead.

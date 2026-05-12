@@ -16,6 +16,7 @@ spec:
         app: frolf-bot-ops
         app.kubernetes.io/component: ops-console
     spec:
+      serviceAccountName: frolf-bot-ops
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
@@ -47,6 +48,16 @@ spec:
               port: 8080
             initialDelaySeconds: 3
             periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           env:
             - name: PORT
               value: "8080"
@@ -82,3 +93,16 @@ spec:
                 secretKeyRef:
                   name: frolf-bot-ops-secrets
                   key: SMTP_PASS
+            - name: NATS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-bot-ops-secrets
+                  key: NATS_URL
+            - name: OPS_HMAC_KEY_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-bot-ops-secrets
+                  key: OPS_HMAC_KEY_JSON
+      volumes:
+        - name: tmp
+          emptyDir: {}

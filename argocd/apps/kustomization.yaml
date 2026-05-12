@@ -6,6 +6,7 @@ resources:
   - frolf-nats.yaml
   - frolf-postgres.yaml
   - frolf-bot-pwa.yaml
+  - frolf-bot-ops.yaml
   - resume-backend.yaml
   - resume-frontend.yaml
   - resume-postgres.yaml
