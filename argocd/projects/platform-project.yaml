@@ -18,6 +18,7 @@ spec:
     - 'https://bitnami-labs.github.io/sealed-secrets'
     - 'https://charts.jetstack.io'
     - 'https://kubernetes.github.io/ingress-nginx'
+    - 'https://pkgs.tailscale.com/helmcharts'
 
   destinations:
     - namespace: 'argocd'
@@ -39,6 +40,8 @@ spec:
     - namespace: 'frolf-bot'
       server: 'https://kubernetes.default.svc'
     - namespace: 'observability'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'tailscale'
       server: 'https://kubernetes.default.svc'
     - namespace: ''
       server: 'https://kubernetes.default.svc'
