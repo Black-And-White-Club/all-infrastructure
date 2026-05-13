@@ -22,12 +22,8 @@ configMapGenerator:
       - PRIVATE_ALLOW_MOCK_PROD=false
 # Image modification - ArgoCD Image Updater will patch this
 images:
-  # Single source of truth for the PWA image: rewrites the `frolf-bot-pwa`
-  # placeholder in base manifests AND carries the tag. Image Updater
-  # (argocd/image-updaters/frolf-bot-pwa.yaml) targets this entry via
-  # manifestTargets.kustomize.name=frolf-bot-pwa. Do not split into two entries.
   - name: frolf-bot-pwa
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
-    newTag: v1.0.133
+    newTag: v1.0.149
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
     newTag: v1.0.149
