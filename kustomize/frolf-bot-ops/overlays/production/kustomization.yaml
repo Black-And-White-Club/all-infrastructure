@@ -6,6 +6,6 @@ resources:
 images:
   - name: frolf-bot-ops
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/ops
-    newTag: v1.0.10
+    newTag: v1.0.11
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/ops
     newTag: v1.0.10
