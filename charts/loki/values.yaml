@@ -7,6 +7,10 @@ global:
   extraArgs:
     - -config.expand-env=true
 
+# DEPRECATED: SimpleScalable (SSD) mode deprecated as of Loki chart 6.52. Will be removed in a
+# future community chart release. Before the next Loki chart bump, decide:
+#   OSS: switch loki-app.yaml repoURL to https://grafana-community.github.io/helm-charts
+#   GEL: upgrade to chart 7.0.0 from https://grafana.github.io/helm-charts
 deploymentMode: SimpleScalable
 
 loki:

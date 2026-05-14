@@ -8,6 +8,10 @@ metadata:
 spec:
   project: observability
   sources:
+    # MIGRATION REQUIRED before next Loki bump: chart 7.0.0 in grafana/loki is GEL (enterprise) only.
+    # OSS users must switch repoURL to https://grafana-community.github.io/helm-charts before upgrading.
+    # 6.55.0 is the last OSS-compatible version in this repo. SSD (SimpleScalable) mode is also
+    # deprecated as of chart 6.52 and will be removed in a future community chart version.
     - repoURL: https://grafana.github.io/helm-charts
       chart: loki
       targetRevision: 6.55.0

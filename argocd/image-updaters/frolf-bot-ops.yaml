@@ -6,7 +6,6 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "21"
 spec:
-  namespace: argocd
   applicationRefs:
     - namePattern: "frolf-bot-ops"
       images:
