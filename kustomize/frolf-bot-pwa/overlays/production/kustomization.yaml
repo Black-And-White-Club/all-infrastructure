@@ -24,6 +24,6 @@ configMapGenerator:
 images:
   - name: frolf-bot-pwa
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
-    newTag: v1.0.149
+    newTag: v1.0.150
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
-    newTag: v1.0.149
+    newTag: v1.0.150
