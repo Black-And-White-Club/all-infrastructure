@@ -57,6 +57,11 @@ config:
 natsBox:
   enabled: false
 
+# Pin NATS to worker-1 so its RWO OCI block volume never needs to
+# re-attach across nodes on reschedule.
+nodeSelector:
+  kubernetes.io/hostname: worker-1
+
 # Resource limits for the NATS pod
 container:
   resources:
