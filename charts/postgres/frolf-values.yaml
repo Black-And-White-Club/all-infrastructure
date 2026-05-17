@@ -28,7 +28,11 @@ primary:
     enabled: true
     storageClass: oci-block-storage
     size: 50Gi
-    mountPath: /var/lib/postgresql
+    # Mount directly at PGDATA, not its parent. OCI's containerd runtime creates an
+    # extra bind mount from the container image's /var/lib/postgresql/data layer,
+    # shadowing the PVC's subdirectory and causing every restart to lose data.
+    # Mounting at the exact PGDATA path eliminates the shadowing.
+    mountPath: /var/lib/postgresql/data
     # Retain the OCI block volume even if the PVC is deleted (e.g., accidental
     # ArgoCD app deletion). Prevents silent data loss on cascade-delete.
     reclaimPolicy: Retain
