@@ -13,7 +13,12 @@ image:
   repository: library/postgres
   tag: "17.4"
 
-postgresqlDataDir: /var/lib/postgresql/data
+# Use a non-default PGDATA path. OCI's containerd runtime shadow-bind-mounts paths
+# that exist in the container image layer (/var/lib/postgresql/data is pre-created
+# by library/postgres), which makes postgres write to ephemeral container storage
+# instead of the PVC. /var/lib/postgresql/pgdata does not exist in the image, so
+# no shadow mount is created and data persists across pod restarts.
+postgresqlDataDir: /var/lib/postgresql/pgdata
 
 primary:
   # Ensure frolf_bot database is created on fresh initdb (e.g., after OCI maintenance
@@ -22,17 +27,15 @@ primary:
   extraEnvVars:
     - name: POSTGRES_DB
       value: frolf_bot
+    - name: PGDATA
+      value: /var/lib/postgresql/pgdata
   nodeSelector:
     kubernetes.io/hostname: worker-1
   persistence:
     enabled: true
     storageClass: oci-block-storage
     size: 50Gi
-    # Mount directly at PGDATA, not its parent. OCI's containerd runtime creates an
-    # extra bind mount from the container image's /var/lib/postgresql/data layer,
-    # shadowing the PVC's subdirectory and causing every restart to lose data.
-    # Mounting at the exact PGDATA path eliminates the shadowing.
-    mountPath: /var/lib/postgresql/data
+    mountPath: /var/lib/postgresql
     # Retain the OCI block volume even if the PVC is deleted (e.g., accidental
     # ArgoCD app deletion). Prevents silent data loss on cascade-delete.
     reclaimPolicy: Retain
