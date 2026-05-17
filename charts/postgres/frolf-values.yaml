@@ -16,6 +16,12 @@ image:
 postgresqlDataDir: /var/lib/postgresql/data
 
 primary:
+  # Ensure frolf_bot database is created on fresh initdb (e.g., after OCI maintenance
+  # causes a volume mount race). The official postgres image reads POSTGRES_DB; the
+  # Bitnami chart's auth.database setting only works with the Bitnami image.
+  extraEnvVars:
+    - name: POSTGRES_DB
+      value: frolf_bot
   nodeSelector:
     kubernetes.io/hostname: worker-1
   persistence:
