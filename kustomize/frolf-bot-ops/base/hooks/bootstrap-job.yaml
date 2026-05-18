@@ -115,15 +115,21 @@ spec:
 
               # Phase 1 — connected to default 'postgres' DB. Role first so the
               # subsequent CREATE DATABASE can assign ownership atomically.
+              # Use a named dollar-quote tag ($body$ … $body$) instead of the
+              # anonymous $$ form: ArgoCD's bundled kustomize collapses literal
+              # "$$" to "$" via its legacy variable-substitution pass, which
+              # corrupts PL/pgSQL dollar-quoting. A named tag has no adjacent
+              # $$ sequence, so it survives both local and ArgoCD renderers.
               psql -v ON_ERROR_STOP=1 -d postgres -v app_pw="$APP_PW" <<'SQL'
-              DO $$
+              DO $body$
               BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'frolfops_app') THEN
                   EXECUTE format('CREATE ROLE frolfops_app LOGIN PASSWORD %L', :'app_pw');
                 ELSE
                   EXECUTE format('ALTER ROLE frolfops_app LOGIN PASSWORD %L', :'app_pw');
                 END IF;
-              END$$;
+              END
+              $body$;
               SQL
 
               # CREATE DATABASE cannot run inside a transaction; gate manually.
