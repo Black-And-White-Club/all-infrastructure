@@ -101,6 +101,14 @@ spec:
                 secretKeyRef:
                   name: frolf-bot-ops-secrets
                   key: OPS_DB_URL
+            # Optional — populated when ops needs read-only access to frolf_bot
+            # for "prod views". If unset, the corresponding phase below is a no-op.
+            - name: PROD_RO_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-bot-ops-secrets
+                  key: PROD_RO_DSN
+                  optional: true
           command: ["bash", "-eu", "-c"]
           args:
             - |
@@ -152,5 +160,43 @@ spec:
               ALTER SCHEMA public OWNER TO frolfops_app;
               GRANT ALL ON SCHEMA public TO frolfops_app;
               SQL
+
+              # Phase 3 — read-only role against the main frolf_bot DB. Optional:
+              # only runs when PROD_RO_DSN is populated. Aligns frolfops_ro's
+              # password with the DSN (the role survives the postgres data dir
+              # but its password does not match the sealed secret after a wipe)
+              # and idempotently grants the read perms the ops console needs.
+              if [ -n "${PROD_RO_DSN:-}" ]; then
+                RO_PW="$(printf '%s' "$PROD_RO_DSN" | sed -nE 's|^postgres(ql)?://[^:]+:([^@]+)@.*|\2|p')"
+                if [ -z "$RO_PW" ]; then
+                  echo "FATAL: failed to parse password from PROD_RO_DSN" >&2
+                  exit 1
+                fi
+                case "$RO_PW" in
+                  *\'*|*\\*)
+                    echo "FATAL: RO_PW contains a single quote or backslash; refusing to embed in SQL literal" >&2
+                    exit 1
+                    ;;
+                esac
+                if [ "$(psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='frolfops_ro'")" = "1" ]; then
+                  psql -v ON_ERROR_STOP=1 -d postgres \
+                    -c "ALTER ROLE frolfops_ro LOGIN PASSWORD '$RO_PW'"
+                else
+                  psql -v ON_ERROR_STOP=1 -d postgres \
+                    -c "CREATE ROLE frolfops_ro LOGIN PASSWORD '$RO_PW'"
+                fi
+                # Grants on the frolf_bot DB. SELECT is granted on existing tables;
+                # ALTER DEFAULT PRIVILEGES ensures future tables (created by the
+                # backend migrator running as the postgres superuser) are also
+                # readable. All commands idempotent.
+                psql -v ON_ERROR_STOP=1 -d frolf_bot <<'SQL'
+                GRANT CONNECT ON DATABASE frolf_bot TO frolfops_ro;
+                GRANT USAGE ON SCHEMA public TO frolfops_ro;
+                GRANT SELECT ON ALL TABLES IN SCHEMA public TO frolfops_ro;
+                ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO frolfops_ro;
+                SQL
+              else
+                echo "PROD_RO_DSN not set; skipping frolfops_ro phase"
+              fi
 
               echo "bootstrap complete"
