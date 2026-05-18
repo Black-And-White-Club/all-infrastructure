@@ -1,0 +1,146 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: frolf-bot-ops-bootstrap
+  labels:
+    app: frolf-bot-ops-bootstrap
+    app.kubernetes.io/component: bootstrap
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-1"
+    # Jobs run to completion — liveness/readiness probes are not applicable to batch workloads
+    ignore-check.kube-linter.io/no-liveness-probe: "batch job, not a long-running service"
+    ignore-check.kube-linter.io/no-readiness-probe: "batch job, not a long-running service"
+spec:
+  backoffLimit: 4
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: frolf-bot-ops-bootstrap
+        app.kubernetes.io/component: bootstrap
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36.1@sha256:b9598f8c98e24d0ad42c1742c32516772c3aa2151011ebaf639089bd18c605b8
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"
+            limits:
+              cpu: "50m"
+              memory: "32Mi"
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              until nc -z frolf-postgres-postgresql.frolf-bot.svc.cluster.local 5432; do
+                echo "PostgreSQL is not ready yet. Waiting 5 seconds..."
+                sleep 5
+              done
+              echo "PostgreSQL is ready!"
+      containers:
+        - name: bootstrap
+          image: postgres:17.4
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          env:
+            # HOME points at writable /tmp so psql can resolve $HOME under
+            # readOnlyRootFilesystem: true and runAsUser: 1000 (random UID
+            # with no /etc/passwd entry).
+            - name: HOME
+              value: /tmp
+            - name: PSQL_HISTORY
+              value: /dev/null
+            - name: PGHOST
+              value: frolf-postgres-postgresql.frolf-bot.svc.cluster.local
+            - name: PGPORT
+              value: "5432"
+            - name: PGUSER
+              value: postgres
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-postgres-secret
+                  key: postgres-password
+            - name: OPS_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: frolf-bot-ops-secrets
+                  key: OPS_DB_URL
+          command: ["bash", "-eu", "-c"]
+          args:
+            - |
+              # Parse role password from OPS_DB_URL literally. Sealed secret today
+              # uses an alphanumeric password; if a URL-special char (% @ : /) is
+              # ever introduced, swap this for a real urldecoder.
+              APP_PW="$(printf '%s' "$OPS_DB_URL" | sed -nE 's|^postgres(ql)?://[^:]+:([^@]+)@.*|\2|p')"
+              if [ -z "$APP_PW" ]; then
+                echo "FATAL: failed to parse password from OPS_DB_URL" >&2
+                exit 1
+              fi
+
+              # Phase 1 — connected to default 'postgres' DB. Role first so the
+              # subsequent CREATE DATABASE can assign ownership atomically.
+              psql -v ON_ERROR_STOP=1 -d postgres -v app_pw="$APP_PW" <<'SQL'
+              DO $$
+              BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'frolfops_app') THEN
+                  EXECUTE format('CREATE ROLE frolfops_app LOGIN PASSWORD %L', :'app_pw');
+                ELSE
+                  EXECUTE format('ALTER ROLE frolfops_app LOGIN PASSWORD %L', :'app_pw');
+                END IF;
+              END$$;
+              SQL
+
+              # CREATE DATABASE cannot run inside a transaction; gate manually.
+              if [ "$(psql -tAc "SELECT 1 FROM pg_database WHERE datname='frolfops'")" != "1" ]; then
+                psql -v ON_ERROR_STOP=1 -d postgres -c "CREATE DATABASE frolfops OWNER frolfops_app;"
+              else
+                psql -v ON_ERROR_STOP=1 -d postgres -c "ALTER DATABASE frolfops OWNER TO frolfops_app;"
+              fi
+
+              # Phase 2 — connected to 'frolfops'. Extensions need superuser;
+              # PG15+ owns 'public' schema via pg_database_owner, so re-own it
+              # explicitly to frolfops_app (the role that runs goose migrations).
+              psql -v ON_ERROR_STOP=1 -d frolfops <<'SQL'
+              CREATE EXTENSION IF NOT EXISTS pgcrypto;
+              CREATE EXTENSION IF NOT EXISTS citext;
+              ALTER SCHEMA public OWNER TO frolfops_app;
+              GRANT ALL ON SCHEMA public TO frolfops_app;
+              SQL
+
+              echo "bootstrap complete"
