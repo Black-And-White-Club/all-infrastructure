@@ -115,22 +115,17 @@ spec:
 
               # Phase 1 — connected to default 'postgres' DB. Role first so the
               # subsequent CREATE DATABASE can assign ownership atomically.
-              # Use a named dollar-quote tag ($body$ … $body$) instead of the
-              # anonymous $$ form: ArgoCD's bundled kustomize collapses literal
-              # "$$" to "$" via its legacy variable-substitution pass, which
-              # corrupts PL/pgSQL dollar-quoting. A named tag has no adjacent
-              # $$ sequence, so it survives both local and ArgoCD renderers.
-              psql -v ON_ERROR_STOP=1 -d postgres -v app_pw="$APP_PW" <<'SQL'
-              DO $body$
-              BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'frolfops_app') THEN
-                  EXECUTE format('CREATE ROLE frolfops_app LOGIN PASSWORD %L', :'app_pw');
-                ELSE
-                  EXECUTE format('ALTER ROLE frolfops_app LOGIN PASSWORD %L', :'app_pw');
-                END IF;
-              END
-              $body$;
-              SQL
+              # Branch in bash (not a DO block): psql interpolates :'app_pw'
+              # in regular SQL strings but explicitly NOT inside dollar-quoted
+              # bodies, so a DO/PL/pgSQL conditional would send :'app_pw'
+              # literally to the server and fail with a syntax error.
+              if [ "$(psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='frolfops_app'")" = "1" ]; then
+                psql -v ON_ERROR_STOP=1 -d postgres -v app_pw="$APP_PW" \
+                  -c "ALTER ROLE frolfops_app LOGIN PASSWORD :'app_pw'"
+              else
+                psql -v ON_ERROR_STOP=1 -d postgres -v app_pw="$APP_PW" \
+                  -c "CREATE ROLE frolfops_app LOGIN PASSWORD :'app_pw'"
+              fi
 
               # CREATE DATABASE cannot run inside a transaction; gate manually.
               if [ "$(psql -tAc "SELECT 1 FROM pg_database WHERE datname='frolfops'")" != "1" ]; then
