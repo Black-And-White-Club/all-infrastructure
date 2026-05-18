@@ -188,13 +188,15 @@ spec:
                 # Grants on the frolf_bot DB. SELECT is granted on existing tables;
                 # ALTER DEFAULT PRIVILEGES ensures future tables (created by the
                 # backend migrator running as the postgres superuser) are also
-                # readable. All commands idempotent.
-                psql -v ON_ERROR_STOP=1 -d frolf_bot <<'SQL'
-                GRANT CONNECT ON DATABASE frolf_bot TO frolfops_ro;
-                GRANT USAGE ON SCHEMA public TO frolfops_ro;
-                GRANT SELECT ON ALL TABLES IN SCHEMA public TO frolfops_ro;
-                ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO frolfops_ro;
-                SQL
+                # readable. All commands idempotent. Multiple -c calls in one
+                # psql invocation avoids a heredoc whose terminator would be
+                # extra-indented inside this `if`/`fi` block (YAML block scalars
+                # strip only the *common* leading whitespace).
+                psql -v ON_ERROR_STOP=1 -d frolf_bot \
+                  -c "GRANT CONNECT ON DATABASE frolf_bot TO frolfops_ro" \
+                  -c "GRANT USAGE ON SCHEMA public TO frolfops_ro" \
+                  -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO frolfops_ro" \
+                  -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO frolfops_ro"
               else
                 echo "PROD_RO_DSN not set; skipping frolfops_ro phase"
               fi
