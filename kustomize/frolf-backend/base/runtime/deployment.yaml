@@ -246,6 +246,11 @@ spec:
                   name: backend-secrets
                   key: TRUSTED_PROXY_CIDRS
                   optional: true
+            - name: OPS_HMAC_KEY_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: OPS_HMAC_KEY_JSON
           startupProbe:
             httpGet:
               path: /livez
