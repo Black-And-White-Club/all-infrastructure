@@ -196,8 +196,7 @@ spec:
                   -c "GRANT CONNECT ON DATABASE frolf_bot TO frolfops_ro" \
                   -c "GRANT USAGE ON SCHEMA public TO frolfops_ro" \
                   -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO frolfops_ro" \
-                  -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO frolfops_ro" \
-                  -c "GRANT SELECT ON TABLE club_permission_config TO frolfops_ro"
+                  -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO frolfops_ro"
               else
                 echo "PROD_RO_DSN not set; skipping frolfops_ro phase"
               fi
