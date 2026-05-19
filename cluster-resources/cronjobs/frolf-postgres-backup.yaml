@@ -50,6 +50,34 @@ spec:
               volumeMounts:
                 - name: backup
                   mountPath: /backup
+            - name: dump-ops
+              image: postgres:17.4
+              command:
+                - sh
+                - -c
+                - pg_dump "$OPS_DB_URL" | gzip > /backup/frolfops.sql.gz
+              env:
+                - name: OPS_DB_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: frolf-bot-ops-secrets
+                      key: OPS_DB_URL
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 999  # postgres user in the official postgres image
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
           containers:
             - name: upload
               image: amazon/aws-cli:2.22.35
@@ -57,8 +85,14 @@ spec:
                 - sh
                 - -c
                 - |
+                  set -e
+                  DATE=$(date +%Y-%m-%d)
                   aws s3 cp /backup/frolf-bot.sql.gz \
-                    "s3://${BUCKET_NAME}/frolf-bot-$(date +%Y-%m-%d).sql.gz" \
+                    "s3://${BUCKET_NAME}/frolf-bot-${DATE}.sql.gz" \
+                    --endpoint-url "$S3_ENDPOINT" \
+                    --region us-ashburn-1
+                  aws s3 cp /backup/frolfops.sql.gz \
+                    "s3://${BUCKET_NAME}/frolfops-${DATE}.sql.gz" \
                     --endpoint-url "$S3_ENDPOINT" \
                     --region us-ashburn-1
               env:
