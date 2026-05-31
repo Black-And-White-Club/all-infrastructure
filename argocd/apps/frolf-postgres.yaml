@@ -18,7 +18,8 @@ spec:
       # PINNED: Do NOT bump this version without verifying the PostgreSQL major version stays the same.
       # Bitnami chart upgrades can bump the PG major version, which triggers initdb and wipes the database.
       # frolf-bot lost its entire DB this way when PR #10 upgraded the chart (16.x→17.x transition).
-      targetRevision: 16.2.4
+      # Verified safe: chart 16.2.4 = PG 17.2.0, chart 17.1.0 = PG 17.6.0 — same PG major version (17).
+      targetRevision: 17.1.0
       helm:
         valueFiles:
           - $values/charts/postgres/frolf-values.yaml
