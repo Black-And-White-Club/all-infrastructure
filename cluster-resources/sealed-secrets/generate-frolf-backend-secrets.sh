@@ -7,6 +7,7 @@ set -euo pipefail
 # Usage:
 #   DB_PASSWORD=... NATS_AUTH_PASSWORD=... AUTH_CALLOUT_ISSUER_NKEY=... \
 #   AUTH_CALLOUT_SIGNING_NKEY=... JWT_SECRET=... TOKEN_ENCRYPTION_KEY=... \
+#   OPS_HMAC_KEY_JSON=... \
 #   AUTH_CALLOUT_SERVER_PUBLIC_KEY=... \
 #   DISCORD_OAUTH_CLIENT_ID=... DISCORD_OAUTH_CLIENT_SECRET=... \
 #   GOOGLE_OAUTH_CLIENT_ID=... GOOGLE_OAUTH_CLIENT_SECRET=... \
@@ -40,6 +41,15 @@ AUTH_CALLOUT_SIGNING_NKEY="${AUTH_CALLOUT_SIGNING_NKEY:-}"
 AUTH_CALLOUT_SERVER_PUBLIC_KEY="${AUTH_CALLOUT_SERVER_PUBLIC_KEY:-}"
 
 JWT_SECRET="${JWT_SECRET:-}"
+# OPS_HMAC_KEY_JSON is the JSON-encoded versioned HMAC key map gating the ops
+# module ({"v1":"<base64-of-32-bytes>"}). The backend deployment references it
+# via a NON-optional secretKeyRef, and the backend hard-fails to start in
+# production when it is empty (see frolf-bot/app/app.go ops-module guard). If
+# this is ever dropped from a secret regeneration, the pod either crashloops
+# (missing key) or — worse, the 2026-05-19 incident — unseals to "" and the ops
+# module silently skips registering its NATS consumer, making every permissions
+# toggle a silent no-op. Keep it required.
+OPS_HMAC_KEY_JSON="${OPS_HMAC_KEY_JSON:-}"
 TOKEN_ENCRYPTION_KEY="${TOKEN_ENCRYPTION_KEY:-}"
 TOKEN_ENCRYPTION_KEY_PREVIOUS="${TOKEN_ENCRYPTION_KEY_PREVIOUS:-}"
 JWT_ISSUER="${JWT_ISSUER:-frolf-bot}"
@@ -88,6 +98,7 @@ require_var AUTH_CALLOUT_ISSUER_NKEY
 require_var AUTH_CALLOUT_SIGNING_NKEY
 require_var AUTH_CALLOUT_SERVER_PUBLIC_KEY
 require_var JWT_SECRET
+require_var OPS_HMAC_KEY_JSON
 require_var TOKEN_ENCRYPTION_KEY
 require_var DISCORD_OAUTH_CLIENT_ID
 require_var DISCORD_OAUTH_CLIENT_SECRET
@@ -137,6 +148,7 @@ kubectl create secret generic "${SECRET_NAME}" \
   --from-literal=AUTH_CALLOUT_SIGNING_NKEY="${AUTH_CALLOUT_SIGNING_NKEY}" \
   --from-literal=AUTH_CALLOUT_SERVER_PUBLIC_KEY="${AUTH_CALLOUT_SERVER_PUBLIC_KEY}" \
   --from-literal=JWT_SECRET="${JWT_SECRET}" \
+  --from-literal=OPS_HMAC_KEY_JSON="${OPS_HMAC_KEY_JSON}" \
   --from-literal=TOKEN_ENCRYPTION_KEY="${TOKEN_ENCRYPTION_KEY}" \
   --from-literal=TOKEN_ENCRYPTION_KEY_PREVIOUS="${TOKEN_ENCRYPTION_KEY_PREVIOUS}" \
   --from-literal=JWT_ISSUER="${JWT_ISSUER}" \
