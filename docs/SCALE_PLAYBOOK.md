@@ -18,6 +18,26 @@ its current single-node homelab footprint, and the trade-offs at each stage.
 
 ---
 
+## Cost summary — every line is an OWNER DECISION, nothing here is auto-applied
+
+Estimates at OCI us-ashburn-1 list prices, June 2026 — **verify against the OCI
+pricing page / cost console before committing to any of them.** The current
+2-VM A1.Flex cluster (4 OCPU / 24 GB total) fits inside the OCI Always Free
+allowance, so today's compute cost is ~$0/mo.
+
+| Option (section below) | Est. monthly cost | Notes |
+|---|---|---|
+| Stay as-is | ~$0 | Always Free A1 compute + small block/object storage |
+| 3rd node (A1.Flex 2 OCPU/12 GB) | ~$28–30 | Beyond free tier: ~$0.01/OCPU-hr + ~$0.0015/GB-hr |
+| HA Postgres (CloudNativePG, +2 replicas) | ~$3 storage + needs 3rd node | 2 × 50 GB block volumes ≈ $2.60; compute rides the new node |
+| WAL-based PITR | < $1 | WAL archive object storage, pennies at this volume |
+| Cross-region backup replication | < $2 | Second-region storage + replication egress on small dumps |
+| Cloudflare in front of webhook | $0 + ~$10–12/yr domain | Free plan incl. 5 custom WAF rules covers a Stripe-IP allowlist; **requires a real domain — duckdns subdomains cannot be onboarded**. Pro ($20/mo) only if managed WAF rulesets wanted |
+| NATS exporter + lag alerts | $0 | Tiny pod on existing nodes |
+| Alerting graduation (Mimir ruler) | $0 | Extra components on existing nodes (RAM headroom permitting) |
+
+---
+
 ## 3-node path
 
 The current cluster is a single OCI compute instance (`worker-1`). Moving to
@@ -117,7 +137,11 @@ The current backup bucket is in `us-ashburn-1`. To add cross-region replication:
 
 If webhook abuse becomes a concern at higher charge volumes:
 
-1. Point `frolf-bot.duckdns.org` DNS through Cloudflare (orange-cloud).
+0. **Prerequisite: a real registered domain (~$10–12/yr).** Cloudflare onboards
+   domains at the nameserver level — a `duckdns.org` subdomain cannot be added.
+   Changing the public hostname also means updating the Stripe webhook endpoint
+   URLs, the cert-manager Certificate, PWA links, and Connect return/refresh URLs.
+1. Point the domain's DNS through Cloudflare (orange-cloud).
 2. Add Cloudflare WAF rule: allow only Stripe's published IP ranges on
    `/api/payments/stripe/webhook` and `/api/payments/stripe/billing/webhook`.
 3. Update `TRUSTED_PROXY_CIDRS` in `backend-secrets` to include Cloudflare's
@@ -125,6 +149,45 @@ If webhook abuse becomes a concern at higher charge volumes:
 
 The nginx `limit-rps: 20` annotation in `ingress-stripe-webhook.yaml` is a
 backstop; Cloudflare adds a deeper line of defence.
+
+---
+
+## PSS enforce graduation (NATS) — maintenance-window procedure
+
+**State (render-verified 2026-06-11):** namespace `frolf-bot` runs PSS
+`warn`/`audit: restricted` only. All workloads are restricted-compliant EXCEPT
+NATS: chart 2.14.0 silently ignores values-level `podSecurityContext:` /
+`container.securityContext:` / `nodeSelector:` keys, so the NATS pod renders
+with NO securityContext (image-default user) and no node pinning. Adding the
+`enforce` label before fixing this blocks NATS pod creation on its next
+restart — a full event-bus outage. The JetStream PVC holds message history the
+DB has been restored from before; treat its file ownership as production data.
+
+Procedure (owner-run, maintenance window, zero new cost):
+
+1. Learn the live identity and data ownership:
+   `kubectl exec -n frolf-bot frolf-nats-0 -- id`
+   `kubectl exec -n frolf-bot frolf-nats-0 -- ls -ln /data`
+2. In `charts/nats/values.yaml`, set the CHART-CORRECT keys (these render;
+   the old top-level keys do not):
+   - `podTemplate.merge.spec.securityContext`: `runAsNonRoot: true`,
+     `runAsUser`/`runAsGroup` = the uid/gid observed in step 1 (or 1000 plus
+     `fsGroup` matching the /data ownership so the kubelet chowns on mount),
+     `seccompProfile.type: RuntimeDefault`.
+   - `container.merge.securityContext`: `allowPrivilegeEscalation: false`,
+     `capabilities.drop: [ALL]`.
+   - Optionally `podTemplate.merge.spec.nodeSelector` for the volume-pinning
+     intent — only after `kubectl get nodes --show-labels` confirms the label.
+3. Verify locally BEFORE pushing: `helm template frolf-nats nats --repo
+   https://nats-io.github.io/k8s/helm/charts/ --version 2.14.0 -f
+   charts/nats/values.yaml -n frolf-bot` and confirm the securityContext
+   appears in the rendered StatefulSet.
+4. Sync, watch `frolf-nats-0` come back Ready, then verify JetStream integrity:
+   `nats stream ls` / `nats stream info` (streams present, messages intact).
+   Rollback = revert the commit and re-sync.
+5. Only then add `pod-security.kubernetes.io/enforce: restricted` +
+   `enforce-version: v1.31` to `cluster-resources/namespaces/frolf-bot.yaml`,
+   and restart one stateless deployment to confirm admission passes.
 
 ---
 
