@@ -143,6 +143,17 @@ require_var STRIPE_APPLICATION_FEE_CENTS
 require_var STRIPE_BILLING_WEBHOOK_SECRET
 require_var STRIPE_PLATFORM_SEASON_FEE_CENTS
 
+# Validate fee integers — non-numeric values would produce a $0 platform fee
+# silently. This is the last line of defense before the value is sealed.
+if [[ ! "${STRIPE_APPLICATION_FEE_CENTS}" =~ ^[0-9]+$ ]]; then
+  echo "ERROR: STRIPE_APPLICATION_FEE_CENTS must be a non-negative integer (got '${STRIPE_APPLICATION_FEE_CENTS}')" >&2
+  exit 1
+fi
+if [[ ! "${STRIPE_PLATFORM_SEASON_FEE_CENTS}" =~ ^[0-9]+$ ]]; then
+  echo "ERROR: STRIPE_PLATFORM_SEASON_FEE_CENTS must be a non-negative integer (got '${STRIPE_PLATFORM_SEASON_FEE_CENTS}')" >&2
+  exit 1
+fi
+
 # TOKEN_ENCRYPTION_KEY must be exactly 32 bytes (the backend hard-fails at
 # config-load otherwise). Use byte-length to be UTF-8 safe.
 TOKEN_ENCRYPTION_KEY_BYTES="$(printf %s "${TOKEN_ENCRYPTION_KEY}" | wc -c | tr -d '[:space:]')"

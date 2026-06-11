@@ -51,5 +51,10 @@ primary:
     runAsGroup: 999
     runAsNonRoot: true
     readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: [ALL]
   podSecurityContext:
     fsGroup: 999
+    seccompProfile:
+      type: RuntimeDefault

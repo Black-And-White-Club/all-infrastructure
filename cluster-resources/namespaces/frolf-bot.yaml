@@ -10,3 +10,15 @@ metadata:
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn-version: v1.31
     pod-security.kubernetes.io/audit-version: v1.31
+    # enforce: all pods in frolf-bot must pass PSS restricted.
+    # Audited workloads before adding this label (see Track F3 in the plan):
+    #   frolf-bot-backend deployment  — compliant (pod+container SC complete)
+    #   frolf-bot-discord deployment  — compliant (pod+container SC complete)
+    #   frolf-bot-pwa deployment      — compliant (pod+container SC complete)
+    #   frolf-bot-ops deployment      — compliant (pod+container SC complete)
+    #   frolf-bot-backend-migrate job — compliant after fix (added allowPrivilegeEscalation:false to init container)
+    #   frolf-postgres-backup cronjob — compliant after fix (added pod seccompProfile + runAsNonRoot)
+    #   frolf-postgres statefulset    — compliant after fix (added allowPrivilegeEscalation:false + capabilities.drop + pod seccompProfile)
+    #   frolf-nats statefulset        — compliant after fix (added podSecurityContext + container securityContext)
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.31

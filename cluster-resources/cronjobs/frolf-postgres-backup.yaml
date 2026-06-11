@@ -18,6 +18,10 @@ spec:
             app: frolf-postgres-backup
         spec:
           restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
           volumes:
             - name: backup
               emptyDir: {}

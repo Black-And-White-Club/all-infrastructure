@@ -146,6 +146,11 @@ if [[ -n "${STRIPE_APPLICATION_FEE_CENTS}" ]]; then
   # value in deployment.yaml — so the entire Stripe feature activates in a
   # single owner sealing action, keeping the "flip STRIPE_ENABLED to true" step
   # as the only remaining cutover change.
+  # Validate numeric — a non-integer value would seal silently and produce a $0 fee.
+  if [[ ! "${STRIPE_APPLICATION_FEE_CENTS}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: STRIPE_APPLICATION_FEE_CENTS must be a non-negative integer (got '${STRIPE_APPLICATION_FEE_CENTS}')" >&2
+    exit 1
+  fi
   echo "Sealing STRIPE_APPLICATION_FEE_CENTS..."
   SEALED_STRIPE_APPLICATION_FEE_CENTS=$(seal_value "${STRIPE_APPLICATION_FEE_CENTS}")
   yq -i ".spec.encryptedData.STRIPE_APPLICATION_FEE_CENTS = \"${SEALED_STRIPE_APPLICATION_FEE_CENTS}\"" "${SEALED_SECRET_FILE}"
@@ -165,6 +170,11 @@ if [[ -n "${STRIPE_PLATFORM_SEASON_FEE_CENTS}" ]]; then
   # than set as a plain value in deployment.yaml — so the entire billing feature
   # activates in a single owner sealing action, parallel to the collection-rail
   # pattern used for STRIPE_APPLICATION_FEE_CENTS.
+  # Validate numeric — a non-integer value would seal silently and produce a $0 fee.
+  if [[ ! "${STRIPE_PLATFORM_SEASON_FEE_CENTS}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: STRIPE_PLATFORM_SEASON_FEE_CENTS must be a non-negative integer (got '${STRIPE_PLATFORM_SEASON_FEE_CENTS}')" >&2
+    exit 1
+  fi
   echo "Sealing STRIPE_PLATFORM_SEASON_FEE_CENTS..."
   SEALED_STRIPE_PLATFORM_SEASON_FEE_CENTS=$(seal_value "${STRIPE_PLATFORM_SEASON_FEE_CENTS}")
   yq -i ".spec.encryptedData.STRIPE_PLATFORM_SEASON_FEE_CENTS = \"${SEALED_STRIPE_PLATFORM_SEASON_FEE_CENTS}\"" "${SEALED_SECRET_FILE}"

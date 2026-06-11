@@ -57,6 +57,14 @@ config:
 natsBox:
   enabled: false
 
+# PSS restricted compliance for the frolf-bot namespace enforce label (v1.31).
+# The NATS process runs as uid 1000 (nats user in the official image).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
 # Pin NATS to worker-1 so its RWO OCI block volume never needs to
 # re-attach across nodes on reschedule.
 nodeSelector:
@@ -64,6 +72,11 @@ nodeSelector:
 
 # Resource limits for the NATS pod
 container:
+  # PSS restricted: no privilege escalation, drop all capabilities.
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: [ALL]
   resources:
     requests:
       cpu: 50m

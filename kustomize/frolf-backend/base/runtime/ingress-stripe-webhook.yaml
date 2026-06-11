@@ -2,6 +2,12 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: frolf-bot-stripe-webhook
+  annotations:
+    # Stripe events are KBs (1m generous+explicit); 20rps/IP with 100 burst
+    # is far above Stripe's legitimate retry bursts while capping abuse.
+    nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
   # NOTE: No CORS annotations here — Stripe webhook/connect calls are
   # server-to-server; they carry no Origin header. Inheriting the PWA
   # CORS contract would be incorrect and could interfere with nginx
