@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frolf-bot-stripe-webhook
+  # NOTE: No CORS annotations here — Stripe webhook/connect calls are
+  # server-to-server; they carry no Origin header. Inheriting the PWA
+  # CORS contract would be incorrect and could interfere with nginx
+  # preflight handling for these paths.
+  #
+  # NOTE: No tls: block and no cert-manager annotation — TLS for
+  # frolf-bot.duckdns.org is owned exclusively by
+  # kustomize/frolf-bot-pwa/base/ingress.yaml (the frolf-bot-pwa-tls
+  # secret). All ingresses on this host share that TLS termination.
+  #
+  # NOTE: The existing /api Prefix ingress (ingress.yaml) technically
+  # matches all three paths below, but nginx gives Exact-type rules
+  # precedence over Prefix-type rules for the same host. These Exact
+  # paths will always be routed here rather than through the CORS-
+  # annotated /api ingress, which is the intended behavior.
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: frolf-bot.duckdns.org
+      http:
+        paths:
+          - path: /api/payments/stripe/webhook
+            pathType: Exact
+            backend:
+              service:
+                name: frolf-bot-backend
+                port:
+                  number: 80
+          - path: /api/payments/stripe/connect/return
+            pathType: Exact
+            backend:
+              service:
+                name: frolf-bot-backend
+                port:
+                  number: 80
+          - path: /api/payments/stripe/connect/refresh
+            pathType: Exact
+            backend:
+              service:
+                name: frolf-bot-backend
+                port:
+                  number: 80

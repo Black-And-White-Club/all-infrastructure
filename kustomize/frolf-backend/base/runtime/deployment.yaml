@@ -251,6 +251,51 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: OPS_HMAC_KEY_JSON
+            # Stripe collection rail — disabled by default. Flip to "true" only
+            # at the coordinated cutover after the owner has sealed the three
+            # STRIPE_* keys below into backend-secrets (see
+            # cluster-resources/sealed-secrets/README.md#stripe-cutover).
+            - name: STRIPE_ENABLED
+              value: "false"
+            # The three credential keys below use optional:true because they do
+            # not yet exist in the sealed-backend-secrets payload. This keeps
+            # pods schedulable before the owner seals them. STRIPE_ENABLED=false
+            # means the backend ignores missing values until cutover.
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: STRIPE_SECRET_KEY
+                  optional: true
+            - name: STRIPE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: STRIPE_WEBHOOK_SECRET
+                  optional: true
+            # STRIPE_APPLICATION_FEE_CENTS is a non-secret integer (≥0 cents
+            # applied as a platform fee on each charge), but it is sealed with
+            # the credential keys so that the entire feature is activated in a
+            # single owner sealing action. optional:true for the same pre-seal
+            # scheduling reason as the keys above.
+            - name: STRIPE_APPLICATION_FEE_CENTS
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: STRIPE_APPLICATION_FEE_CENTS
+                  optional: true
+            # Connect return/refresh URLs are the backend API landing points that
+            # Stripe redirects to after Express onboarding completes or expires.
+            # They are not secrets (confirmed: config.go comment "not secrets")
+            # and do not change per-environment for this deployment.
+            - name: STRIPE_CONNECT_RETURN_URL
+              value: "https://frolf-bot.duckdns.org/api/payments/stripe/connect/return"
+            - name: STRIPE_CONNECT_REFRESH_URL
+              value: "https://frolf-bot.duckdns.org/api/payments/stripe/connect/refresh"
+            # STRIPE_CONNECT_CLIENT_ID is the Standard OAuth client ID seam.
+            # This deployment uses Express onboarding (no client_id required);
+            # omitting the var is intentional — the backend treats empty string
+            # as "not configured" and the Express flow does not read it.
           startupProbe:
             httpGet:
               path: /livez

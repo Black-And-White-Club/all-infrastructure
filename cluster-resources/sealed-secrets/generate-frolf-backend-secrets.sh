@@ -12,6 +12,8 @@ set -euo pipefail
 #   DISCORD_OAUTH_CLIENT_ID=... DISCORD_OAUTH_CLIENT_SECRET=... \
 #   GOOGLE_OAUTH_CLIENT_ID=... GOOGLE_OAUTH_CLIENT_SECRET=... \
 #   SMTP_HOST=... SMTP_USER=... SMTP_PASSWORD=... SMTP_FROM=... \
+#   STRIPE_SECRET_KEY=... STRIPE_WEBHOOK_SECRET=... \
+#   STRIPE_APPLICATION_FEE_CENTS=... \
 #   [SMTP_PORT=587] \
 #   [TOKEN_ENCRYPTION_KEY_PREVIOUS=...] \
 #   [TRUSTED_PROXY_CIDRS=10.0.0.0/8,192.168.0.0/16] \
@@ -20,6 +22,14 @@ set -euo pipefail
 # TOKEN_ENCRYPTION_KEY must be exactly 32 bytes. TOKEN_ENCRYPTION_KEY_PREVIOUS
 # is optional (used during key rotation) and must also be exactly 32 bytes when
 # set.
+#
+# Stripe keys: STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET are the live Stripe
+# API credential and webhook signing secret (sk_live_... / whsec_...).
+# STRIPE_APPLICATION_FEE_CENTS is a non-secret integer but is sealed here so
+# the entire feature activates in a single owner action. All three are required
+# when running this full-regen script (mirror of the "required" convention used
+# for SMTP keys above). Use patch-frolf-backend-secrets.sh to splice them into
+# an existing sealed secret without regenerating everything else.
 
 OUTPUT_FILE="${1:-${SECRETS_REPO_DIR:-.}/sealed-backend-secrets.yaml}"
 NAMESPACE="${NAMESPACE:-frolf-bot}"
@@ -72,6 +82,15 @@ SMTP_USER="${SMTP_USER:-}"
 SMTP_PASSWORD="${SMTP_PASSWORD:-}"
 SMTP_FROM="${SMTP_FROM:-}"
 
+# Stripe collection rail credentials. These are required in the full-regen
+# script so that no accidental sealed-secret is produced without them.
+# Use patch-frolf-backend-secrets.sh to add them to an existing secret.
+# STRIPE_APPLICATION_FEE_CENTS is sealed here (not a secret by nature) so
+# the entire Stripe feature activates in a single owner sealing action.
+STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY:-}"
+STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET:-}"
+STRIPE_APPLICATION_FEE_CENTS="${STRIPE_APPLICATION_FEE_CENTS:-}"
+
 require_command() {
   local cmd="$1"
   if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -108,6 +127,9 @@ require_var SMTP_HOST
 require_var SMTP_USER
 require_var SMTP_PASSWORD
 require_var SMTP_FROM
+require_var STRIPE_SECRET_KEY
+require_var STRIPE_WEBHOOK_SECRET
+require_var STRIPE_APPLICATION_FEE_CENTS
 
 # TOKEN_ENCRYPTION_KEY must be exactly 32 bytes (the backend hard-fails at
 # config-load otherwise). Use byte-length to be UTF-8 safe.
@@ -167,6 +189,9 @@ kubectl create secret generic "${SECRET_NAME}" \
   --from-literal=SMTP_USER="${SMTP_USER}" \
   --from-literal=SMTP_PASSWORD="${SMTP_PASSWORD}" \
   --from-literal=SMTP_FROM="${SMTP_FROM}" \
+  --from-literal=STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY}" \
+  --from-literal=STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET}" \
+  --from-literal=STRIPE_APPLICATION_FEE_CENTS="${STRIPE_APPLICATION_FEE_CENTS}" \
   --dry-run=client -o yaml > "${RAW_SECRET_FILE}"
 
 kubeseal --format=yaml < "${RAW_SECRET_FILE}" > "${OUTPUT_FILE}"
