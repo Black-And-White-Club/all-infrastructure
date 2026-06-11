@@ -64,11 +64,12 @@ cd "$SECRETS_REPO_DIR" && git add . && git commit -m "rotate: oci-objectstore-cr
 ## Stripe cutover — sealing the Stripe collection rail keys {#stripe-cutover}
 
 The Stripe collection rail ships with `STRIPE_ENABLED=false` in
-`kustomize/frolf-backend/base/runtime/deployment.yaml`. The three sealed keys
-(`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_APPLICATION_FEE_CENTS`)
+`kustomize/frolf-backend/base/runtime/deployment.yaml`. The five sealed keys
+(`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_APPLICATION_FEE_CENTS`,
+`STRIPE_BILLING_WEBHOOK_SECRET`, `STRIPE_PLATFORM_SEASON_FEE_CENTS`)
 are referenced as `optional: true` so pods schedule before the seal step.
 
-### Step 1: Seal the three keys (patch workflow — no full regen required)
+### Step 1: Seal the five keys (patch workflow — no full regen required)
 
 ```bash
 cd /path/to/all-infrastructure-secrets
@@ -79,19 +80,31 @@ sops --decrypt --in-place sealed-backend-secrets.sops.yaml
 STRIPE_SECRET_KEY="sk_live_..." \
 STRIPE_WEBHOOK_SECRET="whsec_..." \
 STRIPE_APPLICATION_FEE_CENTS="50" \
+STRIPE_BILLING_WEBHOOK_SECRET="whsec_..." \
+STRIPE_PLATFORM_SEASON_FEE_CENTS="2000" \
 /path/to/all-infrastructure/cluster-resources/sealed-secrets/patch-frolf-backend-secrets.sh \
   sealed-backend-secrets.sops.yaml
 
 # Re-encrypt and commit
 sops --encrypt --in-place sealed-backend-secrets.sops.yaml
 git add sealed-backend-secrets.sops.yaml
-git commit -m "feat(payments): seal Stripe collection rail credentials"
+git commit -m "feat(payments): seal Stripe collection rail + billing credentials"
 ```
 
 > **Note**: The NetworkPolicy (TCP/443 egress) and webhook ingress are safe to
 > land in Git and sync via ArgoCD **before** this sealing step — they are
 > non-breaking additions. Only the `STRIPE_ENABLED` flip (Step 2) activates
 > live traffic.
+>
+> **Billing cutover note**: `STRIPE_BILLING_WEBHOOK_SECRET` is the
+> platform-account signing secret for invoice events (`invoice.paid`,
+> `payment_failed`, etc.) — obtain it from the Stripe Dashboard under
+> **Developers → Webhooks → [platform webhook endpoint]**. It is distinct from
+> `STRIPE_WEBHOOK_SECRET` which signs Connect events. After sealing, also
+> **enable invoice email reminders in the Stripe Dashboard** (account-level
+> setting under **Settings → Billing → Subscriptions and emails → Email
+> reminders**; this is not an API field and must be toggled manually at
+> cutover).
 
 ### Step 2: Flip STRIPE_ENABLED to "true"
 
@@ -116,12 +129,14 @@ backend will start the Stripe module on next pod startup.
 ### Alternative: full regen
 
 If you need to regenerate **all** backend secrets at once (e.g. key rotation),
-`generate-frolf-backend-secrets.sh` now requires the three Stripe vars too:
+`generate-frolf-backend-secrets.sh` now requires all five Stripe vars:
 
 ```bash
 STRIPE_SECRET_KEY=sk_live_... \
 STRIPE_WEBHOOK_SECRET=whsec_... \
 STRIPE_APPLICATION_FEE_CENTS=50 \
+STRIPE_BILLING_WEBHOOK_SECRET=whsec_... \
+STRIPE_PLATFORM_SEASON_FEE_CENTS=2000 \
 <all other existing vars> \
 SECRETS_REPO_DIR=/path/to/all-infrastructure-secrets \
 ./generate-frolf-backend-secrets.sh

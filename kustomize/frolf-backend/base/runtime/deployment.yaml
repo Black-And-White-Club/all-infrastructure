@@ -284,6 +284,28 @@ spec:
                   name: backend-secrets
                   key: STRIPE_APPLICATION_FEE_CENTS
                   optional: true
+            # Platform billing webhook signing secret — signs events from the
+            # PLATFORM Stripe account (invoice.paid, payment_failed, etc.).
+            # Separate from STRIPE_WEBHOOK_SECRET which signs Connect events.
+            # optional:true so pods schedule before the owner seals this value.
+            - name: STRIPE_BILLING_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: STRIPE_BILLING_WEBHOOK_SECRET
+                  optional: true
+            # STRIPE_PLATFORM_SEASON_FEE_CENTS is a non-secret integer (≥0 cents
+            # billed to each club per season via a platform invoice). Sealed here
+            # — rather than set as a plain value — so the entire billing feature
+            # activates in a single owner sealing action, parallel to the
+            # STRIPE_APPLICATION_FEE_CENTS pattern above. optional:true for the
+            # same pre-seal scheduling reason.
+            - name: STRIPE_PLATFORM_SEASON_FEE_CENTS
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: STRIPE_PLATFORM_SEASON_FEE_CENTS
+                  optional: true
             # Connect return/refresh URLs are the backend API landing points that
             # Stripe redirects to after Express onboarding completes or expires.
             # They are not secrets (confirmed: config.go comment "not secrets")

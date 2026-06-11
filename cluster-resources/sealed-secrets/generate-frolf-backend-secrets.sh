@@ -14,6 +14,7 @@ set -euo pipefail
 #   SMTP_HOST=... SMTP_USER=... SMTP_PASSWORD=... SMTP_FROM=... \
 #   STRIPE_SECRET_KEY=... STRIPE_WEBHOOK_SECRET=... \
 #   STRIPE_APPLICATION_FEE_CENTS=... \
+#   STRIPE_BILLING_WEBHOOK_SECRET=... STRIPE_PLATFORM_SEASON_FEE_CENTS=... \
 #   [SMTP_PORT=587] \
 #   [TOKEN_ENCRYPTION_KEY_PREVIOUS=...] \
 #   [TRUSTED_PROXY_CIDRS=10.0.0.0/8,192.168.0.0/16] \
@@ -30,6 +31,11 @@ set -euo pipefail
 # when running this full-regen script (mirror of the "required" convention used
 # for SMTP keys above). Use patch-frolf-backend-secrets.sh to splice them into
 # an existing sealed secret without regenerating everything else.
+# STRIPE_BILLING_WEBHOOK_SECRET is the platform-account webhook signing secret
+# (whsec_...) for the billing invoice webhook — separate from the collection
+# rail secret above. STRIPE_PLATFORM_SEASON_FEE_CENTS is a non-secret integer
+# (≥0 cents billed to each club per season) sealed here for the same
+# single-action activation reason as STRIPE_APPLICATION_FEE_CENTS.
 
 OUTPUT_FILE="${1:-${SECRETS_REPO_DIR:-.}/sealed-backend-secrets.yaml}"
 NAMESPACE="${NAMESPACE:-frolf-bot}"
@@ -90,6 +96,10 @@ SMTP_FROM="${SMTP_FROM:-}"
 STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY:-}"
 STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET:-}"
 STRIPE_APPLICATION_FEE_CENTS="${STRIPE_APPLICATION_FEE_CENTS:-}"
+# Stripe platform billing credentials — sealed alongside the collection rail so
+# both billing and collection activate together in one owner sealing action.
+STRIPE_BILLING_WEBHOOK_SECRET="${STRIPE_BILLING_WEBHOOK_SECRET:-}"
+STRIPE_PLATFORM_SEASON_FEE_CENTS="${STRIPE_PLATFORM_SEASON_FEE_CENTS:-}"
 
 require_command() {
   local cmd="$1"
@@ -130,6 +140,8 @@ require_var SMTP_FROM
 require_var STRIPE_SECRET_KEY
 require_var STRIPE_WEBHOOK_SECRET
 require_var STRIPE_APPLICATION_FEE_CENTS
+require_var STRIPE_BILLING_WEBHOOK_SECRET
+require_var STRIPE_PLATFORM_SEASON_FEE_CENTS
 
 # TOKEN_ENCRYPTION_KEY must be exactly 32 bytes (the backend hard-fails at
 # config-load otherwise). Use byte-length to be UTF-8 safe.
@@ -192,6 +204,8 @@ kubectl create secret generic "${SECRET_NAME}" \
   --from-literal=STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY}" \
   --from-literal=STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET}" \
   --from-literal=STRIPE_APPLICATION_FEE_CENTS="${STRIPE_APPLICATION_FEE_CENTS}" \
+  --from-literal=STRIPE_BILLING_WEBHOOK_SECRET="${STRIPE_BILLING_WEBHOOK_SECRET}" \
+  --from-literal=STRIPE_PLATFORM_SEASON_FEE_CENTS="${STRIPE_PLATFORM_SEASON_FEE_CENTS}" \
   --dry-run=client -o yaml > "${RAW_SECRET_FILE}"
 
 kubeseal --format=yaml < "${RAW_SECRET_FILE}" > "${OUTPUT_FILE}"

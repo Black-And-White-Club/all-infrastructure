@@ -30,6 +30,13 @@ spec:
                 name: frolf-bot-backend
                 port:
                   number: 80
+          - path: /api/payments/stripe/billing/webhook
+            pathType: Exact
+            backend:
+              service:
+                name: frolf-bot-backend
+                port:
+                  number: 80
           - path: /api/payments/stripe/connect/return
             pathType: Exact
             backend:
