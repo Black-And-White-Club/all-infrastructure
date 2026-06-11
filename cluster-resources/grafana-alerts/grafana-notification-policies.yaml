@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alert-notification-policies
+  namespace: observability
+  labels:
+    grafana_alert: "1"
+data:
+  notification-policies.yaml: |
+    apiVersion: 1
+    policies:
+      - orgId: 1
+        receiver: discord
+        group_by: [alertname]
+        repeat_interval: 4h

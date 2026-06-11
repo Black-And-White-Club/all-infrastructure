@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alert-contact-points
+  namespace: observability
+  labels:
+    grafana_alert: "1"
+data:
+  contact-points.yaml: |
+    apiVersion: 1
+    contactPoints:
+      - orgId: 1
+        name: discord
+        receivers:
+          - uid: discord-webhook
+            type: discord
+            settings:
+              # Grafana 10.x file-provisioning supports ${VAR} env interpolation.
+              # The webhook URL is injected via the grafana-alerting-discord
+              # SealedSecret (extraEnvFrom in charts/grafana/values.yaml).
+              # The secret is optional:true; this contact point is inactive until sealed.
+              url: ${GRAFANA_ALERTING_DISCORD_WEBHOOK}
+              use_discord_username: false
+            disableResolveMessage: false
