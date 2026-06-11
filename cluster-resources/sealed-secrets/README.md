@@ -61,6 +61,32 @@ sops --encrypt --in-place "${SECRETS_REPO_DIR}/sealed-oci-object-storage-creds.s
 cd "$SECRETS_REPO_DIR" && git add . && git commit -m "rotate: oci-objectstore-creds"
 ```
 
+## Complete enumerated seal list
+
+All secrets that must be sealed before full production operation:
+
+**backend-secrets** (frolf-bot namespace):
+1. `STRIPE_SECRET_KEY` — Stripe live API key (`sk_live_...`)
+2. `STRIPE_WEBHOOK_SECRET` — Connect webhook signing secret (`whsec_...`)
+3. `STRIPE_APPLICATION_FEE_CENTS` — Per-charge platform fee in cents (integer ≥ 0)
+4. `STRIPE_BILLING_WEBHOOK_SECRET` — Platform billing webhook signing secret (`whsec_...`)
+5. `STRIPE_PLATFORM_SEASON_FEE_CENTS` — Per-season platform billing fee in cents (integer ≥ 0)
+
+**grafana-alerting-discord** (observability namespace):
+6. `GRAFANA_ALERTING_DISCORD_WEBHOOK` — Discord webhook URL for Grafana alert notifications
+   (generate with `generate-grafana-alerting-discord-secret.sh`)
+
+The `grafana-alerting-discord` secret is marked `optional: true` in
+`charts/grafana/values.yaml`, so Grafana schedules before this secret is sealed.
+The Discord contact point will be inactive until the secret is present.
+
+See also:
+- [Key rotation procedures](../../docs/KEY_ROTATION.md)
+- [Postgres restore drill](../../docs/POSTGRES_RESTORE_TEST.md)
+- [Scaling and alerting graduation](../../docs/SCALE_PLAYBOOK.md)
+
+---
+
 ## Stripe cutover — sealing the Stripe collection rail keys {#stripe-cutover}
 
 The Stripe collection rail ships with `STRIPE_ENABLED=false` in
