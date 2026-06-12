@@ -311,7 +311,7 @@ spec:
                   key: STRIPE_PLATFORM_SEASON_FEE_CENTS
                   optional: true
             # Connect return/refresh URLs are the backend API landing points that
-            # Stripe redirects to after Express onboarding completes or expires.
+            # Stripe redirects to after hosted onboarding (Accounts v2) completes or expires.
             # They are not secrets (confirmed: config.go comment "not secrets")
             # and do not change per-environment for this deployment.
             - name: STRIPE_CONNECT_RETURN_URL
@@ -319,9 +319,9 @@ spec:
             - name: STRIPE_CONNECT_REFRESH_URL
               value: "https://frolf-bot.duckdns.org/api/payments/stripe/connect/refresh"
             # STRIPE_CONNECT_CLIENT_ID is the Standard OAuth client ID seam.
-            # This deployment uses Express onboarding (no client_id required);
+            # Connected accounts are created via Accounts v2 (hosted onboarding; no client_id required);
             # omitting the var is intentional — the backend treats empty string
-            # as "not configured" and the Express flow does not read it.
+            # as "not configured" and the Accounts v2 flow does not read it.
           startupProbe:
             httpGet:
               path: /livez
