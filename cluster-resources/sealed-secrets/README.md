@@ -77,8 +77,31 @@ All secrets that must be sealed before full production operation:
    (generate with `generate-grafana-alerting-discord-secret.sh`)
 
 The `grafana-alerting-discord` secret is marked `optional: true` in
-`charts/grafana/values.yaml`, so Grafana schedules before this secret is sealed.
-The Discord contact point will be inactive until the secret is present.
+`charts/grafana/values.yaml` (chart key `envFromSecrets` — chart 10.5.15 has no
+`extraEnvFrom` key and silently ignores one), so Grafana schedules before this
+secret is sealed. The Discord contact point will be inactive until the secret
+is present.
+
+> **Pre-seal verification (run once after the first sync, before sealing):**
+> while the secret is absent, `${GRAFANA_ALERTING_DISCORD_WEBHOOK}` in the
+> contact-point YAML expands to an empty string. Confirm Grafana still loads
+> the alert *rules* in that state — an invalid contact point can fail the
+> sidecar's alerting provisioning reload and take the rules down with it:
+>
+> ```bash
+> kubectl logs -n observability deploy/grafana -c grafana-sc-alerts --tail=20
+> kubectl exec -n observability deploy/grafana -c grafana -- \
+>   wget -qO- http://localhost:3000/api/v1/provisioning/alert-rules | head -c 300
+> ```
+>
+> If the reload is rejected (non-2xx logged by the sidecar), seal the webhook
+> secret first and re-sync before relying on any alert in
+> `cluster-resources/grafana-alerts/`. After sealing, restart the Grafana pod
+> so it picks up the env var (read at pod start) — use the ArgoCD restart
+> action or delete the pod (`kubectl delete pod -n observability -l
+> app.kubernetes.io/name=grafana`); do NOT `rollout restart`, which patches the
+> Deployment outside Git. Then send a test notification from
+> **Alerting → Contact points → discord → Test**.
 
 See also:
 - [Key rotation procedures](../../docs/KEY_ROTATION.md)

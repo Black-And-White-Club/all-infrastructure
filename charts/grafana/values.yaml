@@ -141,10 +141,12 @@ sidecar:
 # it in the alerting contact-point YAML below. The secret is marked optional:true
 # so Grafana schedules before the owner seals the webhook URL. Pods tolerate
 # the missing env var; the contact point will be inactive until sealed.
-extraEnvFrom:
-  - secretRef:
-      name: grafana-alerting-discord
-      optional: true
+# CHART-CORRECT KEY (render-verified 2026-06-12): grafana chart 10.5.15 reads
+# `envFromSecrets` (list of {name, optional}); it has NO `extraEnvFrom` key and
+# silently ignores one — same failure mode as the NATS chart values keys.
+envFromSecrets:
+  - name: grafana-alerting-discord
+    optional: true
 
 # Default dashboard folders
 # dashboardProviders:

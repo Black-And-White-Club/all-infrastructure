@@ -122,16 +122,19 @@ data:
               - refId: A
                 datasourceUid: mimir
                 model:
-                  # Fires when no frolf-postgres-backup job has completed successfully
-                  # in the last 26 hours. Uses kube_job_status_succeeded with a
-                  # 26h lookback via increase(); absent() fires when the metric
-                  # disappears (e.g. job history limit rotation), ensuring we
-                  # always alert on missing backup evidence regardless of KSM state.
+                  # Fires when the frolf-postgres-backup CronJob has no successful
+                  # completion in the last 26 hours (daily schedule + 2h grace).
+                  # kube_cronjob_status_last_successful_time is a stable per-CronJob
+                  # gauge, so this is immune to job-history rotation flaps that made
+                  # the previous kube_job_status_succeeded/increase() formulation
+                  # need a 25h debounce (which delayed real detection to ~51h).
+                  # absent() covers a CronJob that has never succeeded or a deleted
+                  # CronJob, so missing backup evidence still alerts.
                   expr: |
                     (
-                      absent(kube_job_status_succeeded{job_name=~"frolf-postgres-backup.*"})
+                      absent(kube_cronjob_status_last_successful_time{namespace="frolf-bot",cronjob="frolf-postgres-backup"})
                       or
-                      (sum(increase(kube_job_status_succeeded{job_name=~"frolf-postgres-backup.*"}[26h])) == 0)
+                      ((time() - kube_cronjob_status_last_successful_time{namespace="frolf-bot",cronjob="frolf-postgres-backup"}) > 26*3600)
                     )
                   instant: true
                   intervalMs: 1000
@@ -139,7 +142,7 @@ data:
                   refId: A
             noDataState: Alerting
             execErrState: Alerting
-            for: 25h
+            for: 30m
             annotations:
               summary: "No successful Postgres backup in the last 26 hours"
               description: "frolf-postgres-backup has not completed successfully in 26h. Investigate backup job logs immediately."
