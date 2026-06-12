@@ -264,7 +264,7 @@ alloy:
         }
         rule {
           source_labels = ["__meta_kubernetes_endpoint_port_name"]
-          regex         = "metrics|http-metrics"
+          regex         = "metrics|http-metrics|tcp-prometheus-servicemonitor"
           action        = "keep"
         }
         rule {

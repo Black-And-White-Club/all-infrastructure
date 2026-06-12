@@ -139,7 +139,7 @@ data:
                   refId: A
             noDataState: Alerting
             execErrState: Alerting
-            for: 0s
+            for: 25h
             annotations:
               summary: "No successful Postgres backup in the last 26 hours"
               description: "frolf-postgres-backup has not completed successfully in 26h. Investigate backup job logs immediately."
