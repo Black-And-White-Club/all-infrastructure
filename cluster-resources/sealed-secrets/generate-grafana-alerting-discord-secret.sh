@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Generates a SealedSecret for grafana-alerting-discord in the observability namespace.
 # The secret contains GRAFANA_ALERTING_DISCORD_WEBHOOK, which Grafana injects via
-# extraEnvFrom (charts/grafana/values.yaml) so the alerts file-provisioning YAML
+# envFromSecrets (charts/grafana/values.yaml) so the alerts file-provisioning YAML
 # can reference it as ${GRAFANA_ALERTING_DISCORD_WEBHOOK}.
 #
 # Usage:

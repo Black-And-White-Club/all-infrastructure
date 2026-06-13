@@ -17,7 +17,7 @@ data:
             settings:
               # Grafana 10.x file-provisioning supports ${VAR} env interpolation.
               # The webhook URL is injected via the grafana-alerting-discord
-              # SealedSecret (extraEnvFrom in charts/grafana/values.yaml).
+              # SealedSecret (envFromSecrets in charts/grafana/values.yaml).
               # The secret is optional:true; this contact point is inactive until sealed.
               url: ${GRAFANA_ALERTING_DISCORD_WEBHOOK}
               use_discord_username: false
