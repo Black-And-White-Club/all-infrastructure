@@ -90,3 +90,19 @@ spec:
           protocol: TCP
         - port: 465
           protocol: TCP
+    # Stripe API egress (api.stripe.com / files.stripe.com). NetworkPolicy v1
+    # cannot restrict by FQDN, so we permit any external destination on TLS
+    # port 443 while excluding RFC1918 ranges to prevent in-cluster lateral
+    # reach. Copied verbatim from frolf-bot-discord-networkpolicy.yaml.
+    # DNS egress is provided by the namespace-wide frolf-bot-allow-dns-egress
+    # policy.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443

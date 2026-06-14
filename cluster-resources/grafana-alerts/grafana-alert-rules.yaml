@@ -1,0 +1,256 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alert-rules
+  namespace: observability
+  labels:
+    grafana_alert: "1"
+data:
+  alert-rules.yaml: |
+    apiVersion: 1
+    groups:
+      # ─── Stripe webhook 5xx ─────────────────────────────────────────────────────
+      - orgId: 1
+        name: stripe-webhook-5xx
+        folder: frolf-bot
+        interval: 1m
+        rules:
+          - uid: stripe-webhook-5xx
+            title: Stripe Webhook 5xx
+            condition: A
+            data:
+              - refId: A
+                datasourceUid: mimir
+                model:
+                  expr: |
+                    sum(rate(nginx_ingress_controller_requests{ingress="frolf-bot-stripe-webhook",status=~"5.."}[5m])) > 0
+                  instant: true
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+            noDataState: OK
+            execErrState: Alerting
+            for: 10m
+            annotations:
+              summary: "Stripe webhook ingress returning 5xx errors"
+              description: "Rate of 5xx responses on frolf-bot-stripe-webhook ingress > 0 for 10 minutes."
+            labels:
+              severity: critical
+
+      # ─── Frolf-bot crash loop ────────────────────────────────────────────────────
+      - orgId: 1
+        name: frolf-bot-crashloop
+        folder: frolf-bot
+        interval: 1m
+        rules:
+          - uid: frolf-bot-crashloop-waiting
+            title: Frolf Bot CrashLoopBackOff
+            condition: A
+            data:
+              - refId: A
+                datasourceUid: mimir
+                model:
+                  expr: |
+                    kube_pod_container_status_waiting_reason{namespace="frolf-bot",reason="CrashLoopBackOff"} > 0
+                  instant: true
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+            noDataState: OK
+            execErrState: Alerting
+            for: 5m
+            annotations:
+              summary: "Pod in frolf-bot namespace is in CrashLoopBackOff"
+              description: "{{ $labels.pod }}/{{ $labels.container }} has been in CrashLoopBackOff for > 5 minutes."
+            labels:
+              severity: critical
+
+          - uid: frolf-bot-restart-delta
+            title: Frolf Bot High Restart Rate
+            condition: A
+            data:
+              - refId: A
+                datasourceUid: mimir
+                model:
+                  expr: |
+                    increase(kube_pod_container_status_restarts_total{namespace="frolf-bot"}[1h]) > 3
+                  instant: true
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+            noDataState: OK
+            execErrState: Alerting
+            for: 0s
+            annotations:
+              summary: "Pod in frolf-bot namespace restarted > 3 times in last hour"
+              description: "{{ $labels.pod }}/{{ $labels.container }} has restarted {{ $value | printf \"%.0f\" }} times in the last hour."
+            labels:
+              severity: warning
+
+      # ─── Postgres backup ─────────────────────────────────────────────────────────
+      - orgId: 1
+        name: postgres-backup-failed
+        folder: frolf-bot
+        interval: 5m
+        rules:
+          - uid: postgres-backup-job-failed
+            title: Postgres Backup Job Failed
+            condition: A
+            data:
+              - refId: A
+                datasourceUid: mimir
+                model:
+                  expr: |
+                    kube_job_status_failed{job_name=~"frolf-postgres-backup.*"} > 0
+                  instant: true
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+            noDataState: OK
+            execErrState: Alerting
+            for: 0s
+            annotations:
+              summary: "Postgres backup job failed"
+              description: "Job {{ $labels.job_name }} in namespace {{ $labels.namespace }} has failed."
+            labels:
+              severity: critical
+
+          - uid: postgres-backup-stale
+            title: Postgres Backup Stale (no success in 26h)
+            condition: A
+            data:
+              - refId: A
+                datasourceUid: mimir
+                model:
+                  # Fires when the frolf-postgres-backup CronJob has no successful
+                  # completion in the last 26 hours (daily schedule + 2h grace).
+                  # kube_cronjob_status_last_successful_time is a stable per-CronJob
+                  # gauge, so this is immune to job-history rotation flaps that made
+                  # the previous kube_job_status_succeeded/increase() formulation
+                  # need a 25h debounce (which delayed real detection to ~51h).
+                  # absent() covers a CronJob that has never succeeded or a deleted
+                  # CronJob, so missing backup evidence still alerts.
+                  expr: |
+                    (
+                      absent(kube_cronjob_status_last_successful_time{namespace="frolf-bot",cronjob="frolf-postgres-backup"})
+                      or
+                      ((time() - kube_cronjob_status_last_successful_time{namespace="frolf-bot",cronjob="frolf-postgres-backup"}) > 26*3600)
+                    )
+                  instant: true
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+            noDataState: Alerting
+            execErrState: Alerting
+            for: 30m
+            annotations:
+              summary: "No successful Postgres backup in the last 26 hours"
+              description: "frolf-postgres-backup has not completed successfully in 26h. Investigate backup job logs immediately."
+            labels:
+              severity: critical
+
+      # ─── Certificate expiry ──────────────────────────────────────────────────────
+      - orgId: 1
+        name: cert-expiry
+        folder: platform
+        interval: 1h
+        rules:
+          - uid: cert-expiry-14d
+            title: TLS Certificate Expiring Within 14 Days
+            condition: A
+            data:
+              - refId: A
+                datasourceUid: mimir
+                model:
+                  expr: |
+                    certmanager_certificate_expiration_timestamp_seconds - time() < 14*24*3600
+                  instant: true
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+            noDataState: OK
+            execErrState: Alerting
+            for: 0s
+            annotations:
+              summary: "TLS certificate expiring soon"
+              description: "Certificate {{ $labels.name }} in namespace {{ $labels.namespace }} expires in {{ $value | humanizeDuration }}."
+            labels:
+              severity: warning
+
+      # ─── Outbox stale (Loki log-based rule) ─────────────────────────────────────
+      - orgId: 1
+        name: outbox-stale
+        folder: frolf-bot
+        interval: 5m
+        rules:
+          - uid: outbox-stale-events
+            title: Outbox Stale Events Detected
+            condition: A
+            data:
+              - refId: A
+                datasourceUid: loki
+                model:
+                  expr: |
+                    count_over_time({namespace="frolf-bot"} |= "outbox stale events detected" [15m]) > 0
+                  instant: true
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+            noDataState: OK
+            execErrState: Alerting
+            for: 0s
+            annotations:
+              summary: "Outbox forwarder detecting stale events"
+              description: "The outbox forwarder has logged 'outbox stale events detected' in the last 15 minutes. NATS delivery may be blocked."
+            labels:
+              severity: warning
+
+      # ─── Disk pressure ───────────────────────────────────────────────────────────
+      - orgId: 1
+        name: disk-pressure
+        folder: platform
+        interval: 5m
+        rules:
+          - uid: pvc-low-space
+            title: PVC Low Available Space (<15%)
+            condition: A
+            data:
+              - refId: A
+                datasourceUid: mimir
+                model:
+                  expr: |
+                    kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes < 0.15
+                  instant: true
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+            noDataState: OK
+            execErrState: Alerting
+            for: 15m
+            annotations:
+              summary: "PVC running low on space"
+              description: "PVC {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} is at {{ $value | humanizePercentage }} available."
+            labels:
+              severity: warning
+
+          - uid: node-root-disk-low
+            title: Node Root Filesystem Low (<10%)
+            condition: A
+            data:
+              - refId: A
+                datasourceUid: mimir
+                model:
+                  expr: |
+                    node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.10
+                  instant: true
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+            noDataState: OK
+            execErrState: Alerting
+            for: 15m
+            annotations:
+              summary: "Node root filesystem nearly full"
+              description: "Node {{ $labels.instance }} root filesystem has {{ $value | humanizePercentage }} available."
+            labels:
+              severity: critical

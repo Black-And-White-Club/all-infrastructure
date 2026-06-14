@@ -5,6 +5,7 @@ resources:
   - deployment.yaml
   - service.yaml
   - ingress.yaml
+  - ingress-stripe-webhook.yaml
 
 labels:
   - includeSelectors: true

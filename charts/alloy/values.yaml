@@ -244,6 +244,39 @@ alloy:
         }
       }
 
+      // cert-manager metrics (:9402/metrics) — required for cert-expiry alert rules
+      // in cluster-resources/grafana-alerts/grafana-alert-rules.yaml which use
+      // certmanager_certificate_expiration_timestamp_seconds.
+      prometheus.scrape "cert_manager" {
+        targets         = discovery.relabel.cert_manager.output
+        scrape_interval = "60s"
+        job_name        = "cert-manager"
+        forward_to      = [prometheus.remote_write.mimir.receiver]
+      }
+
+      discovery.relabel "cert_manager" {
+        targets = discovery.kubernetes.endpoints.targets
+        rule {
+          source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_service_name"]
+          regex         = "cert-manager;cert-manager"
+          separator     = ";"
+          action        = "keep"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_endpoint_port_name"]
+          regex         = "metrics|http-metrics|tcp-prometheus-servicemonitor"
+          action        = "keep"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_service_name"]
+          target_label  = "service"
+        }
+      }
+
       // kubelet and cadvisor
       discovery.kubernetes "nodes" {
         role = "node"

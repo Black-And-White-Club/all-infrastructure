@@ -8,10 +8,29 @@ set -euo pipefail
 #   TOKEN_ENCRYPTION_KEY=... AUTH_CALLOUT_SERVER_PUBLIC_KEY=... \
 #   [TOKEN_ENCRYPTION_KEY_PREVIOUS=...] \
 #   [TRUSTED_PROXY_CIDRS=10.0.0.0/8,192.168.0.0/16] \
+#   [STRIPE_SECRET_KEY=sk_live_...] \
+#   [STRIPE_WEBHOOK_SECRET=whsec_...] \
+#   [STRIPE_APPLICATION_FEE_CENTS=50] \
 #   ./patch-frolf-backend-secrets.sh [sealed-secret-file]
 #
 # TOKEN_ENCRYPTION_KEY (and TOKEN_ENCRYPTION_KEY_PREVIOUS, when set for key
 # rotation) must each be exactly 32 bytes; the backend hard-fails otherwise.
+#
+# Known keys that can be patched individually (set only the ones you want to
+# update; unset vars are silently skipped):
+#   TOKEN_ENCRYPTION_KEY, TOKEN_ENCRYPTION_KEY_PREVIOUS,
+#   AUTH_CALLOUT_SERVER_PUBLIC_KEY, DISCORD_OAUTH_ACTIVITY_REDIRECT_URL,
+#   TRUSTED_PROXY_CIDRS,
+#   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_APPLICATION_FEE_CENTS,
+#   STRIPE_BILLING_WEBHOOK_SECRET, STRIPE_PLATFORM_SEASON_FEE_CENTS
+#
+# Stripe cutover workflow (seal all three in one pass, then flip STRIPE_ENABLED):
+#   STRIPE_SECRET_KEY=sk_live_... \
+#   STRIPE_WEBHOOK_SECRET=whsec_... \
+#   STRIPE_APPLICATION_FEE_CENTS=50 \
+#   ./patch-frolf-backend-secrets.sh /path/to/all-infrastructure-secrets/sealed-backend-secrets.sops.yaml
+# Then in all-infrastructure (base deployment.yaml): set STRIPE_ENABLED value to "true",
+# commit, and let ArgoCD sync. See cluster-resources/sealed-secrets/README.md#stripe-cutover.
 
 SEALED_SECRET_FILE="${1:-sealed-backend-secrets.yaml}"
 NAMESPACE="${NAMESPACE:-frolf-bot}"
@@ -22,6 +41,11 @@ TOKEN_ENCRYPTION_KEY_PREVIOUS="${TOKEN_ENCRYPTION_KEY_PREVIOUS:-}"
 AUTH_CALLOUT_SERVER_PUBLIC_KEY="${AUTH_CALLOUT_SERVER_PUBLIC_KEY:-}"
 DISCORD_OAUTH_ACTIVITY_REDIRECT_URL="${DISCORD_OAUTH_ACTIVITY_REDIRECT_URL:-}"
 TRUSTED_PROXY_CIDRS="${TRUSTED_PROXY_CIDRS:-}"
+STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY:-}"
+STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET:-}"
+STRIPE_APPLICATION_FEE_CENTS="${STRIPE_APPLICATION_FEE_CENTS:-}"
+STRIPE_BILLING_WEBHOOK_SECRET="${STRIPE_BILLING_WEBHOOK_SECRET:-}"
+STRIPE_PLATFORM_SEASON_FEE_CENTS="${STRIPE_PLATFORM_SEASON_FEE_CENTS:-}"
 
 require_command() {
   local cmd="$1"
@@ -99,6 +123,61 @@ if [[ -n "${TRUSTED_PROXY_CIDRS}" ]]; then
   echo "Sealing TRUSTED_PROXY_CIDRS..."
   SEALED_TRUSTED_PROXY_CIDRS=$(seal_value "${TRUSTED_PROXY_CIDRS}")
   yq -i ".spec.encryptedData.TRUSTED_PROXY_CIDRS = \"${SEALED_TRUSTED_PROXY_CIDRS}\"" "${SEALED_SECRET_FILE}"
+  PATCHED=$((PATCHED + 1))
+fi
+
+if [[ -n "${STRIPE_SECRET_KEY}" ]]; then
+  echo "Sealing STRIPE_SECRET_KEY..."
+  SEALED_STRIPE_SECRET_KEY=$(seal_value "${STRIPE_SECRET_KEY}")
+  yq -i ".spec.encryptedData.STRIPE_SECRET_KEY = \"${SEALED_STRIPE_SECRET_KEY}\"" "${SEALED_SECRET_FILE}"
+  PATCHED=$((PATCHED + 1))
+fi
+
+if [[ -n "${STRIPE_WEBHOOK_SECRET}" ]]; then
+  echo "Sealing STRIPE_WEBHOOK_SECRET..."
+  SEALED_STRIPE_WEBHOOK_SECRET=$(seal_value "${STRIPE_WEBHOOK_SECRET}")
+  yq -i ".spec.encryptedData.STRIPE_WEBHOOK_SECRET = \"${SEALED_STRIPE_WEBHOOK_SECRET}\"" "${SEALED_SECRET_FILE}"
+  PATCHED=$((PATCHED + 1))
+fi
+
+if [[ -n "${STRIPE_APPLICATION_FEE_CENTS}" ]]; then
+  # STRIPE_APPLICATION_FEE_CENTS is a non-secret integer (≥0 cents applied as a
+  # platform fee per charge). It is sealed here — rather than set as a plain
+  # value in deployment.yaml — so the entire Stripe feature activates in a
+  # single owner sealing action, keeping the "flip STRIPE_ENABLED to true" step
+  # as the only remaining cutover change.
+  # Validate numeric — a non-integer value would seal silently and produce a $0 fee.
+  if [[ ! "${STRIPE_APPLICATION_FEE_CENTS}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: STRIPE_APPLICATION_FEE_CENTS must be a non-negative integer (got '${STRIPE_APPLICATION_FEE_CENTS}')" >&2
+    exit 1
+  fi
+  echo "Sealing STRIPE_APPLICATION_FEE_CENTS..."
+  SEALED_STRIPE_APPLICATION_FEE_CENTS=$(seal_value "${STRIPE_APPLICATION_FEE_CENTS}")
+  yq -i ".spec.encryptedData.STRIPE_APPLICATION_FEE_CENTS = \"${SEALED_STRIPE_APPLICATION_FEE_CENTS}\"" "${SEALED_SECRET_FILE}"
+  PATCHED=$((PATCHED + 1))
+fi
+
+if [[ -n "${STRIPE_BILLING_WEBHOOK_SECRET}" ]]; then
+  echo "Sealing STRIPE_BILLING_WEBHOOK_SECRET..."
+  SEALED_STRIPE_BILLING_WEBHOOK_SECRET=$(seal_value "${STRIPE_BILLING_WEBHOOK_SECRET}")
+  yq -i ".spec.encryptedData.STRIPE_BILLING_WEBHOOK_SECRET = \"${SEALED_STRIPE_BILLING_WEBHOOK_SECRET}\"" "${SEALED_SECRET_FILE}"
+  PATCHED=$((PATCHED + 1))
+fi
+
+if [[ -n "${STRIPE_PLATFORM_SEASON_FEE_CENTS}" ]]; then
+  # STRIPE_PLATFORM_SEASON_FEE_CENTS is a non-secret integer (≥0 cents charged
+  # to each club as a platform billing fee per season). It is sealed here — rather
+  # than set as a plain value in deployment.yaml — so the entire billing feature
+  # activates in a single owner sealing action, parallel to the collection-rail
+  # pattern used for STRIPE_APPLICATION_FEE_CENTS.
+  # Validate numeric — a non-integer value would seal silently and produce a $0 fee.
+  if [[ ! "${STRIPE_PLATFORM_SEASON_FEE_CENTS}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: STRIPE_PLATFORM_SEASON_FEE_CENTS must be a non-negative integer (got '${STRIPE_PLATFORM_SEASON_FEE_CENTS}')" >&2
+    exit 1
+  fi
+  echo "Sealing STRIPE_PLATFORM_SEASON_FEE_CENTS..."
+  SEALED_STRIPE_PLATFORM_SEASON_FEE_CENTS=$(seal_value "${STRIPE_PLATFORM_SEASON_FEE_CENTS}")
+  yq -i ".spec.encryptedData.STRIPE_PLATFORM_SEASON_FEE_CENTS = \"${SEALED_STRIPE_PLATFORM_SEASON_FEE_CENTS}\"" "${SEALED_SECRET_FILE}"
   PATCHED=$((PATCHED + 1))
 fi
 

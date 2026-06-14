@@ -10,3 +10,16 @@ metadata:
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn-version: v1.31
     pod-security.kubernetes.io/audit-version: v1.31
+    # PSS enforce DELIBERATELY ABSENT (warn/audit only). Render-verified audit 2026-06-11:
+    #   frolf-bot-backend deployment  — compliant (pod+container SC complete)
+    #   frolf-bot-discord deployment  — compliant (pod+container SC complete)
+    #   frolf-bot-pwa deployment      — compliant (pod+container SC complete)
+    #   frolf-bot-ops deployment      — compliant (pod+container SC complete)
+    #   frolf-bot-backend-migrate job — compliant (allowPrivilegeEscalation:false added to init container)
+    #   frolf-postgres-backup cronjob — compliant (pod seccompProfile + runAsNonRoot added)
+    #   frolf-postgres statefulset    — compliant (bitnami 16.2.4 defaults; helm template verified)
+    #   frolf-nats statefulset        — NOT compliant: nats chart 2.14.0 silently IGNORES
+    #     values-level securityContext keys; the rendered StatefulSet has NO securityContext.
+    #     Adding enforce would block NATS pod creation on next restart (event-bus outage).
+    #     Graduation procedure (verify runtime uid vs JetStream PVC ownership, then
+    #     podTemplate.merge keys, then enforce): docs/SCALE_PLAYBOOK.md "PSS enforce graduation".

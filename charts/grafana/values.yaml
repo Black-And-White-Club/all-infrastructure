@@ -127,6 +127,26 @@ sidecar:
       disableDeletion: false
       allowUiUpdates: true
     searchNamespace: observability
+  # Alerts sidecar watches ConfigMaps labeled grafana_alert: "1" and loads
+  # Grafana unified alerting file-provisioning YAML (apiVersion 1 format).
+  # Mirrors the dashboards sidecar pattern above.
+  # Supported since grafana helm chart >=6.x; chart 10.5.15 in use here confirms support.
+  alerts:
+    enabled: true
+    label: grafana_alert
+    labelValue: "1"
+    searchNamespace: observability
+
+# Discord webhook URL injected from a SealedSecret so Grafana can interpolate
+# it in the alerting contact-point YAML below. The secret is marked optional:true
+# so Grafana schedules before the owner seals the webhook URL. Pods tolerate
+# the missing env var; the contact point will be inactive until sealed.
+# CHART-CORRECT KEY (render-verified 2026-06-12): grafana chart 10.5.15 reads
+# `envFromSecrets` (list of {name, optional}); it has NO `extraEnvFrom` key and
+# silently ignores one — same failure mode as the NATS chart values keys.
+envFromSecrets:
+  - name: grafana-alerting-discord
+    optional: true
 
 # Default dashboard folders
 # dashboardProviders:

@@ -57,10 +57,21 @@ config:
 natsBox:
   enabled: false
 
-# Pin NATS to worker-1 so its RWO OCI block volume never needs to
-# re-attach across nodes on reschedule.
-nodeSelector:
-  kubernetes.io/hostname: worker-1
+# NOTE (render-verified 2026-06-11): nats chart 2.14.0 SILENTLY IGNORES top-level
+# `podSecurityContext:`, `container.securityContext:`, and `nodeSelector:` keys —
+# helm template output is byte-identical with or without them. The NATS pod
+# currently runs with NO securityContext (image default user) and NO node pinning.
+# Do NOT re-add those keys here. The chart-correct locations are
+# `podTemplate.merge.spec.securityContext` / `.spec.nodeSelector` and
+# `container.merge.securityContext` — but applying them changes the pod identity
+# over the live JetStream PVC (data-loss-adjacent) and applies an untested node
+# label, so they are deliberately deferred to the owner-run maintenance procedure
+# in all-infrastructure/docs/SCALE_PLAYBOOK.md "PSS enforce graduation (NATS)".
+
+# Intended-but-NOT-applied: pin NATS to the worker holding its RWO OCI block
+# volume. Single-worker cluster today, so placement is unaffected; apply via
+# podTemplate.merge.spec.nodeSelector after verifying the real node label
+# (kubectl get nodes --show-labels) during the graduation procedure.
 
 # Resource limits for the NATS pod
 container:

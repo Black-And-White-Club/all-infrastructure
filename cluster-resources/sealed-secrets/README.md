@@ -61,6 +61,136 @@ sops --encrypt --in-place "${SECRETS_REPO_DIR}/sealed-oci-object-storage-creds.s
 cd "$SECRETS_REPO_DIR" && git add . && git commit -m "rotate: oci-objectstore-creds"
 ```
 
+## Complete enumerated seal list
+
+All secrets that must be sealed before full production operation:
+
+**backend-secrets** (frolf-bot namespace):
+1. `STRIPE_SECRET_KEY` — Stripe live API key (`sk_live_...`)
+2. `STRIPE_WEBHOOK_SECRET` — Connect webhook signing secret (`whsec_...`)
+3. `STRIPE_APPLICATION_FEE_CENTS` — Per-charge platform fee in cents (integer ≥ 0)
+4. `STRIPE_BILLING_WEBHOOK_SECRET` — Platform billing webhook signing secret (`whsec_...`)
+5. `STRIPE_PLATFORM_SEASON_FEE_CENTS` — Per-season platform billing fee in cents (integer ≥ 0)
+
+**grafana-alerting-discord** (observability namespace):
+6. `GRAFANA_ALERTING_DISCORD_WEBHOOK` — Discord webhook URL for Grafana alert notifications
+   (generate with `generate-grafana-alerting-discord-secret.sh`)
+
+The `grafana-alerting-discord` secret is marked `optional: true` in
+`charts/grafana/values.yaml` (chart key `envFromSecrets` — chart 10.5.15 has no
+`extraEnvFrom` key and silently ignores one), so Grafana schedules before this
+secret is sealed. The Discord contact point will be inactive until the secret
+is present.
+
+> **Pre-seal verification (run once after the first sync, before sealing):**
+> while the secret is absent, `${GRAFANA_ALERTING_DISCORD_WEBHOOK}` in the
+> contact-point YAML expands to an empty string. Confirm Grafana still loads
+> the alert *rules* in that state — an invalid contact point can fail the
+> sidecar's alerting provisioning reload and take the rules down with it:
+>
+> ```bash
+> kubectl logs -n observability deploy/grafana -c grafana-sc-alerts --tail=20
+> kubectl exec -n observability deploy/grafana -c grafana -- \
+>   wget -qO- http://localhost:3000/api/v1/provisioning/alert-rules | head -c 300
+> ```
+>
+> If the reload is rejected (non-2xx logged by the sidecar), seal the webhook
+> secret first and re-sync before relying on any alert in
+> `cluster-resources/grafana-alerts/`. After sealing, restart the Grafana pod
+> so it picks up the env var (read at pod start) — use the ArgoCD restart
+> action or delete the pod (`kubectl delete pod -n observability -l
+> app.kubernetes.io/name=grafana`); do NOT `rollout restart`, which patches the
+> Deployment outside Git. Then send a test notification from
+> **Alerting → Contact points → discord → Test**.
+
+See also:
+- [Key rotation procedures](../../docs/KEY_ROTATION.md)
+- [Postgres restore drill](../../docs/POSTGRES_RESTORE_TEST.md)
+- [Scaling and alerting graduation](../../docs/SCALE_PLAYBOOK.md)
+
+---
+
+## Stripe cutover — sealing the Stripe collection rail keys {#stripe-cutover}
+
+The Stripe collection rail ships with `STRIPE_ENABLED=false` in
+`kustomize/frolf-backend/base/runtime/deployment.yaml`. The five sealed keys
+(`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_APPLICATION_FEE_CENTS`,
+`STRIPE_BILLING_WEBHOOK_SECRET`, `STRIPE_PLATFORM_SEASON_FEE_CENTS`)
+are referenced as `optional: true` so pods schedule before the seal step.
+
+### Step 1: Seal the five keys (patch workflow — no full regen required)
+
+```bash
+cd /path/to/all-infrastructure-secrets
+
+# Decrypt the current sealed file so yq can splice in the new keys
+sops --decrypt --in-place sealed-backend-secrets.sops.yaml
+
+STRIPE_SECRET_KEY="sk_live_..." \
+STRIPE_WEBHOOK_SECRET="whsec_..." \
+STRIPE_APPLICATION_FEE_CENTS="50" \
+STRIPE_BILLING_WEBHOOK_SECRET="whsec_..." \
+STRIPE_PLATFORM_SEASON_FEE_CENTS="2000" \
+/path/to/all-infrastructure/cluster-resources/sealed-secrets/patch-frolf-backend-secrets.sh \
+  sealed-backend-secrets.sops.yaml
+
+# Re-encrypt and commit
+sops --encrypt --in-place sealed-backend-secrets.sops.yaml
+git add sealed-backend-secrets.sops.yaml
+git commit -m "feat(payments): seal Stripe collection rail + billing credentials"
+```
+
+> **Note**: The NetworkPolicy (TCP/443 egress) and webhook ingress are safe to
+> land in Git and sync via ArgoCD **before** this sealing step — they are
+> non-breaking additions. Only the `STRIPE_ENABLED` flip (Step 2) activates
+> live traffic.
+>
+> **Billing cutover note**: `STRIPE_BILLING_WEBHOOK_SECRET` is the
+> platform-account signing secret for invoice events (`invoice.paid`,
+> `payment_failed`, etc.) — obtain it from the Stripe Dashboard under
+> **Developers → Webhooks → [platform webhook endpoint]**. It is distinct from
+> `STRIPE_WEBHOOK_SECRET` which signs Connect events. After sealing, also
+> **enable invoice email reminders in the Stripe Dashboard** (account-level
+> setting under **Settings → Billing → Subscriptions and emails → Email
+> reminders**; this is not an API field and must be toggled manually at
+> cutover).
+
+### Step 2: Flip STRIPE_ENABLED to "true"
+
+In `all-infrastructure` (`kustomize/frolf-backend/base/runtime/deployment.yaml`),
+change:
+
+```yaml
+- name: STRIPE_ENABLED
+  value: "false"
+```
+
+to:
+
+```yaml
+- name: STRIPE_ENABLED
+  value: "true"
+```
+
+Commit and push to the GitOps branch. ArgoCD will sync the Deployment, and the
+backend will start the Stripe module on next pod startup.
+
+### Alternative: full regen
+
+If you need to regenerate **all** backend secrets at once (e.g. key rotation),
+`generate-frolf-backend-secrets.sh` now requires all five Stripe vars:
+
+```bash
+STRIPE_SECRET_KEY=sk_live_... \
+STRIPE_WEBHOOK_SECRET=whsec_... \
+STRIPE_APPLICATION_FEE_CENTS=50 \
+STRIPE_BILLING_WEBHOOK_SECRET=whsec_... \
+STRIPE_PLATFORM_SEASON_FEE_CENTS=2000 \
+<all other existing vars> \
+SECRETS_REPO_DIR=/path/to/all-infrastructure-secrets \
+./generate-frolf-backend-secrets.sh
+```
+
 ## DB credentials for resume-backend
 
 Use `generate-sealed-secrets.sh` to generate both `resume-db` and `resume-app` SealedSecrets:
