@@ -1,6 +1,28 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  name: frolf-backend-jetstream-ensure-policy
+  namespace: frolf-bot
+spec:
+  podSelector:
+    matchLabels:
+      app: frolf-backend-jetstream-ensure
+  policyTypes:
+    - Egress
+  egress:
+    # NATS internal client port — the only destination jetstream-ensure contacts.
+    # DNS egress is covered by the namespace-wide frolf-bot-allow-dns-egress policy.
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nats
+      ports:
+        - protocol: TCP
+          port: 4222
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
   name: frolf-bot-backend-policy
   namespace: frolf-bot
 spec:
