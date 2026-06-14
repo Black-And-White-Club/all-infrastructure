@@ -3,7 +3,6 @@ kind: Kustomization
 
 resources:
   - migration-job.yaml
-  - jetstream-ensure-job.yaml
 
 labels:
   - pairs:

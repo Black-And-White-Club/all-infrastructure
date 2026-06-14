@@ -41,18 +41,11 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    # Internal NATS client connections from backend and the PreSync
-    # jetstream-ensure Job (kustomize/frolf-backend/base/hooks/jetstream-ensure-job.yaml
-    # uses `app: frolf-backend-jetstream-ensure`). Without the ensure label here
-    # the Job is blocked under default-deny and PreSync hangs forever.
+    # Internal NATS client connections from backend
     - from:
         - podSelector:
-            matchExpressions:
-              - key: app
-                operator: In
-                values:
-                  - frolf-bot-backend
-                  - frolf-backend-jetstream-ensure
+            matchLabels:
+              app: frolf-bot-backend
       ports:
         - protocol: TCP
           port: 4222
