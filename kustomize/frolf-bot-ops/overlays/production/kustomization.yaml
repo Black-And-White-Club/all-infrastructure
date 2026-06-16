@@ -8,4 +8,4 @@ images:
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/ops
     newTag: v1.0.39
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/ops
-    newTag: v1.0.38
+    newTag: v1.0.39
