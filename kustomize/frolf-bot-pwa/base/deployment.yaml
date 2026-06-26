@@ -99,6 +99,35 @@ spec:
                 configMapKeyRef:
                   name: frolf-pwa-config
                   key: PRIVATE_ALLOW_MOCK_PROD
+            # Live Card P4 epic feature flags, read by src/lib/config.ts via
+            # $env/dynamic/public (runtime env). optional:true so a missing key
+            # leaves the var unset — config.ts treats unset as OFF — instead of
+            # crashing the pod. Values are supplied per-overlay (production sets
+            # them in the configMapGenerator). spectate is on-by-default in code.
+            - name: PUBLIC_FEATURE_FORMATS
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_FEATURE_FORMATS
+                  optional: true
+            - name: PUBLIC_FEATURE_TEAM_SCORING
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_FEATURE_TEAM_SCORING
+                  optional: true
+            - name: PUBLIC_FEATURE_RECORDS
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_FEATURE_RECORDS
+                  optional: true
+            - name: PUBLIC_FEATURE_STABLEFORD
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_FEATURE_STABLEFORD
+                  optional: true
           readinessProbe:
             httpGet:
               path: /health

@@ -20,6 +20,13 @@ configMapGenerator:
       # is a server-only diagnostic override that gates mock mode outside dev.
       - PUBLIC_USE_MOCK=false
       - PRIVATE_ALLOW_MOCK_PROD=false
+      # Live Card P4 epic enablement. Flip any to false to ramp gradually;
+      # spectate is already on-by-default in src/lib/config.ts (no flag needed).
+      # TEAM_SCORING gates the Wolf lens; FORMATS gates the standings lenses.
+      - PUBLIC_FEATURE_FORMATS=true
+      - PUBLIC_FEATURE_TEAM_SCORING=true
+      - PUBLIC_FEATURE_RECORDS=true
+      - PUBLIC_FEATURE_STABLEFORD=true
 # Image modification - ArgoCD Image Updater will patch this
 images:
   - name: frolf-bot-pwa
