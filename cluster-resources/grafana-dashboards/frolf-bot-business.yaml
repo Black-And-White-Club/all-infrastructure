@@ -15,7 +15,7 @@ data:
       "tags": ["frolf-bot", "business"],
       "timezone": "browser",
       "schemaVersion": 38,
-      "version": 1,
+      "version": 2,
       "refresh": "5m",
       "time": { "from": "now-7d", "to": "now" },
       "templating": {
@@ -181,6 +181,108 @@ data:
               "expr": "sum(increase(frolf_bot_tag_movement_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[7d]))",
               "legendFormat": "Tag moves (7d)",
               "refId": "D"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [{ "color": "green", "value": null }]
+              }
+            }
+          },
+          "options": { "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] } }
+        },
+        {
+          "id": 8,
+          "title": "Viral Loop / Growth",
+          "type": "row",
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 },
+          "collapsed": false,
+          "datasource": null
+        },
+        {
+          "id": 9,
+          "title": "Referral Joins per Interval (by Source)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 31 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum by (referral_source) (rate(frolf_bot_business_referral_joins_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[$__rate_interval]))",
+              "legendFormat": "{{referral_source}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          }
+        },
+        {
+          "id": 10,
+          "title": "Guest Activations per Interval",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 31 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(rate(frolf_bot_business_guest_activations_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[$__rate_interval]))",
+              "legendFormat": "Guest activations",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          }
+        },
+        {
+          "id": 11,
+          "title": "Discord Installs per Interval",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 39 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(rate(frolf_bot_business_discord_installs_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[$__rate_interval]))",
+              "legendFormat": "Discord installs",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          }
+        },
+        {
+          "id": 12,
+          "title": "Viral Loop Funnel — 7d",
+          "type": "stat",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 39 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(increase(frolf_bot_business_discord_installs_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[7d]))",
+              "legendFormat": "Installs (7d)",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(increase(frolf_bot_business_guest_activations_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[7d]))",
+              "legendFormat": "Activations (7d)",
+              "refId": "B"
+            },
+            {
+              "expr": "sum(increase(frolf_bot_business_referral_joins_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[7d]))",
+              "legendFormat": "Referral Joins (7d)",
+              "refId": "C"
             }
           ],
           "fieldConfig": {
