@@ -128,6 +128,18 @@ spec:
                   name: frolf-pwa-config
                   key: PUBLIC_FEATURE_STABLEFORD
                   optional: true
+            - name: PUBLIC_FEATURE_FOCUSED_SCORING
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_FEATURE_FOCUSED_SCORING
+                  optional: true
+            - name: PUBLIC_FEATURE_CARDS
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_FEATURE_CARDS
+                  optional: true
           readinessProbe:
             httpGet:
               path: /health
