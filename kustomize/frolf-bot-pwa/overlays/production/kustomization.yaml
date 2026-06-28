@@ -27,6 +27,11 @@ configMapGenerator:
       - PUBLIC_FEATURE_TEAM_SCORING=true
       - PUBLIC_FEATURE_RECORDS=true
       - PUBLIC_FEATURE_STABLEFORD=true
+      # Disc-golf scoring overhaul: FOCUSED_SCORING gates the one-hole-at-a-time
+      # view; CARDS gates roster→cards grouping + the card-scoped focused view.
+      # Focused-scoring alone degrades to a whole-field focused view until cards on.
+      - PUBLIC_FEATURE_FOCUSED_SCORING=true
+      - PUBLIC_FEATURE_CARDS=true
 # Image modification - ArgoCD Image Updater will patch this
 images:
   - name: frolf-bot-pwa
