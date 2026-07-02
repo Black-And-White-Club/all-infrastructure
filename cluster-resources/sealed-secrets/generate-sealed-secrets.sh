@@ -62,8 +62,8 @@ stringData:
   DATABASE_URL: "${DB_URL}"
 EOF
 
-kubeseal --format=yaml < "${TMP_DIR}/${SECRET_NAME}.secret.yaml" > "${OUTPUT_DIR}/sealed-${SECRET_NAME}.yaml"
-kubeseal --format=yaml < "${TMP_DIR}/${SECRET_NAME}-app.secret.yaml" > "${OUTPUT_DIR}/sealed-${SECRET_NAME}-app.yaml"
+kubeseal --format=yaml --controller-name "${CONTROLLER_NAME:-sealed-secrets}" --controller-namespace "${CONTROLLER_NAMESPACE:-kube-system}" < "${TMP_DIR}/${SECRET_NAME}.secret.yaml" > "${OUTPUT_DIR}/sealed-${SECRET_NAME}.yaml"
+kubeseal --format=yaml --controller-name "${CONTROLLER_NAME:-sealed-secrets}" --controller-namespace "${CONTROLLER_NAMESPACE:-kube-system}" < "${TMP_DIR}/${SECRET_NAME}-app.secret.yaml" > "${OUTPUT_DIR}/sealed-${SECRET_NAME}-app.yaml"
 
 echo "Sealed secrets generated in ${OUTPUT_DIR}:"
 ls -1 "${OUTPUT_DIR}/sealed-${SECRET_NAME}"*.yaml

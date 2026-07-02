@@ -26,7 +26,7 @@ kubectl create secret generic ${SECRET_NAME} \
   --dry-run=client -o yaml > "${SECRET_NAME}.yaml"
 
 echo "Sealing secret..."
-kubeseal --format=yaml < "${SECRET_NAME}.yaml" > "${OUTPUT_FILE}"
+kubeseal --format=yaml --controller-name "${CONTROLLER_NAME:-sealed-secrets}" --controller-namespace "${CONTROLLER_NAMESPACE:-kube-system}" < "${SECRET_NAME}.yaml" > "${OUTPUT_FILE}"
 
 # Clean up raw secret
 rm "${SECRET_NAME}.yaml"

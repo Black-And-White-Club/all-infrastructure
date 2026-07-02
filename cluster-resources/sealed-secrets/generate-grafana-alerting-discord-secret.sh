@@ -48,5 +48,5 @@ kubectl create secret generic "${SECRET_NAME}" \
   --from-literal=GRAFANA_ALERTING_DISCORD_WEBHOOK="${GRAFANA_ALERTING_DISCORD_WEBHOOK}" \
   --dry-run=client -o yaml > "${RAW_SECRET_FILE}"
 
-kubeseal --format=yaml < "${RAW_SECRET_FILE}" > "${OUTPUT_FILE}"
+kubeseal --format=yaml --controller-name "${CONTROLLER_NAME:-sealed-secrets}" --controller-namespace "${CONTROLLER_NAMESPACE:-kube-system}" < "${RAW_SECRET_FILE}" > "${OUTPUT_FILE}"
 echo "Sealed secret created at ${OUTPUT_FILE}"
