@@ -25,3 +25,13 @@ spec:
                 name: frolf-bot-pwa
                 port:
                   number: 80
+    - host: www.aceflight.app
+      http:
+        paths:
+          - path: /.well-known/acme-challenge/
+            pathType: Prefix
+            backend:
+              service:
+                name: frolf-bot-pwa
+                port:
+                  number: 80
