@@ -315,9 +315,9 @@ spec:
             # They are not secrets (confirmed: config.go comment "not secrets")
             # and do not change per-environment for this deployment.
             - name: STRIPE_CONNECT_RETURN_URL
-              value: "https://frolf-bot.duckdns.org/api/payments/stripe/connect/return"
+              value: "https://aceflight.app/api/payments/stripe/connect/return"
             - name: STRIPE_CONNECT_REFRESH_URL
-              value: "https://frolf-bot.duckdns.org/api/payments/stripe/connect/refresh"
+              value: "https://aceflight.app/api/payments/stripe/connect/refresh"
             # STRIPE_CONNECT_CLIENT_ID is the Standard OAuth client ID seam.
             # Connected accounts are created via Accounts v2 (hosted onboarding; no client_id required);
             # omitting the var is intentional — the backend treats empty string

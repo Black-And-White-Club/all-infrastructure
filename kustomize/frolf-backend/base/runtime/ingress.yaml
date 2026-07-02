@@ -5,14 +5,14 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://frolf-bot.duckdns.org"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://aceflight.app"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
     nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS, DELETE"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
 spec:
   ingressClassName: nginx
   rules:
-    - host: frolf-bot.duckdns.org
+    - host: aceflight.app
       http:
         paths:
           - path: /api
@@ -23,5 +23,5 @@ spec:
                 port:
                   number: 80
   # TLS is owned by kustomize/frolf-bot-pwa/base/ingress.yaml — all four
-  # ingresses share the host `frolf-bot.duckdns.org`, and cert-manager
+  # ingresses share the host `aceflight.app`, and cert-manager
   # only needs one source of truth for the `frolf-bot-pwa-tls` secret.

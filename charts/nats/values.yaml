@@ -123,10 +123,10 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/rewrite-target: /
   hosts:
-    - host: frolf-bot.duckdns.org
+    - host: aceflight.app
       paths:
         - /nats
   tls:
     - secretName: frolf-bot-pwa-tls
       hosts:
-        - frolf-bot.duckdns.org
+        - aceflight.app

@@ -346,11 +346,11 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://frolf-bot.duckdns.org"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://aceflight.app"
     nginx.ingress.kubernetes.io/cors-allow-methods: "POST, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type, traceparent, tracestate"
   hosts:
-    - frolf-bot.duckdns.org
+    - aceflight.app
   # The chart always renders a main `path` block from `path` + `faroPort`
   # (see templates/ingress.yaml). Override both so it points at the OTLP
   # HTTP receiver on the existing `/v1` prefix instead of the chart default
@@ -361,7 +361,7 @@ ingress:
   pathType: Prefix
   faroPort: 4318
   # TLS is owned by kustomize/frolf-bot-pwa/base/ingress.yaml — all four
-  # ingresses share the host `frolf-bot.duckdns.org`, and cert-manager
+  # ingresses share the host `aceflight.app`, and cert-manager
   # only needs one source of truth for the `frolf-bot-pwa-tls` secret.
   tls: []
 

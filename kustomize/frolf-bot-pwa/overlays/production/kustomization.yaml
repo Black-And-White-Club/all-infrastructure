@@ -8,11 +8,11 @@ namespace: frolf-bot
 configMapGenerator:
   - name: frolf-pwa-config
     literals:
-      - PUBLIC_NATS_URL=wss://frolf-bot.duckdns.org/nats
-      - PUBLIC_API_URL=https://frolf-bot.duckdns.org
-      - PUBLIC_OTEL_ENDPOINT=https://frolf-bot.duckdns.org
+      - PUBLIC_NATS_URL=wss://aceflight.app/nats
+      - PUBLIC_API_URL=https://aceflight.app
+      - PUBLIC_OTEL_ENDPOINT=https://aceflight.app
       - PUBLIC_DEBUG=false
-      - PUBLIC_API_HOST_ALLOWLIST=frolf-bot.duckdns.org
+      - PUBLIC_API_HOST_ALLOWLIST=aceflight.app
       - PRIVATE_API_HOST_ALLOWLIST=frolf-bot-backend.frolf-bot.svc.cluster.local
       - PRIVATE_API_URL=http://frolf-bot-backend.frolf-bot.svc.cluster.local
       # Mock-mode flags must be explicit "false" in production.

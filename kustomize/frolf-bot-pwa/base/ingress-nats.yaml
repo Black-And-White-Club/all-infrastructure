@@ -14,13 +14,13 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     # CORS for the PWA origin opening the WS from the browser.
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://frolf-bot.duckdns.org"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://aceflight.app"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
 spec:
   ingressClassName: nginx
   rules:
-    - host: frolf-bot.duckdns.org
+    - host: aceflight.app
       http:
         paths:
           - path: /nats
@@ -31,6 +31,6 @@ spec:
                 port:
                   number: 9222
   # TLS is owned by kustomize/frolf-bot-pwa/base/ingress.yaml — all four
-  # ingresses share the host `frolf-bot.duckdns.org`, and cert-manager
+  # ingresses share the host `aceflight.app`, and cert-manager
   # only needs one source of truth for the `frolf-bot-pwa-tls` secret.
   # nginx terminates TLS once and routes paths to each backend.

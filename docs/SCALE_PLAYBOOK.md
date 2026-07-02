@@ -32,7 +32,7 @@ allowance, so today's compute cost is ~$0/mo.
 | HA Postgres (CloudNativePG, +2 replicas) | ~$3 storage + needs 3rd node | 2 × 50 GB block volumes ≈ $2.60; compute rides the new node |
 | WAL-based PITR | < $1 | WAL archive object storage, pennies at this volume |
 | Cross-region backup replication | < $2 | Second-region storage + replication egress on small dumps |
-| Cloudflare in front of webhook | $0 + ~$10–12/yr domain | Free plan incl. 5 custom WAF rules covers a Stripe-IP allowlist; **requires a real domain — duckdns subdomains cannot be onboarded**. Pro ($20/mo) only if managed WAF rulesets wanted |
+| Cloudflare in front of webhook | $0 + ~$10–12/yr domain | Free plan incl. 5 custom WAF rules covers a Stripe-IP allowlist; **now onboardable — `aceflight.app` is a real registered domain** (the prior `duckdns.org` subdomain could not be added to Cloudflare). Pro ($20/mo) only if managed WAF rulesets wanted |
 | NATS exporter + lag alerts | $0 | Tiny pod on existing nodes |
 | Alerting graduation (Mimir ruler) | $0 | Extra components on existing nodes (RAM headroom permitting) |
 
@@ -137,10 +137,11 @@ The current backup bucket is in `us-ashburn-1`. To add cross-region replication:
 
 If webhook abuse becomes a concern at higher charge volumes:
 
-0. **Prerequisite: a real registered domain (~$10–12/yr).** Cloudflare onboards
-   domains at the nameserver level — a `duckdns.org` subdomain cannot be added.
-   Changing the public hostname also means updating the Stripe webhook endpoint
-   URLs, the cert-manager Certificate, PWA links, and Connect return/refresh URLs.
+0. **Prerequisite satisfied: `aceflight.app` is a real registered domain
+   (~$10–12/yr).** Cloudflare onboards domains at the nameserver level, which
+   the prior `duckdns.org` subdomain could not support. Any future hostname
+   change would still mean updating the Stripe webhook endpoint URLs, the
+   cert-manager Certificate, PWA links, and Connect return/refresh URLs.
 1. Point the domain's DNS through Cloudflare (orange-cloud).
 2. Add Cloudflare WAF rule: allow only Stripe's published IP ranges on
    `/api/payments/stripe/webhook` and `/api/payments/stripe/billing/webhook`.

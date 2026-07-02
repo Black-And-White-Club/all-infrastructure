@@ -9,7 +9,7 @@ patches:
   #
   # INVARIANT: OAuth redirect URLs MUST agree across the platform.
   #   DISCORD_OAUTH_ACTIVITY_REDIRECT_URL  ==  ${PWA_BASE_URL}/api/install/callback
-  #   DISCORD_BOT_INSTALL_REDIRECT_URL     ==  https://frolf-bot.duckdns.org/api/install/callback
+  #   DISCORD_BOT_INSTALL_REDIRECT_URL     ==  https://aceflight.app/api/install/callback
   # Both must also match the redirect URI(s) registered on the Discord
   # application. PWA_BASE_URL is sealed in `backend-secrets` (see
   # cluster-resources/sealed-secrets/generate-frolf-backend-secrets.sh
@@ -37,7 +37,7 @@ patches:
         path: /spec/template/spec/containers/0/env/-
         value:
           name: DISCORD_BOT_INSTALL_REDIRECT_URL
-          value: "https://frolf-bot.duckdns.org/api/install/callback"
+          value: "https://aceflight.app/api/install/callback"
 images:
   - name: frolf-bot-backend
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot/backend

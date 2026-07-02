@@ -62,6 +62,8 @@ spec:
               value: "5000"
             - name: ENVIRONMENT
               value: "production"
+            - name: PWA_BASE_URL
+              value: "https://aceflight.app"
             - name: CONFIG_FILE
               value: ""
             - name: LOKI_URL

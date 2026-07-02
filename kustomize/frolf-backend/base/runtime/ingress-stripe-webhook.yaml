@@ -14,7 +14,7 @@ metadata:
   # preflight handling for these paths.
   #
   # NOTE: No tls: block and no cert-manager annotation — TLS for
-  # frolf-bot.duckdns.org is owned exclusively by
+  # aceflight.app is owned exclusively by
   # kustomize/frolf-bot-pwa/base/ingress.yaml (the frolf-bot-pwa-tls
   # secret). All ingresses on this host share that TLS termination.
   #
@@ -26,7 +26,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: frolf-bot.duckdns.org
+    - host: aceflight.app
       http:
         paths:
           - path: /api/payments/stripe/webhook
