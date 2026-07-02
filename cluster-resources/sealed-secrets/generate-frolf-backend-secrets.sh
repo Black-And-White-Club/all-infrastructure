@@ -40,6 +40,14 @@ set -euo pipefail
 OUTPUT_FILE="${1:-${SECRETS_REPO_DIR:-.}/sealed-backend-secrets.yaml}"
 NAMESPACE="${NAMESPACE:-frolf-bot}"
 SECRET_NAME="${SECRET_NAME:-backend-secrets}"
+# kubeseal's built-in default (--controller-name sealed-secrets-controller) points at a
+# stale, endpoint-less service left over from before the controller was deployed via the
+# `sealed-secrets` Helm release (see argocd/platform/sealed-secrets-controller.yaml,
+# releaseName: sealed-secrets) — the live controller service in this cluster is named
+# `sealed-secrets`, not `sealed-secrets-controller`. Override explicitly rather than rely
+# on kubeseal's default.
+CONTROLLER_NAME="${CONTROLLER_NAME:-sealed-secrets}"
+CONTROLLER_NAMESPACE="${CONTROLLER_NAMESPACE:-kube-system}"
 
 DB_HOST="${DB_HOST:-frolf-postgres-postgresql.frolf-bot.svc.cluster.local}"
 DB_PORT="${DB_PORT:-5432}"
@@ -219,5 +227,8 @@ kubectl create secret generic "${SECRET_NAME}" \
   --from-literal=STRIPE_PLATFORM_SEASON_FEE_CENTS="${STRIPE_PLATFORM_SEASON_FEE_CENTS}" \
   --dry-run=client -o yaml > "${RAW_SECRET_FILE}"
 
-kubeseal --format=yaml < "${RAW_SECRET_FILE}" > "${OUTPUT_FILE}"
+kubeseal --format=yaml \
+  --controller-name "${CONTROLLER_NAME}" \
+  --controller-namespace "${CONTROLLER_NAMESPACE}" \
+  < "${RAW_SECRET_FILE}" > "${OUTPUT_FILE}"
 echo "Sealed secret created at ${OUTPUT_FILE}"

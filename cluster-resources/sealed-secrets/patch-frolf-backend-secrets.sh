@@ -36,6 +36,14 @@ set -euo pipefail
 SEALED_SECRET_FILE="${1:-sealed-backend-secrets.yaml}"
 NAMESPACE="${NAMESPACE:-frolf-bot}"
 SECRET_NAME="${SECRET_NAME:-backend-secrets}"
+# kubeseal's built-in default (--controller-name sealed-secrets-controller) points at a
+# stale, endpoint-less service left over from before the controller was deployed via the
+# `sealed-secrets` Helm release (see argocd/platform/sealed-secrets-controller.yaml,
+# releaseName: sealed-secrets) — the live controller service in this cluster is named
+# `sealed-secrets`, not `sealed-secrets-controller`. Override explicitly rather than rely
+# on kubeseal's default.
+CONTROLLER_NAME="${CONTROLLER_NAME:-sealed-secrets}"
+CONTROLLER_NAMESPACE="${CONTROLLER_NAMESPACE:-kube-system}"
 
 TOKEN_ENCRYPTION_KEY="${TOKEN_ENCRYPTION_KEY:-}"
 TOKEN_ENCRYPTION_KEY_PREVIOUS="${TOKEN_ENCRYPTION_KEY_PREVIOUS:-}"
@@ -78,6 +86,8 @@ fi
 
 seal_value() {
   echo -n "$1" | kubeseal --raw \
+    --controller-name "${CONTROLLER_NAME}" \
+    --controller-namespace "${CONTROLLER_NAMESPACE}" \
     --namespace "${NAMESPACE}" \
     --name "${SECRET_NAME}" \
     --scope strict
