@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frolf-bot-acme-challenge
+  annotations:
+    # Must stay permanently disabled. cert-manager's own ephemeral HTTP-01
+    # solver Ingress also sets ssl-redirect:false, but with 4+ static
+    # Ingress objects sharing this host (none of which opt out), the
+    # merged nginx ssl-redirect setting for the host wins the race and
+    # 308-redirects the ACME challenge path to HTTPS, which breaks
+    # domain validation. This Ingress is the documented cert-manager
+    # workaround: a permanent, always-present opt-out for this exact
+    # path so renewals don't depend on solver-Ingress timing.
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: frolf-bot.duckdns.org
+      http:
+        paths:
+          - path: /.well-known/acme-challenge/
+            pathType: Prefix
+            backend:
+              service:
+                name: frolf-bot-pwa
+                port:
+                  number: 80

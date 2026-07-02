@@ -6,6 +6,7 @@ resources:
   - service.yaml
   - ingress.yaml
   - ingress-nats.yaml
+  - ingress-acme-challenge.yaml
 
 labels:
   - pairs:
