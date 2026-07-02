@@ -4,7 +4,10 @@ metadata:
   name: frolf-bot-pwa-www-redirect
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/permanent-redirect: https://aceflight.app$request_uri
+    # No $request_uri: the admission webhook validates this value against a
+    # plain-URL regex and denies nginx variables. www deep links land on the
+    # homepage, which is fine — all generated links use the apex domain.
+    nginx.ingress.kubernetes.io/permanent-redirect: https://aceflight.app
     nginx.ingress.kubernetes.io/permanent-redirect-code: "301"
 spec:
   ingressClassName: nginx
