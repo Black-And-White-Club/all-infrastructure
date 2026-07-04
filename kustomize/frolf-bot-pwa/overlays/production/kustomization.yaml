@@ -32,6 +32,8 @@ configMapGenerator:
       # Focused-scoring alone degrades to a whole-field focused view until cards on.
       - PUBLIC_FEATURE_FOCUSED_SCORING=true
       - PUBLIC_FEATURE_CARDS=true
+      # GPS course mapping: gates the course pin-capture / mapping UI.
+      - PUBLIC_FEATURE_COURSE_MAPPING=true
 # Image modification - ArgoCD Image Updater will patch this
 images:
   - name: frolf-bot-pwa
