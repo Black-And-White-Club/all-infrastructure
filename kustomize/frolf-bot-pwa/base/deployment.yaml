@@ -140,6 +140,12 @@ spec:
                   name: frolf-pwa-config
                   key: PUBLIC_FEATURE_CARDS
                   optional: true
+            - name: PUBLIC_FEATURE_COURSE_MAPPING
+              valueFrom:
+                configMapKeyRef:
+                  name: frolf-pwa-config
+                  key: PUBLIC_FEATURE_COURSE_MAPPING
+                  optional: true
           readinessProbe:
             httpGet:
               path: /health

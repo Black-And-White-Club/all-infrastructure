@@ -295,6 +295,26 @@ data:
             }
           },
           "options": { "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] } }
+        },
+        {
+          "id": 13,
+          "title": "Course Pins Captured per Interval",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 47 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(rate(frolf_bot_business_course_pins_captured_total{job=\"frolf-bot\", club_id=~\"$club_id\"}[$__rate_interval]))",
+              "legendFormat": "Course pins captured",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          }
         }
       ]
     }
