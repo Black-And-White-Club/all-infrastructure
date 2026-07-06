@@ -40,4 +40,4 @@ images:
     newName: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
     newTag: v1.0.219
   - name: us-ashburn-1.ocir.io/id2uwn5pyixh/frolf-bot-pwa
-    newTag: v1.0.218
+    newTag: v1.0.219
