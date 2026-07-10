@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-frolf-eventbus
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  frolf-bot-eventbus.json: |
+    {
+      "id": null,
+      "uid": "frolf-eventbus",
+      "title": "Frolf Bot — Event Bus Health",
+      "description": "JetStream poison messages (MaxDeliver exhausted), publish errors, and publish throughput across backend and discord-frolf-bot. Poison metrics are recorded by whichever service instance wins the account-wide advisory queue group, so panels match both service prefixes.",
+      "tags": ["frolf-bot", "eventbus", "nats"],
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "30s",
+      "time": { "from": "now-24h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Poison Messages (24h)",
+          "description": "Messages that exhausted JetStream MaxDeliver and were silently abandoned (delivery stopped, NOT terminated — they age out via stream retention). Captured by the eventbus AdvisoryListener. Series does not exist until the first poison message, so 0 renders from noValue.",
+          "type": "stat",
+          "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(increase({__name__=~\"(frolf_bot|discord_frolf_bot)_eventbus_poison_messages_total\"}[24h]))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 2,
+          "title": "Poison Messages by Stream / Consumer",
+          "description": "Hourly increase per (stream, consumer). Any non-zero point means a handler failed MaxDeliver times on the same message — find it with: nats consumer info <stream> <consumer>, then nats stream get <stream> <stream_seq> (seq is in the service log line).",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 18, "x": 6, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum by (stream, consumer) (increase({__name__=~\"(frolf_bot|discord_frolf_bot)_eventbus_poison_messages_total\"}[1h]))",
+              "legendFormat": "{{stream}} / {{consumer}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          }
+        },
+        {
+          "id": 3,
+          "title": "Publish Errors",
+          "description": "Publish failures after the eventbus retry loop is exhausted (3 attempts with backoff). Persistent non-zero here means NATS is unreachable or a subject is being rejected.",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(rate(frolf_bot_eventbus_messages_publish_errors_total[5m]))",
+              "legendFormat": "backend",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(rate(discord_frolf_bot_eventbus_messages_publish_errors_total[5m]))",
+              "legendFormat": "discord",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": { "fixedColor": "orange", "mode": "fixed" },
+              "custom": { "lineWidth": 2 }
+            }
+          }
+        },
+        {
+          "id": 4,
+          "title": "Publish Throughput",
+          "description": "Messages published per second by each service — baseline context for judging whether an error or poison blip is a big deal.",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
+          "targets": [
+            {
+              "expr": "sum(rate(frolf_bot_eventbus_messages_published_total[5m]))",
+              "legendFormat": "backend",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(rate(discord_frolf_bot_eventbus_messages_published_total[5m]))",
+              "legendFormat": "discord",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": { "lineWidth": 2 }
+            }
+          }
+        }
+      ]
+    }

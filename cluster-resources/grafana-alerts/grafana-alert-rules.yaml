@@ -205,6 +205,42 @@ data:
             labels:
               severity: warning
 
+      # ─── Eventbus poison messages (JetStream MaxDeliver exhausted) ─────────────
+      - orgId: 1
+        name: eventbus-poison-messages
+        folder: frolf-bot
+        interval: 5m
+        rules:
+          - uid: eventbus-poison-message
+            title: JetStream Poison Message Detected
+            condition: A
+            data:
+              - refId: A
+                datasourceUid: mimir
+                model:
+                  # Recorded by the eventbus AdvisoryListener when a consumer
+                  # exhausts MaxDeliver; the message is NOT terminated, it sits
+                  # in the stream until retention ages it out, so every hit
+                  # deserves a look. The advisory queue group means whichever
+                  # service instance wins delivery records the metric, hence
+                  # the __name__ regex across both service prefixes.
+                  # noDataState stays OK: the counter series does not exist at
+                  # all until the first poison message ever occurs.
+                  expr: |
+                    sum by (stream, consumer) (increase({__name__=~"(frolf_bot|discord_frolf_bot)_eventbus_poison_messages_total"}[1h])) > 0
+                  instant: true
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+            noDataState: OK
+            execErrState: Alerting
+            for: 0s
+            annotations:
+              summary: "JetStream consumer exhausted MaxDeliver — message abandoned"
+              description: "{{ $value | printf \"%.0f\" }} message(s) on stream {{ $labels.stream }}, consumer {{ $labels.consumer }} exhausted MaxDeliver in the last hour. The message is not terminated — it remains in the stream until retention drops it. Check the owning handler's logs for the stream_seq, then inspect with 'nats stream get'."
+            labels:
+              severity: warning
+
       # ─── Disk pressure ───────────────────────────────────────────────────────────
       - orgId: 1
         name: disk-pressure
