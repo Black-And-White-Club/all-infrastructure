@@ -241,6 +241,49 @@ data:
             labels:
               severity: warning
 
+      # ─── Handler failure rate (sustained errors below the poison threshold) ────
+      - orgId: 1
+        name: handler-failure-rate
+        folder: frolf-bot
+        interval: 5m
+        rules:
+          - uid: handler-failure-rate-elevated
+            title: Handler Failure Rate Elevated
+            condition: A
+            data:
+              - refId: A
+                datasourceUid: mimir
+                model:
+                  # Recorded by the shared handlerwrapper (frolf-bot-shared/utils/
+                  # handlerwrapper/returning.go's recordFailure -> ReturningMetrics.
+                  # RecordFailure) on every handler invocation that returns an error;
+                  # each domain's OTEL metrics package increments its own
+                  # "<domain>_handler_failure_total" counter (round and betting spell
+                  # it "handler_failures_total" — the regex covers both). Exported
+                  # with the service-name prefix, e.g. frolf_bot_score_handler_failure_total.
+                  # This is the general safety net for a handler that keeps
+                  # failing-and-redelivering WITHOUT ever exhausting JetStream's
+                  # MaxDeliver — the "JetStream Poison Message Detected" rule above
+                  # only fires once MaxDeliver is exhausted, so a handler that hard-
+                  # errors on every invocation but keeps getting redelivered produces
+                  # zero alerts from that rule alone.
+                  # noDataState stays OK: the counter series does not exist at all
+                  # until the first handler failure ever occurs.
+                  expr: |
+                    sum(rate({__name__=~"(frolf_bot|discord_frolf_bot)_.+_handler_failures?_total"}[5m])) > 0
+                  instant: true
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+            noDataState: OK
+            execErrState: Alerting
+            for: 10m
+            annotations:
+              summary: "Handler failure rate sustained above zero"
+              description: "One or more NATS/Watermill event handlers have been returning errors continuously for 10+ minutes. This counter increments on every handler failure regardless of JetStream redelivery count, so it catches persistent handler errors (e.g. a DB constraint violation hit on every invocation) that never trip the poison-message MaxDeliver threshold. Check service logs for 'handler failed' ERROR entries to identify the offending handler."
+            labels:
+              severity: warning
+
       # ─── Disk pressure ───────────────────────────────────────────────────────────
       - orgId: 1
         name: disk-pressure
