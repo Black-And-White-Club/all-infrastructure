@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: tailscale-operator
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     # Sync after sealed-secrets (wave -4) so the operator-oauth Secret
     # exists by the time the operator pod boots. Before app workloads
@@ -10,6 +12,7 @@ metadata:
     # being claimed.
     argocd.argoproj.io/sync-wave: "10"
 spec:
+  revisionHistoryLimit: 3
   project: platform
   sources:
     - repoURL: https://pkgs.tailscale.com/helmcharts
@@ -30,6 +33,12 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
     syncOptions:
       - CreateNamespace=false
       - ServerSideApply=true

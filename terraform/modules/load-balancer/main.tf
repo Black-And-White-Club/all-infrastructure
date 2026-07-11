@@ -92,7 +92,10 @@ resource "oci_load_balancer_listener" "https_terminated" {
   protocol                 = "HTTP"
 
   ssl_configuration {
-    certificate_ids         = local.certificate_ids
+    certificate_ids = local.certificate_ids
+    # Intentional: this controls client-certificate (mTLS) verification for
+    # inbound connections, which we don't use — not a TLS downgrade. Server
+    # TLS termination still uses certificate_ids above.
     verify_peer_certificate = false
   }
 }

@@ -3,6 +3,10 @@ kind: AppProject
 metadata:
   name: platform
   namespace: argocd
+  annotations:
+    # Projects must exist before any Application that references them;
+    # Applications in this tree start at wave -10.
+    argocd.argoproj.io/sync-wave: "-100"
 spec:
   description: Platform infrastructure services
 
@@ -33,6 +37,10 @@ spec:
       server: 'https://kubernetes.default.svc'
     - namespace: 'default'
       server: 'https://kubernetes.default.svc'
+    # The app namespaces below are required by cluster-sealed-secrets and
+    # cluster-network-policies (platform-project apps with no destination
+    # namespace) which place SealedSecrets/NetworkPolicies directly into
+    # application namespaces. Do not trim them from this project.
     - namespace: 'resume-db'
       server: 'https://kubernetes.default.svc'
     - namespace: 'resume-app'

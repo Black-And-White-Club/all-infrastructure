@@ -1,13 +1,17 @@
 terraform {
-  required_version = "~> 1.9"
+  # >= 1.10 required for backend use_lockfile (S3-native state locking).
+  required_version = "~> 1.10"
 
   backend "s3" {
-    bucket   = "terraform-state"
-    key      = "all-infrastructure/terraform.tfstate"
-    region   = "us-ashburn-1"
+    bucket = "terraform-state"
+    key    = "all-infrastructure/terraform.tfstate"
+    region = "us-ashburn-1"
     endpoints = {
       s3 = "https://id2uwn5pyixh.compat.objectstorage.us-ashburn-1.oraclecloud.com"
     }
+    # Lockfile-based state locking (no DynamoDB equivalent on OCI's S3-compat
+    # API); prevents concurrent applies from corrupting remote state.
+    use_lockfile                = true
     skip_region_validation      = true
     skip_credentials_validation = true
     skip_metadata_api_check     = true
@@ -118,9 +122,13 @@ resource "time_sleep" "wait_for_iam_policy" {
 module "identity_users" {
   source = "./modules/identity-users"
 
-  tenancy_ocid           = var.tenancy_ocid
-  service_account_id     = "test-service-account"
-  aiu_service_account_id = "test-aiu-account"
+  tenancy_ocid = var.tenancy_ocid
+  # NOTE: these names are literal OCI user names in production ("test-" prefix
+  # is historical). Renaming RECREATES the users and invalidates their auth
+  # tokens/API keys (OCIR pull secrets, image-updater) — only change the
+  # tfvars values during a planned credential-rotation window.
+  service_account_id     = var.service_account_name
+  aiu_service_account_id = var.image_updater_account_name
   email_prefix           = var.user_email_prefix
   user_email_domain      = var.user_email_domain
 }
@@ -269,16 +277,6 @@ module "resume_load_balancer" {
    The compute module attaches disks by index (disk_attach_to). Here we attach resume-db to instance at index 1. */
 /* compute_extra_disk_bindings removed; disk attachment wiring now occurs via variables passed to the compute module above. */
 
-output "object_storage_buckets" {
-  description = "Created object storage buckets for observability"
-  value       = module.object_storage.bucket_names
-}
-
-output "instance_public_ips" {
-  description = "Public IPs of the compute instances"
-  value       = module.compute.public_ips
-}
-
 # Instance Principals for OCI CSI Driver
 # This creates a dynamic group and policies so the CSI driver can
 # provision block volumes without needing API keys in secrets.
@@ -289,10 +287,5 @@ module "csi_instance_principals" {
   compartment_ocid = var.compartment_ocid
   # Match all instances in the compartment so both control-plane and worker nodes
   # can use instance principals. The CSI controller pod may run on either node.
-  matching_rule    = "instance.compartment.id = '${var.compartment_ocid}'"
-}
-
-output "csi_dynamic_group_name" {
-  description = "Name of the dynamic group for CSI driver"
-  value       = module.csi_instance_principals.dynamic_group_name
+  matching_rule = "instance.compartment.id = '${var.compartment_ocid}'"
 }

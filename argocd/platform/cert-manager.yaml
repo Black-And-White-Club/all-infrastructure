@@ -4,9 +4,12 @@ kind: Application
 metadata:
   name: platform-cert-manager
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
+  revisionHistoryLimit: 3
   project: platform
   sources:
     - repoURL: https://charts.jetstack.io
@@ -28,6 +31,12 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true

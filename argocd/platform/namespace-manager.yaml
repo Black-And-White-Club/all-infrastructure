@@ -3,9 +3,13 @@ kind: Application
 metadata:
   name: cluster-namespaces
   namespace: argocd
+  # No resources-finalizer: this app owns Namespaces; a finalizer would
+  # cascade-delete every namespace (and all workloads/PVCs inside) if the
+  # app were accidentally deleted.
   annotations:
     argocd.argoproj.io/sync-wave: "-10"
 spec:
+  revisionHistoryLimit: 3
   project: platform
   source:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
@@ -22,5 +26,11 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
     syncOptions:
       - CreateNamespace=true

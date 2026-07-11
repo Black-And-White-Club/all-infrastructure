@@ -7,9 +7,12 @@ kind: Application
 metadata:
   name: oci-csi-driver
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/sync-wave: "-4"
 spec:
+  revisionHistoryLimit: 3
   project: platform
   source:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
@@ -30,6 +33,12 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
