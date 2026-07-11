@@ -128,3 +128,9 @@ variable "allowed_ssh_cidrs" {
   type        = list(string)
   default     = []
 }
+
+variable "assign_public_ip" {
+  description = "Whether instances get an ephemeral public IP on their primary VNIC. Default true preserves existing behavior; set false for private-only nodes (SSH is CIDR-gated regardless)."
+  type        = bool
+  default     = true
+}

@@ -3,20 +3,31 @@ kind: Application
 metadata:
   name: cluster-storage
   namespace: argocd
+  # No resources-finalizer: this app owns PVs/PVCs (production data);
+  # intentionally omitted so app deletion never cascades to storage.
   annotations:
     argocd.argoproj.io/sync-wave: "-5"
 spec:
+  revisionHistoryLimit: 3
   project: platform
   source:
     repoURL: https://github.com/Black-And-White-Club/all-infrastructure.git
     targetRevision: main
-    path: cluster-resources
+    # Whole-directory sync: every manifest in cluster-resources/storage/ is
+    # applied. New PV/PVC/StorageClass files added there are picked up
+    # automatically (the old enumerated include-list silently skipped them).
+    path: cluster-resources/storage
     directory:
       recurse: false
-      include: '{storage-class-local.yaml,storage-class-oci.yaml,pv-grafana.yaml,pv-loki-local.yaml,pv-resume-postgres-local.yaml,pv-tempo-ingester-wal.yaml,pvc-resume-postgres.yaml}'
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

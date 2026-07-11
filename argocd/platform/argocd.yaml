@@ -5,9 +5,12 @@ kind: Application
 metadata:
   name: argocd
   namespace: argocd
+  # No resources-finalizer: this app manages Argo CD itself; a finalizer
+  # would make accidental deletion cascade-delete the control plane.
   annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
+  revisionHistoryLimit: 3
   project: platform
   sources:
     - repoURL: https://argoproj.github.io/argo-helm
@@ -27,6 +30,12 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true

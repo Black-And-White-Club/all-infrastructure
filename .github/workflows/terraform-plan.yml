@@ -32,17 +32,9 @@ jobs:
       TF_VAR_region: ${{ secrets.OCI_REGION }}
       # Non-auth variables (OCIDs, config — not sensitive but gitignored)
       TF_VAR_compartment_ocid: ${{ secrets.TF_VAR_COMPARTMENT_OCID }}
-      TF_VAR_resume_compartment_ocid: ${{ secrets.TF_VAR_RESUME_COMPARTMENT_OCID }}
-      TF_VAR_frolf_bot_compartment_ocid: ${{ secrets.TF_VAR_FROLF_BOT_COMPARTMENT_OCID }}
-      TF_VAR_resume_bucket_ocid: ${{ secrets.TF_VAR_RESUME_BUCKET_OCID }}
-      TF_VAR_frolf_bot_bucket_ocid: ${{ secrets.TF_VAR_FROLF_BOT_BUCKET_OCID }}
-      TF_VAR_resume_repo_ocid: ${{ secrets.TF_VAR_RESUME_REPO_OCID }}
-      TF_VAR_frolf_bot_repo_ocid: ${{ secrets.TF_VAR_FROLF_BOT_REPO_OCID }}
-      TF_VAR_namespace: ${{ secrets.TF_VAR_NAMESPACE }}
       TF_VAR_availability_domain: ${{ secrets.TF_VAR_AVAILABILITY_DOMAIN }}
       TF_VAR_image_id: ${{ secrets.TF_VAR_IMAGE_ID }}
       TF_VAR_ssh_public_key: ${{ secrets.TF_VAR_SSH_PUBLIC_KEY }}
-      TF_VAR_admin_group_ocid: ${{ secrets.TF_VAR_ADMIN_GROUP_OCID }}
       TF_VAR_user_email_prefix: ${{ secrets.TF_VAR_USER_EMAIL_PREFIX }}
 
     steps:
@@ -52,7 +44,9 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "~1.9"
+          # Must satisfy required_version in terraform/main.tf (~> 1.10, needed
+          # for backend use_lockfile state locking).
+          terraform_version: "~1.10"
 
       - name: Configure OCI credentials
         run: |

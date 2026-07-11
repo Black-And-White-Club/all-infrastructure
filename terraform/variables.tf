@@ -18,41 +18,6 @@ variable "compartment_ocid" {
   type        = string
 }
 
-variable "resume_compartment_ocid" {
-  description = "OCID of the resume compartment"
-  type        = string
-}
-
-variable "frolf_bot_compartment_ocid" {
-  description = "OCID of the frolf bot compartment"
-  type        = string
-}
-
-variable "resume_bucket_ocid" {
-  description = "OCID of the resume bucket"
-  type        = string
-}
-
-variable "frolf_bot_bucket_ocid" {
-  description = "OCID of the frolf bot bucket"
-  type        = string
-}
-
-variable "resume_repo_ocid" {
-  description = "OCID of the resume repository"
-  type        = string
-}
-
-variable "frolf_bot_repo_ocid" {
-  description = "OCID of the frolf bot repository"
-  type        = string
-}
-
-variable "namespace" {
-  description = "Namespace for the resources"
-  type        = string
-}
-
 variable "availability_domain" {
   description = "OCI availability domain for compute resources"
   type        = string
@@ -103,11 +68,6 @@ variable "ssh_public_key" {
   type        = string
 }
 
-variable "admin_group_ocid" {
-  description = "OCID of the Administrators group"
-  type        = string
-}
-
 variable "allowed_k8s_api_cidrs" {
   description = "List of CIDR blocks allowed to access Kubernetes API server (port 6443). Keep this in terraform.tfvars (gitignored)."
   type        = list(string)
@@ -142,18 +102,6 @@ variable "sealed_secrets_backup_bucket_name" {
   description = "OCI Object Storage bucket for sealed-secrets controller key backups"
   type        = string
   default     = "sealed-secrets-backup"
-}
-
-variable "disks" {
-  description = "Optional map of block storage disks definitions for provisioning via block-storage module"
-  type = map(object({
-    name                = string
-    size                = number
-    type                = optional(string, "")
-    availability_domain = optional(string, "")
-    labels              = optional(map(string), {})
-  }))
-  default = {}
 }
 
 variable "resume_db_disk_size" {
@@ -227,14 +175,14 @@ variable "resume_certificate_ocid" {
   default     = ""
 }
 
-variable "resume_certificate_file_path" {
-  description = "Path to the certificate PEM file (for importing cert-manager cert to OCI). e.g., /tmp/cert.pem"
+variable "service_account_name" {
+  description = "OCI user name for the application service account. WARNING: renaming recreates the user and invalidates its auth tokens/API keys — rotate credentials deliberately."
   type        = string
-  default     = ""
+  default     = "test-service-account"
 }
 
-variable "resume_certificate_key_path" {
-  description = "Path to the private key PEM file (for importing cert-manager cert to OCI). e.g., /tmp/key.pem"
+variable "image_updater_account_name" {
+  description = "OCI user name for the ArgoCD Image Updater service account. WARNING: renaming recreates the user and invalidates its auth tokens/API keys — rotate credentials deliberately."
   type        = string
-  default     = ""
+  default     = "test-aiu-account"
 }
