@@ -3,9 +3,12 @@ kind: Application
 metadata:
   name: grafana
   namespace: argocd
+  # No resources-finalizer: grafana uses a persistent volume (grafana-pv);
+  # omitted so app deletion never cascades to stateful data.
   annotations:
     argocd.argoproj.io/sync-wave: "5"
 spec:
+  revisionHistoryLimit: 3
   project: observability
   sources:
     - repoURL: https://grafana.github.io/helm-charts
@@ -39,6 +42,12 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
     syncOptions:
       - PrunePropagationPolicy=foreground
       - ServerSideApply=true

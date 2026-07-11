@@ -27,3 +27,18 @@ output "resume_load_balancer_ip_addresses" {
   description = "Public IP addresses for the OCI load balancer"
   value       = module.resume_load_balancer.load_balancer_ip_addresses
 }
+
+output "object_storage_buckets" {
+  description = "Created object storage buckets for observability"
+  value       = module.object_storage.bucket_names
+}
+
+output "instance_public_ips" {
+  description = "Public IPs of the compute instances"
+  value       = module.compute.public_ips
+}
+
+output "csi_dynamic_group_name" {
+  description = "Name of the dynamic group for CSI driver"
+  value       = module.csi_instance_principals.dynamic_group_name
+}

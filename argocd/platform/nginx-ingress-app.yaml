@@ -3,9 +3,12 @@ kind: Application
 metadata:
   name: nginx-ingress
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/sync-wave: "10"
 spec:
+  revisionHistoryLimit: 3
   project: platform
   sources:
     - repoURL: https://kubernetes.github.io/ingress-nginx
@@ -26,5 +29,11 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
     syncOptions:
       - CreateNamespace=true

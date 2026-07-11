@@ -63,17 +63,9 @@ Go to repo **Settings → Secrets and variables → Actions → New repository s
 | Secret Name | Terraform Variable |
 |-------------|-------------------|
 | `TF_VAR_COMPARTMENT_OCID` | `compartment_ocid` |
-| `TF_VAR_RESUME_COMPARTMENT_OCID` | `resume_compartment_ocid` |
-| `TF_VAR_FROLF_BOT_COMPARTMENT_OCID` | `frolf_bot_compartment_ocid` |
-| `TF_VAR_RESUME_BUCKET_OCID` | `resume_bucket_ocid` |
-| `TF_VAR_FROLF_BOT_BUCKET_OCID` | `frolf_bot_bucket_ocid` |
-| `TF_VAR_RESUME_REPO_OCID` | `resume_repo_ocid` |
-| `TF_VAR_FROLF_BOT_REPO_OCID` | `frolf_bot_repo_ocid` |
-| `TF_VAR_NAMESPACE` | `namespace` |
 | `TF_VAR_AVAILABILITY_DOMAIN` | `availability_domain` |
 | `TF_VAR_IMAGE_ID` | `image_id` |
 | `TF_VAR_SSH_PUBLIC_KEY` | `ssh_public_key` |
-| `TF_VAR_ADMIN_GROUP_OCID` | `admin_group_ocid` |
 | `TF_VAR_USER_EMAIL_PREFIX` | `user_email_prefix` |
 
 ---

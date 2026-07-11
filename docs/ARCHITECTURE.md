@@ -54,11 +54,11 @@ Preferred state is OCI block storage for persistent volumes and OCI object stora
 
 Current intentional local-storage exceptions still managed in this repo:
 
-- [`cluster-resources/pv-grafana.yaml`](../cluster-resources/pv-grafana.yaml)
-- [`cluster-resources/pv-loki-local.yaml`](../cluster-resources/pv-loki-local.yaml)
-- [`cluster-resources/pv-resume-postgres-local.yaml`](../cluster-resources/pv-resume-postgres-local.yaml)
-- [`cluster-resources/pv-tempo-ingester-wal.yaml`](../cluster-resources/pv-tempo-ingester-wal.yaml)
-- [`cluster-resources/pvc-resume-postgres.yaml`](../cluster-resources/pvc-resume-postgres.yaml)
+- [`cluster-resources/storage/pv-grafana.yaml`](../cluster-resources/storage/pv-grafana.yaml)
+- [`cluster-resources/storage/pv-loki-local.yaml`](../cluster-resources/storage/pv-loki-local.yaml)
+- [`cluster-resources/storage/pv-resume-postgres-local.yaml`](../cluster-resources/storage/pv-resume-postgres-local.yaml)
+- [`cluster-resources/storage/pv-tempo-ingester-wal.yaml`](../cluster-resources/storage/pv-tempo-ingester-wal.yaml)
+- [`cluster-resources/storage/pvc-resume-postgres.yaml`](../cluster-resources/storage/pvc-resume-postgres.yaml)
 
 Retired comment-only PVC stubs live under [`cluster-resources/retired/`](../cluster-resources/retired).
 
