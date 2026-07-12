@@ -269,6 +269,10 @@ data:
                   # zero alerts from that rule alone.
                   # noDataState stays OK: the counter series does not exist at all
                   # until the first handler failure ever occurs.
+                  # COVERAGE CAVEAT: only handlers whose router wires a real
+                  # ReturningMetrics emit this counter. Not yet wired: backend
+                  # guild/handicap/rating modules and most of discord-frolf-bot —
+                  # a hard-failing handler there is invisible to this alert.
                   expr: |
                     sum(rate({__name__=~"(frolf_bot|discord_frolf_bot)_.+_handler_failures?_total"}[5m])) > 0
                   instant: true
