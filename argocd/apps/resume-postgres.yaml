@@ -17,7 +17,7 @@ spec:
       # PINNED: Do NOT bump this version without verifying the PostgreSQL major version stays the same.
       # Bitnami chart upgrades can bump the PG major version, which triggers initdb and wipes the database
       # (frolf-bot lost its entire DB this way — see apps/frolf-postgres.yaml).
-      targetRevision: 18.1.13
+      targetRevision: 18.7.13
       helm:
         valueFiles:
           - $values/charts/postgres/resume-values.yaml
