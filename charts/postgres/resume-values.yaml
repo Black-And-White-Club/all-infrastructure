@@ -19,6 +19,8 @@ primary:
     # consuming the tenancy's OCI Always Free block volume quota. If you prefer
     # to use OCI block storage, set storageClassName: oci-block-storage instead.
     storageClassName: local-storage
+    # size is ignored because existingClaim is set — the actual bound PV/PVC
+    # (resume-postgres-local-pv) is 8Gi.
     size: 2Gi
     # Pre-created PVC that binds to resume-postgres-local-pv PersistentVolume.
     # The PVC must exist in the resume-db namespace before Postgres starts.
@@ -28,7 +30,7 @@ primary:
       cpu: 25m
       memory: 128Mi
     limits:
-      cpu: 100m
+      cpu: 300m
       memory: 256Mi
 metrics:
   # Disable metrics sidecar for development environments with limited resources
