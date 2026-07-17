@@ -33,6 +33,12 @@ mimir:
     # Disable ingest storage (Kafka) - use direct ingestion instead
     ingest_storage:
       enabled: false
+    # Ingester runs on emptyDir (persistentVolume disabled below): flush the
+    # TSDB head to object storage on graceful shutdown so a planned restart
+    # loses no samples.
+    blocks_storage:
+      tsdb:
+        flush_blocks_on_shutdown: true
     # Single-replica: no replication or zone awareness
     # push_grpc_method_enabled must be true when ingest_storage is disabled
     ingester:
@@ -114,10 +120,10 @@ ingester:
   resources:
     requests:
       cpu: 20m
-      memory: 128Mi
+      memory: 384Mi
     limits:
       cpu: 200m
-      memory: 512Mi
+      memory: 1Gi
 
 ##############################################
 # DISTRIBUTOR
