@@ -185,3 +185,12 @@ metricsGenerator:
     limits:
       cpu: 150m
       memory: 256Mi
+
+# Metrics-generator processors are opt-in per tenant via overrides; without this
+# the generator receives spans but emits nothing (no traces_* series in Mimir).
+overrides:
+  defaults:
+    metrics_generator:
+      processors:
+        - service-graphs
+        - span-metrics

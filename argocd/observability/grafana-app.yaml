@@ -26,12 +26,6 @@ spec:
     server: https://kubernetes.default.svc
     namespace: observability
   ignoreDifferences:
-    - group: ""
-      kind: Secret
-      name: grafana
-      namespace: observability
-      jsonPointers:
-        - /data/admin-password
     - group: apps
       kind: Deployment
       name: grafana
