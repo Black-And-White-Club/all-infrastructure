@@ -174,6 +174,7 @@ module "compute" {
   allowed_k8s_api_cidrs   = var.allowed_k8s_api_cidrs
   allowed_ssh_cidrs       = var.allowed_ssh_cidrs
   cloudflare_ipv4_cidrs   = var.cloudflare_ipv4_cidrs
+  admin_ipv4_cidrs        = var.admin_ipv4_cidrs
   boot_volume_size_in_gbs = var.boot_volume_size_in_gbs
 
   depends_on = [

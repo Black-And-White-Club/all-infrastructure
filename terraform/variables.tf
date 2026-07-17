@@ -158,6 +158,12 @@ variable "allowed_ssh_cidrs" {
   default     = []
 }
 
+variable "admin_ipv4_cidrs" {
+  description = "List of admin CIDR blocks allowed to reach the LB on 80/443 for non-Cloudflare-proxied hostnames sharing this LB (grafana.jaromero.cloud, jaromero.cloud). Personal/office IP, not public data — keep this in terraform.tfvars (gitignored) / the TF_VAR_ADMIN_IPV4_CIDRS CI secret, same as allowed_ssh_cidrs. Empty list = no non-Cloudflare HTTP(S) access."
+  type        = list(string)
+  default     = []
+}
+
 variable "cloudflare_ipv4_cidrs" {
   description = "Cloudflare's published IPv4 ranges (https://www.cloudflare.com/ips-v4/) allowed to reach the LB on 80/443. Unlike allowed_ssh_cidrs/allowed_k8s_api_cidrs, this is public, non-sensitive data, so the real values live in the committed default below (not gitignored terraform.tfvars) — the CI plan/apply workflows never source a tfvars file, so a default here is required for the origin lockdown to actually apply. See the comment above the dynamic ingress_security_rules blocks in modules/compute/network.tf if this list ever needs revisiting."
   type        = list(string)
