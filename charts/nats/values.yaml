@@ -14,6 +14,10 @@ config:
       dir: /data
       pvc:
         enabled: true
+        # NOTE: the live PVC (frolf-nats-js-frolf-nats-0) was manually expanded
+        # to 50Gi. This value only applies at PVC creation, and the StatefulSet's
+        # volumeClaimTemplates field is immutable — do NOT bump it to 50Gi, that
+        # would wedge the ArgoCD sync. Kept at 10Gi to match the live STS spec.
         size: 10Gi
         storageClassName: "oci-block-storage"
   nats:
