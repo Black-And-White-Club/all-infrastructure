@@ -30,6 +30,22 @@ resource "oci_core_instance" "vm" {
     boot_volume_size_in_gbs = var.boot_volume_size_in_gbs
   }
 
+  # Oracle Cloud Agent plugin config. "Custom Logs Monitoring" (the
+  # unified-monitoring-agent fluentd plugin) is disabled: we ship logs via
+  # Alloy -> Loki, and the plugin's on-host health-check loop was writing
+  # multi-GB /var/log/messages spam (found 2026-07-17: 4.9G on the
+  # control plane). Disabling here is the durable off-switch; stopping the
+  # systemd unit on-host does not stop the cloud agent's checker loop.
+  agent_config {
+    is_management_disabled = false
+    is_monitoring_disabled = false
+
+    plugins_config {
+      desired_state = "DISABLED"
+      name          = "Custom Logs Monitoring"
+    }
+  }
+
   metadata = merge(
     {
       ssh_authorized_keys = var.ssh_public_key
