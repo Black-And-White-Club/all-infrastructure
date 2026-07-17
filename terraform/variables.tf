@@ -158,6 +158,28 @@ variable "allowed_ssh_cidrs" {
   default     = []
 }
 
+variable "cloudflare_ipv4_cidrs" {
+  description = "Cloudflare's published IPv4 ranges (https://www.cloudflare.com/ips-v4/) allowed to reach the LB on 80/443. Unlike allowed_ssh_cidrs/allowed_k8s_api_cidrs, this is public, non-sensitive data, so the real values live in the committed default below (not gitignored terraform.tfvars) — the CI plan/apply workflows never source a tfvars file, so a default here is required for the origin lockdown to actually apply. See the comment above the dynamic ingress_security_rules blocks in modules/compute/network.tf if this list ever needs revisiting."
+  type        = list(string)
+  default = [
+    "173.245.48.0/20",
+    "103.21.244.0/22",
+    "103.22.200.0/22",
+    "103.31.4.0/22",
+    "141.101.64.0/18",
+    "108.162.192.0/18",
+    "190.93.240.0/20",
+    "188.114.96.0/20",
+    "197.234.240.0/22",
+    "198.41.128.0/17",
+    "162.158.0.0/15",
+    "104.16.0.0/13",
+    "104.24.0.0/14",
+    "172.64.0.0/13",
+    "131.0.72.0/22",
+  ]
+}
+
 variable "user_email_prefix" {
   description = "Email prefix/username for service account users (before the + and domain). Keep in terraform.tfvars (gitignored)."
   type        = string

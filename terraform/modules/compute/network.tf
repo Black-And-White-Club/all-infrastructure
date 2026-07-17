@@ -48,26 +48,42 @@ resource "oci_core_security_list" "default" {
     }
   }
 
-  # Allow public internet traffic to reach the OCI load balancer (ports 80/443).
+  # Allow internet traffic to reach the OCI load balancer (ports 80/443),
+  # restricted to Cloudflare's IP ranges now that DNS/traffic is proxied through Cloudflare.
   # The LB sits in this subnet, so it needs these ingress rules.
   # Backend nodes are only reached via the LB over private VCN paths.
-  ingress_security_rules {
-    protocol    = "6" # TCP
-    source      = "0.0.0.0/0"
-    description = "Allow HTTP from internet (OCI load balancer)"
-    tcp_options {
-      min = var.backend_http_port
-      max = var.backend_http_port
+  #
+  # cloudflare_ipv4_cidrs is a static snapshot of https://www.cloudflare.com/ips-v4/, set
+  # manually in terraform.tfvars. Cloudflare rarely changes these ranges, but if legitimate
+  # traffic starts getting silently dropped, re-check that URL against the tfvars value first.
+  # If staleness becomes a recurring problem, consider auto-refreshing via a Terraform `http`
+  # data source (trade-off: plans can then drift on Cloudflare's schedule, not just ours) or a
+  # scheduled CI job that diffs and opens a PR (keeps a human review step). Cloudflare
+  # Authenticated Origin Pulls (mTLS client cert at nginx) is a complementary check that
+  # doesn't depend on IP ranges at all and is worth layering in if this list becomes a burden.
+  dynamic "ingress_security_rules" {
+    for_each = var.cloudflare_ipv4_cidrs
+    content {
+      protocol    = "6" # TCP
+      source      = ingress_security_rules.value
+      description = "Allow HTTP from Cloudflare edge"
+      tcp_options {
+        min = var.backend_http_port
+        max = var.backend_http_port
+      }
     }
   }
 
-  ingress_security_rules {
-    protocol    = "6" # TCP
-    source      = "0.0.0.0/0"
-    description = "Allow HTTPS from internet (OCI load balancer)"
-    tcp_options {
-      min = var.backend_https_port
-      max = var.backend_https_port
+  dynamic "ingress_security_rules" {
+    for_each = var.cloudflare_ipv4_cidrs
+    content {
+      protocol    = "6" # TCP
+      source      = ingress_security_rules.value
+      description = "Allow HTTPS from Cloudflare edge"
+      tcp_options {
+        min = var.backend_https_port
+        max = var.backend_https_port
+      }
     }
   }
 

@@ -129,6 +129,12 @@ variable "allowed_ssh_cidrs" {
   default     = []
 }
 
+variable "cloudflare_ipv4_cidrs" {
+  description = "Cloudflare's published IPv4 ranges (https://www.cloudflare.com/ips-v4/), allowed to reach the LB on 80/443. Origin lockdown now that traffic is proxied through Cloudflare."
+  type        = list(string)
+  default     = []
+}
+
 variable "assign_public_ip" {
   description = "Whether instances get an ephemeral public IP on their primary VNIC. Default true preserves existing behavior; set false for private-only nodes (SSH is CIDR-gated regardless)."
   type        = bool
