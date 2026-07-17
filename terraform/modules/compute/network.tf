@@ -87,6 +87,36 @@ resource "oci_core_security_list" "default" {
     }
   }
 
+  # admin_ipv4_cidrs: other hostnames on this same LB (grafana.jaromero.cloud,
+  # jaromero.cloud) are NOT proxied through Cloudflare, so the Cloudflare-only
+  # rules above block them at the network layer regardless of Host header.
+  # This grants those specific admin IPs direct access on 80/443.
+  dynamic "ingress_security_rules" {
+    for_each = var.admin_ipv4_cidrs
+    content {
+      protocol    = "6" # TCP
+      source      = ingress_security_rules.value
+      description = "Allow HTTP from admin IP (non-Cloudflare hostnames)"
+      tcp_options {
+        min = var.backend_http_port
+        max = var.backend_http_port
+      }
+    }
+  }
+
+  dynamic "ingress_security_rules" {
+    for_each = var.admin_ipv4_cidrs
+    content {
+      protocol    = "6" # TCP
+      source      = ingress_security_rules.value
+      description = "Allow HTTPS from admin IP (non-Cloudflare hostnames)"
+      tcp_options {
+        min = var.backend_https_port
+        max = var.backend_https_port
+      }
+    }
+  }
+
   # Kubernetes API server - internal
   ingress_security_rules {
     protocol = "6"

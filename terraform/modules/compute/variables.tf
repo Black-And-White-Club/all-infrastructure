@@ -135,6 +135,12 @@ variable "cloudflare_ipv4_cidrs" {
   default     = []
 }
 
+variable "admin_ipv4_cidrs" {
+  description = "List of CIDR blocks allowed to reach the LB on 80/443 outside of Cloudflare. Needed because other hostnames (grafana.jaromero.cloud, jaromero.cloud) share this LB but aren't proxied through Cloudflare, so the cloudflare_ipv4_cidrs-only rules block them. Empty list = no non-Cloudflare HTTP(S) access."
+  type        = list(string)
+  default     = []
+}
+
 variable "assign_public_ip" {
   description = "Whether instances get an ephemeral public IP on their primary VNIC. Default true preserves existing behavior; set false for private-only nodes (SSH is CIDR-gated regardless)."
   type        = bool
