@@ -41,3 +41,18 @@ controller:
     enabled: true
   config:
     resolver: "coredns.kube-system.svc.cluster.local. valid=30s"
+    # Real client IP recovery behind Cloudflare -> OCI LB (TCP passthrough on
+    # 443) -> nginx. The LB proxies, so the TCP peer is always the LB's address
+    # in the node subnet; the true client IP only exists in CF-Connecting-IP,
+    # which Cloudflare overwrites on every proxied request (unforgeable by
+    # clients, unlike append-only X-Forwarded-For). Origin lockdown (terraform
+    # cloudflare_ipv4_cidrs) means only CF + the admin IP can reach the LB at
+    # all. Non-CF hostnames (grafana, resume) lack the header and keep seeing
+    # the LB address — unchanged behavior. use-forwarded-headers stays false so
+    # incoming X-Forwarded-* junk is ignored; nginx rebuilds clean X-Real-IP /
+    # X-Forwarded-For for upstreams from the recovered address. Downstream
+    # consumers: PWA ADDRESS_HEADER=X-Real-IP (kustomize/frolf-bot-pwa) and
+    # backend TRUSTED_PROXY_CIDRS (backend-secrets).
+    enable-real-ip: "true"
+    forwarded-for-header: "CF-Connecting-IP"
+    proxy-real-ip-cidr: "10.0.1.0/24"

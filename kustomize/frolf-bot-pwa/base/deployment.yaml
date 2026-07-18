@@ -40,6 +40,14 @@ spec:
             - name: tmp
               mountPath: /tmp
           env:
+            # adapter-node client-IP source for rate limiting (OG share-card
+            # endpoint). nginx-ingress sets X-Real-IP from CF-Connecting-IP
+            # (see charts/nginx-ingress/values.yaml); single-valued, so no
+            # XFF_DEPTH semantics. Routes using getClientAddress() must keep
+            # their try/catch fail-open — the header is absent on direct
+            # (non-ingress) requests and adapter-node throws.
+            - name: ADDRESS_HEADER
+              value: "X-Real-IP"
             - name: BODY_SIZE_LIMIT
               value: "10M"
             - name: IDLE_TIMEOUT
