@@ -349,9 +349,13 @@ spec:
             timeoutSeconds: 3
             failureThreshold: 6
           resources:
+            # Sized from 7d observed peaks (2026-07-19): CPU 16m, memory
+            # working-set 102Mi. CPU request must stay <= ~50m so a rolling-
+            # update surge pod fits on the 96%-requested 2-node cluster
+            # (alloy's request fix 4ef1390a consumed the old headroom).
             requests:
               memory: "128Mi"
-              cpu: "100m"
+              cpu: "50m"
             limits:
               memory: "512Mi"
               cpu: "500m"

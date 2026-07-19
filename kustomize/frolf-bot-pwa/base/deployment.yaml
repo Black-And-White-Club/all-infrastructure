@@ -173,9 +173,13 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 10
           resources:
+            # Sized from 7d observed peaks (2026-07-19): CPU 11m, memory
+            # working-set 175Mi. CPU request must stay <= ~50m so a rolling-
+            # update surge pod fits on the 96%-requested 2-node cluster
+            # (alloy's request fix 4ef1390a consumed the old headroom).
             requests:
-              cpu: 100m
-              memory: 64Mi
+              cpu: 50m
+              memory: 192Mi
             limits:
               cpu: 500m
               memory: 512Mi
