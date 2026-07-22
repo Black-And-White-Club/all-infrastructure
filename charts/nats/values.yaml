@@ -100,6 +100,15 @@ promExporter:
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: true
       runAsNonRoot: true
+      # Image has no USER directive (defaults to root) — runAsNonRoot alone
+      # makes kubelet refuse to start the container (CreateContainerConfigError).
+      # 1000 matches the convention used for other app images with no built-in
+      # non-root user (frolf-backend/frolf-discord/frolf-bot-pwa deployments).
+      # runAsGroup pins the primary GID too, so it doesn't default to root (0).
+      runAsUser: 1000
+      runAsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
       capabilities:
         drop:
           - ALL
