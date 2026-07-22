@@ -173,6 +173,11 @@ metricsGenerator:
           - db.system
           - db.operation
           - db.sql.table
+      # Required by Grafana Trace Drilldown's TraceQL metrics queries. Keep
+      # every span kind and flush blocks so historical query ranges work.
+      local_blocks:
+        filter_server_spans: false
+        flush_to_storage: true
     storage:
       path: /var/tempo/wal
       # Remote write to Mimir for metrics storage
@@ -194,3 +199,4 @@ overrides:
       processors:
         - service-graphs
         - span-metrics
+        - local-blocks

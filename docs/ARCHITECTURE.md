@@ -67,3 +67,4 @@ Retired comment-only PVC stubs live under [`cluster-resources/retired/`](../clus
 - Helm/provider updates are proposed by Renovate from [`renovate.json`](../renovate.json).
 - Application image updates are written back to Git by Argo CD Image Updater from [`argocd/image-updaters/`](../argocd/image-updaters).
 - CI validates Terraform, Helm, and Kustomize from [`.github/workflows/ci-validate.yml`](../.github/workflows/ci-validate.yml).
+- NATS StatefulSet observability changes use the [JetStream replay-safety rollout gate](./NATS_OBSERVABILITY_ROLLOUT.md).

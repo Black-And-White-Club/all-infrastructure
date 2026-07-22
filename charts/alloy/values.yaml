@@ -20,10 +20,12 @@ alloy:
       }
 
       /////////////////////////////////////////
-      // OTLP RECEIVER - ALL APPLICATION SIGNALS
+      // OTLP RECEIVERS - INTERNAL AND BROWSER SIGNALS
       /////////////////////////////////////////
 
-      otelcol.receiver.otlp "default" {
+      // Internal workloads are associated with their source Pod before any
+      // resource attributes are promoted to metric or log labels.
+      otelcol.receiver.otlp "internal" {
         grpc {
           endpoint = "0.0.0.0:4317"
         }
@@ -31,42 +33,146 @@ alloy:
           endpoint = "0.0.0.0:4318"
         }
         output {
-          // Pointing to the new transform processor
-          logs    = [otelcol.processor.transform.default.input]
-          metrics = [otelcol.processor.transform.default.input]
-          traces  = [otelcol.processor.transform.default.input]
+          logs    = [otelcol.processor.k8sattributes.internal.input]
+          metrics = [otelcol.processor.k8sattributes.internal.input]
+          traces  = [otelcol.processor.k8sattributes.internal.input]
+        }
+      }
+
+      // Browser OTLP stays on the public /v1 path but uses a dedicated port.
+      // It deliberately bypasses k8sattributes: the source connection is the
+      // ingress controller, not the end user's browser.
+      otelcol.receiver.otlp "browser" {
+        http {
+          endpoint = "0.0.0.0:4319"
+        }
+        output {
+          logs    = [otelcol.processor.transform.browser.input]
+          metrics = [otelcol.processor.transform.browser.input]
+          traces  = [otelcol.processor.transform.browser.input]
         }
       }
 
       /////////////////////////////////////////
-      // TRANSFORM PROCESSOR - ENRICH ALL SIGNALS
-      // (Replaces the invalid otelcol.processor.resource)
+      // INTERNAL KUBERNETES RESOURCE ENRICHMENT
       /////////////////////////////////////////
 
-      otelcol.processor.transform "default" {
+      otelcol.processor.k8sattributes "internal" {
+        extract {
+          metadata = [
+            "k8s.namespace.name",
+            "k8s.deployment.name",
+            "k8s.statefulset.name",
+            "k8s.pod.name",
+            "k8s.pod.uid",
+            "k8s.node.name",
+          ]
+        }
+
+        pod_association {
+          source {
+            from = "resource_attribute"
+            name = "k8s.pod.uid"
+          }
+        }
+        pod_association {
+          source {
+            from = "connection"
+          }
+        }
+
+        output {
+          logs    = [otelcol.processor.transform.internal.input]
+          metrics = [otelcol.processor.transform.internal.input]
+          traces  = [otelcol.processor.transform.internal.input]
+        }
+      }
+
+      /////////////////////////////////////////
+      // TRANSFORMS - CURATED RESOURCE DIMENSIONS
+      /////////////////////////////////////////
+
+      otelcol.processor.transform "internal" {
         error_mode = "ignore"
 
-        // 1. Logs: Set cluster name in resource attributes
         log_statements {
           context = "resource"
           statements = [
             "set(attributes[\"k8s.cluster.name\"], \"production\")",
+            "set(attributes[\"service.instance.id\"], attributes[\"k8s.pod.uid\"])",
+            "set(attributes[\"k8s.workload.name\"], attributes[\"k8s.deployment.name\"]) where attributes[\"k8s.deployment.name\"] != nil",
+            "set(attributes[\"k8s.workload.name\"], attributes[\"k8s.statefulset.name\"]) where attributes[\"k8s.workload.name\"] == nil and attributes[\"k8s.statefulset.name\"] != nil",
+            "set(attributes[\"deployment.environment.name\"], attributes[\"deployment.environment\"]) where attributes[\"deployment.environment.name\"] == nil and attributes[\"deployment.environment\"] != nil",
+            "set(attributes[\"environment\"], attributes[\"deployment.environment.name\"])",
+            "set(attributes[\"namespace\"], attributes[\"k8s.namespace.name\"])",
+            "set(attributes[\"workload\"], attributes[\"k8s.workload.name\"])",
+            "set(attributes[\"pod\"], attributes[\"k8s.pod.name\"])",
           ]
         }
 
-        // 2. Metrics: Set cluster name in resource attributes
         metric_statements {
           context = "resource"
           statements = [
             "set(attributes[\"k8s.cluster.name\"], \"production\")",
+            "set(attributes[\"service.instance.id\"], attributes[\"k8s.pod.uid\"])",
+            "set(attributes[\"k8s.workload.name\"], attributes[\"k8s.deployment.name\"]) where attributes[\"k8s.deployment.name\"] != nil",
+            "set(attributes[\"k8s.workload.name\"], attributes[\"k8s.statefulset.name\"]) where attributes[\"k8s.workload.name\"] == nil and attributes[\"k8s.statefulset.name\"] != nil",
+            "set(attributes[\"deployment.environment.name\"], attributes[\"deployment.environment\"]) where attributes[\"deployment.environment.name\"] == nil and attributes[\"deployment.environment\"] != nil",
           ]
         }
 
-        // 3. Traces: Set cluster name in resource attributes
+        metric_statements {
+          context = "datapoint"
+          statements = [
+            "set(attributes[\"environment\"], resource.attributes[\"deployment.environment.name\"])",
+            "set(attributes[\"namespace\"], resource.attributes[\"k8s.namespace.name\"])",
+            "set(attributes[\"workload\"], resource.attributes[\"k8s.workload.name\"])",
+            "set(attributes[\"pod\"], resource.attributes[\"k8s.pod.name\"])",
+            "set(attributes[\"app_surface\"], resource.attributes[\"app.surface\"])",
+          ]
+        }
+
         trace_statements {
           context = "resource"
           statements = [
             "set(attributes[\"k8s.cluster.name\"], \"production\")",
+            "set(attributes[\"service.instance.id\"], attributes[\"k8s.pod.uid\"])",
+            "set(attributes[\"k8s.workload.name\"], attributes[\"k8s.deployment.name\"]) where attributes[\"k8s.deployment.name\"] != nil",
+            "set(attributes[\"k8s.workload.name\"], attributes[\"k8s.statefulset.name\"]) where attributes[\"k8s.workload.name\"] == nil and attributes[\"k8s.statefulset.name\"] != nil",
+            "set(attributes[\"deployment.environment.name\"], attributes[\"deployment.environment\"]) where attributes[\"deployment.environment.name\"] == nil and attributes[\"deployment.environment\"] != nil",
+          ]
+        }
+
+        output {
+          logs    = [otelcol.processor.attributes.logs.input]
+          metrics = [otelcol.processor.batch.default.input]
+          traces  = [otelcol.processor.batch.default.input]
+        }
+      }
+
+      otelcol.processor.transform "browser" {
+        error_mode = "ignore"
+
+        log_statements {
+          context = "resource"
+          statements = [
+            "set(attributes[\"k8s.cluster.name\"], \"production\")",
+            "set(attributes[\"deployment.environment.name\"], attributes[\"deployment.environment\"]) where attributes[\"deployment.environment.name\"] == nil and attributes[\"deployment.environment\"] != nil",
+            "set(attributes[\"environment\"], attributes[\"deployment.environment.name\"])",
+          ]
+        }
+        metric_statements {
+          context = "datapoint"
+          statements = [
+            "set(attributes[\"environment\"], resource.attributes[\"deployment.environment.name\"])",
+            "set(attributes[\"app_surface\"], resource.attributes[\"app.surface\"])",
+          ]
+        }
+        trace_statements {
+          context = "resource"
+          statements = [
+            "set(attributes[\"k8s.cluster.name\"], \"production\")",
+            "set(attributes[\"deployment.environment.name\"], attributes[\"deployment.environment\"]) where attributes[\"deployment.environment.name\"] == nil and attributes[\"deployment.environment\"] != nil",
           ]
         }
 
@@ -85,13 +191,12 @@ alloy:
         action {
           key    = "loki.resource.labels"
           action = "insert"
-          value  = "service.name,service.version,deployment.environment.name,deployment.environment,k8s.namespace.name"
+          value  = "service.name,environment,namespace,workload,pod,app.surface"
         }
-        // Hint attributes for Loki label extraction (low-cardinality only)
         action {
           key    = "loki.attribute.labels"
           action = "insert"
-          value  = "service.name,deployment.environment,k8s.namespace.name"
+          value  = "level"
         }
         output {
           logs = [otelcol.processor.batch.logs.input]
@@ -172,6 +277,70 @@ alloy:
 
       discovery.kubernetes "endpoints" {
         role = "endpoints"
+      }
+
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      // NATS exporter sidecar. Discovery is restricted to its private Pod
+      // port, so no monitoring endpoint is exposed outside the cluster.
+      prometheus.scrape "nats" {
+        targets         = discovery.relabel.nats_exporter.output
+        scrape_interval = "30s"
+        job_name        = "nats"
+        forward_to      = [prometheus.relabel.nats.receiver]
+      }
+
+      // The exporter applies -prefix only to core metrics. Normalize its
+      // JetStream families too so dashboards use one stable nats_* namespace.
+      prometheus.relabel "nats" {
+        forward_to = [prometheus.remote_write.mimir.receiver]
+        rule {
+          source_labels = ["__name__"]
+          regex         = "jetstream_stream_(.*)"
+          replacement   = "nats_stream_$1"
+          target_label  = "__name__"
+        }
+        rule {
+          source_labels = ["__name__"]
+          regex         = "jetstream_consumer_(.*)"
+          replacement   = "nats_consumer_$1"
+          target_label  = "__name__"
+        }
+        rule {
+          source_labels = ["__name__"]
+          regex         = "jetstream_server_(.*)"
+          replacement   = "nats_server_$1"
+          target_label  = "__name__"
+        }
+      }
+
+      discovery.relabel "nats_exporter" {
+        targets = discovery.kubernetes.pods.targets
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          regex         = "frolf-bot"
+          action        = "keep"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          regex         = "prom-exporter"
+          action        = "keep"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_port_number"]
+          regex         = "7777"
+          action        = "keep"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
       }
 
       // kube-state-metrics
@@ -334,6 +503,10 @@ alloy:
       port: 4318
       targetPort: 4318
       protocol: TCP
+    - name: otlp-http-web
+      port: 4319
+      targetPort: 4319
+      protocol: TCP
     # Alloy's internal HTTP/UI server listens on 12345 by default. Align
     # service port and targetPort — no consumer in this repo references
     # 12347 (verified via repo-wide grep).
@@ -368,7 +541,7 @@ ingress:
   # exports). `extraPaths` removed because the main path now covers it.
   path: /v1
   pathType: Prefix
-  faroPort: 4318
+  faroPort: 4319
   # TLS is owned by kustomize/frolf-bot-pwa/base/ingress.yaml — all four
   # ingresses share the host `aceflight.app`, and cert-manager
   # only needs one source of truth for the `frolf-bot-pwa-tls` secret.

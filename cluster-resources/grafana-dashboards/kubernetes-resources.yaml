@@ -31,6 +31,42 @@ data:
             "multi": true,
             "refresh": 2,
             "sort": 1
+          },
+          {
+            "name": "node",
+            "label": "Node",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(kube_pod_info{namespace=~\"$namespace\"}, node)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "pod",
+            "label": "Pod",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(kube_pod_info{namespace=~\"$namespace\", node=~\"$node\"}, pod)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "container",
+            "label": "Container",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(kube_pod_container_info{namespace=~\"$namespace\", pod=~\"$pod\"}, container)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "refresh": 2,
+            "sort": 1
           }
         ]
       },
@@ -91,13 +127,13 @@ data:
         },
         {
           "id": 3,
-          "title": "Pods Not Ready",
+          "title": "Workload Health — Pods Not Ready",
           "type": "stat",
           "gridPos": { "h": 6, "w": 5, "x": 10, "y": 0 },
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum(kube_pod_status_ready{condition=\"false\"})",
+              "expr": "sum(kube_pod_status_ready{namespace=~\"$namespace\", pod=~\"$pod\", condition=\"false\"})",
               "refId": "A"
             }
           ],
@@ -123,7 +159,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum(kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\"}) or on() vector(0)",
+              "expr": "sum(kube_pod_container_status_last_terminated_reason{namespace=~\"$namespace\", pod=~\"$pod\", container=~\"$container\", reason=\"OOMKilled\"}) or on() vector(0)",
               "refId": "A"
             }
           ],
@@ -149,7 +185,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum(increase(kube_pod_container_status_restarts_total[24h]))",
+              "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\", pod=~\"$pod\", container=~\"$container\"}[24h]))",
               "refId": "A"
             }
           ],
@@ -177,7 +213,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "100 * (1 - avg by (node) (rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval])))",
+              "expr": "100 * (1 - avg by (node) (rate(node_cpu_seconds_total{node=~\"$node\", mode=\"idle\"}[$__rate_interval])))",
               "legendFormat": "{{node}}",
               "refId": "A"
             }
@@ -198,7 +234,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
+              "expr": "100 * (1 - node_memory_MemAvailable_bytes{node=~\"$node\"} / node_memory_MemTotal_bytes{node=~\"$node\"})",
               "legendFormat": "{{node}}",
               "refId": "A"
             }
@@ -219,7 +255,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "node_load5 / on(node) count by (node) (count by (node, cpu) (node_cpu_seconds_total))",
+              "expr": "node_load5{node=~\"$node\"} / on(node) count by (node) (count by (node, cpu) (node_cpu_seconds_total{node=~\"$node\"}))",
               "legendFormat": "{{node}}",
               "refId": "A"
             }
@@ -240,7 +276,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\", fstype!=\"rootfs\"} / node_filesystem_size_bytes{mountpoint=\"/\", fstype!=\"rootfs\"})",
+              "expr": "100 * (1 - node_filesystem_avail_bytes{node=~\"$node\", mountpoint=\"/\", fstype!=\"rootfs\"} / node_filesystem_size_bytes{node=~\"$node\", mountpoint=\"/\", fstype!=\"rootfs\"})",
               "legendFormat": "{{node}}",
               "refId": "A"
             }
@@ -269,7 +305,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[1h])) > 0",
+              "expr": "sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\", pod=~\"$pod\", container=~\"$container\"}[1h])) > 0",
               "legendFormat": "{{namespace}}/{{pod}}",
               "refId": "A"
             }
@@ -290,7 +326,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "topk(10, sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}[$__rate_interval])))",
+              "expr": "topk(10, sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", node=~\"$node\", pod=~\"$pod\", container=~\"$container\", container!=\"\", container!=\"POD\"}[$__rate_interval])))",
               "legendFormat": "{{namespace}}/{{pod}}",
               "refId": "A"
             }
@@ -311,7 +347,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "topk(10, sum by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}))",
+              "expr": "topk(10, sum by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\", node=~\"$node\", pod=~\"$pod\", container=~\"$container\", container!=\"\", container!=\"POD\"}))",
               "legendFormat": "{{namespace}}/{{pod}}",
               "refId": "A"
             }
@@ -325,15 +361,20 @@ data:
         },
         {
           "id": 13,
-          "title": "CPU Usage vs Requests % by Pod",
+          "title": "CPU Usage vs Requests / Limits % by Pod",
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 30 },
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "100 * sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}[$__rate_interval])) / sum by (namespace, pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\", resource=\"cpu\"})",
-              "legendFormat": "{{namespace}}/{{pod}}",
+              "expr": "100 * sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", node=~\"$node\", pod=~\"$pod\", container=~\"$container\", container!=\"\", container!=\"POD\"}[$__rate_interval])) / sum by (namespace, pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\", node=~\"$node\", pod=~\"$pod\", container=~\"$container\", resource=\"cpu\"})",
+              "legendFormat": "request — {{namespace}}/{{pod}}",
               "refId": "A"
+            },
+            {
+              "expr": "100 * sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", node=~\"$node\", pod=~\"$pod\", container=~\"$container\", container!=\"\", container!=\"POD\"}[$__rate_interval])) / sum by (namespace, pod) (kube_pod_container_resource_limits{namespace=~\"$namespace\", node=~\"$node\", pod=~\"$pod\", container=~\"$container\", resource=\"cpu\"})",
+              "legendFormat": "limit — {{namespace}}/{{pod}}",
+              "refId": "B"
             }
           ],
           "fieldConfig": {
@@ -345,15 +386,20 @@ data:
         },
         {
           "id": 14,
-          "title": "Memory Usage vs Requests % by Pod",
+          "title": "Memory Usage vs Requests / Limits % by Pod",
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 30 },
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "100 * sum by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}) / sum by (namespace, pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\", resource=\"memory\"})",
-              "legendFormat": "{{namespace}}/{{pod}}",
+              "expr": "100 * sum by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\", node=~\"$node\", pod=~\"$pod\", container=~\"$container\", container!=\"\", container!=\"POD\"}) / sum by (namespace, pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\", node=~\"$node\", pod=~\"$pod\", container=~\"$container\", resource=\"memory\"})",
+              "legendFormat": "request — {{namespace}}/{{pod}}",
               "refId": "A"
+            },
+            {
+              "expr": "100 * sum by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\", node=~\"$node\", pod=~\"$pod\", container=~\"$container\", container!=\"\", container!=\"POD\"}) / sum by (namespace, pod) (kube_pod_container_resource_limits{namespace=~\"$namespace\", node=~\"$node\", pod=~\"$pod\", container=~\"$container\", resource=\"memory\"})",
+              "legendFormat": "limit — {{namespace}}/{{pod}}",
+              "refId": "B"
             }
           ],
           "fieldConfig": {
@@ -371,7 +417,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "100 * sum by (namespace, pod) (rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\", container!=\"\"}[5m])) / sum by (namespace, pod) (rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\", container!=\"\"}[5m]))",
+              "expr": "100 * sum by (namespace, pod) (rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\", pod=~\"$pod\", container=~\"$container\", container!=\"\"}[5m])) / sum by (namespace, pod) (rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\", pod=~\"$pod\", container=~\"$container\", container!=\"\"}[5m]))",
               "legendFormat": "{{namespace}}/{{pod}}",
               "refId": "A"
             }

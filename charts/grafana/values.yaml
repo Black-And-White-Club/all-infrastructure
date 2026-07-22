@@ -95,15 +95,24 @@ datasources:
         access: proxy
         editable: true
         jsonData:
-          tracesToLogs:
+          tracesToLogsV2:
             datasourceUid: loki
-            mappedTags:
+            spanStartTimeShift: -1h
+            spanEndTimeShift: 1h
+            filterByTraceID: true
+            filterBySpanID: false
+            customQuery: false
+            tags:
               - key: service.name
-                value: service
-              - key: pod.name
-                value: pod
-              - key: namespace
+                value: service_name
+              - key: deployment.environment.name
+                value: environment
+              - key: k8s.namespace.name
                 value: namespace
+              - key: k8s.workload.name
+                value: workload
+              - key: k8s.pod.name
+                value: pod
           tracesToMetrics:
             datasourceUid: mimir
             spanStartTimeShift: 1s

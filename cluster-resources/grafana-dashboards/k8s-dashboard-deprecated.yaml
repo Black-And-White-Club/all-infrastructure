@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-k8s-deprecated
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  k8s-dashboard-deprecated.json: |
+    {
+      "id": null,
+      "uid": "f0bc58e1-e352-48ee-a588-3d9688cd08ec",
+      "title": "K8S Dashboard (Moved)",
+      "description": "This UID is retained for one GitOps release so bookmarks resolve to the supported replacement.",
+      "tags": ["deprecated", "kubernetes"],
+      "timezone": "browser",
+      "schemaVersion": 42,
+      "version": 1,
+      "time": { "from": "now-1h", "to": "now" },
+      "links": [
+        {
+          "title": "Open Kubernetes — Resource Usage & Health",
+          "type": "link",
+          "url": "/d/k8s-resources/kubernetes-resource-usage-and-health",
+          "targetBlank": false
+        }
+      ],
+      "panels": [
+        {
+          "id": 1,
+          "title": "Dashboard moved",
+          "type": "text",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+          "options": {
+            "mode": "markdown",
+            "content": "# Dashboard moved\n\nUse [Kubernetes — Resource Usage & Health](/d/k8s-resources/kubernetes-resource-usage-and-health). This compatibility dashboard is intentionally removed in a later Git commit after the replacement is verified live."
+          }
+        }
+      ]
+    }

@@ -21,11 +21,47 @@ data:
       "templating": {
         "list": [
           {
+            "name": "service",
+            "label": "Service",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(http_server_request_duration_seconds_count, job)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "environment",
+            "label": "Environment",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(http_server_request_duration_seconds_count{job=~\"$service\"}, environment)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "refresh": 2,
+            "sort": 1
+          },
+          {
             "name": "route",
             "label": "Route",
             "type": "query",
             "datasource": { "type": "prometheus", "uid": "mimir" },
-            "query": "label_values(http_server_request_duration_seconds_count{job=\"frolf-bot\"}, http_route)",
+            "query": "label_values(http_server_request_duration_seconds_count{job=~\"$service\", environment=~\"$environment\"}, http_route)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "status",
+            "label": "Status",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(http_server_request_duration_seconds_count{job=~\"$service\", environment=~\"$environment\", http_route=~\"$route\"}, http_response_status_code)",
             "includeAll": true,
             "allValue": ".*",
             "multi": true,
@@ -43,7 +79,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum by (http_route) (rate(http_server_request_duration_seconds_count{job=\"frolf-bot\", http_route=~\"$route\"}[5m]))",
+              "expr": "sum by (job, http_route) (rate(http_server_request_duration_seconds_count{job=~\"$service\", environment=~\"$environment\", http_route=~\"$route\", http_response_status_code=~\"$status\"}[5m]))",
               "legendFormat": "{{http_route}}",
               "refId": "A"
             }
@@ -63,7 +99,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum by (http_route) (rate(http_server_request_duration_seconds_count{job=\"frolf-bot\", http_route=~\"$route\", http_response_status_code=~\"5..\"}[5m]))",
+              "expr": "sum by (job, http_route) (rate(http_server_request_duration_seconds_count{job=~\"$service\", environment=~\"$environment\", http_route=~\"$route\", http_response_status_code=~\"5..\"}[5m]))",
               "legendFormat": "{{http_route}} errors",
               "refId": "A"
             }
@@ -84,17 +120,17 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "histogram_quantile(0.50, sum by (http_route, le) (rate(http_server_request_duration_seconds_bucket{job=\"frolf-bot\", http_route=~\"$route\"}[5m])))",
+              "expr": "histogram_quantile(0.50, sum by (job, http_route, le) (rate(http_server_request_duration_seconds_bucket{job=~\"$service\", environment=~\"$environment\", http_route=~\"$route\", http_response_status_code=~\"$status\"}[5m])))",
               "legendFormat": "p50 {{http_route}}",
               "refId": "A"
             },
             {
-              "expr": "histogram_quantile(0.95, sum by (http_route, le) (rate(http_server_request_duration_seconds_bucket{job=\"frolf-bot\", http_route=~\"$route\"}[5m])))",
+              "expr": "histogram_quantile(0.95, sum by (job, http_route, le) (rate(http_server_request_duration_seconds_bucket{job=~\"$service\", environment=~\"$environment\", http_route=~\"$route\", http_response_status_code=~\"$status\"}[5m])))",
               "legendFormat": "p95 {{http_route}}",
               "refId": "B"
             },
             {
-              "expr": "histogram_quantile(0.99, sum by (http_route, le) (rate(http_server_request_duration_seconds_bucket{job=\"frolf-bot\", http_route=~\"$route\"}[5m])))",
+              "expr": "histogram_quantile(0.99, sum by (job, http_route, le) (rate(http_server_request_duration_seconds_bucket{job=~\"$service\", environment=~\"$environment\", http_route=~\"$route\", http_response_status_code=~\"$status\"}[5m])))",
               "legendFormat": "p99 {{http_route}}",
               "refId": "C"
             }
@@ -114,7 +150,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum by (http_response_status_code) (rate(http_server_request_duration_seconds_count{job=\"frolf-bot\", http_route=~\"$route\"}[5m]))",
+              "expr": "sum by (job, http_response_status_code) (rate(http_server_request_duration_seconds_count{job=~\"$service\", environment=~\"$environment\", http_route=~\"$route\", http_response_status_code=~\"$status\"}[5m]))",
               "legendFormat": "HTTP {{http_response_status_code}}",
               "refId": "A"
             }
@@ -134,7 +170,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum(increase(http_server_request_duration_seconds_count{job=\"frolf-bot\"}[24h]))",
+              "expr": "sum(increase(http_server_request_duration_seconds_count{job=~\"$service\", environment=~\"$environment\", http_route=~\"$route\", http_response_status_code=~\"$status\"}[24h]))",
               "legendFormat": "Total requests",
               "refId": "A"
             }

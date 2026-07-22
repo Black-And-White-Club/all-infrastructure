@@ -18,6 +18,28 @@ data:
       "version": 1,
       "refresh": "30s",
       "time": { "from": "now-24h", "to": "now" },
+      "templating": {
+        "list": [
+          {
+            "name": "service", "label": "Service", "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values({__name__=~\"(frolf_bot|discord_frolf_bot)_eventbus_messages_published_total\"}, job)",
+            "includeAll": true, "allValue": ".*", "multi": true, "refresh": 2, "sort": 1
+          },
+          {
+            "name": "stream", "label": "Stream", "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(nats_stream_total_messages{server_id=~\".*\"}, stream_name)",
+            "includeAll": true, "allValue": ".*", "multi": true, "refresh": 2, "sort": 1
+          },
+          {
+            "name": "consumer", "label": "Consumer", "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(nats_consumer_num_pending{stream_name=~\"$stream\"}, consumer_name)",
+            "includeAll": true, "allValue": ".*", "multi": true, "refresh": 2, "sort": 1
+          }
+        ]
+      },
       "panels": [
         {
           "id": 1,
@@ -28,7 +50,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum(increase({__name__=~\"(frolf_bot|discord_frolf_bot)_eventbus_poison_messages_total\"}[24h]))",
+              "expr": "sum(increase({__name__=~\"(frolf_bot|discord_frolf_bot)_eventbus_poison_messages_total\", job=~\"$service\", stream=~\"$stream\", consumer=~\"$consumer\"}[24h]))",
               "refId": "A"
             }
           ],
@@ -55,7 +77,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum by (stream, consumer) (increase({__name__=~\"(frolf_bot|discord_frolf_bot)_eventbus_poison_messages_total\"}[1h]))",
+              "expr": "sum by (stream, consumer) (increase({__name__=~\"(frolf_bot|discord_frolf_bot)_eventbus_poison_messages_total\", job=~\"$service\", stream=~\"$stream\", consumer=~\"$consumer\"}[1h]))",
               "legendFormat": "{{stream}} / {{consumer}}",
               "refId": "A"
             }
@@ -76,12 +98,12 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum(rate(frolf_bot_eventbus_messages_publish_errors_total[5m]))",
+              "expr": "sum(rate(frolf_bot_eventbus_messages_publish_errors_total{job=~\"$service\"}[5m]))",
               "legendFormat": "backend",
               "refId": "A"
             },
             {
-              "expr": "sum(rate(discord_frolf_bot_eventbus_messages_publish_errors_total[5m]))",
+              "expr": "sum(rate(discord_frolf_bot_eventbus_messages_publish_errors_total{job=~\"$service\"}[5m]))",
               "legendFormat": "discord",
               "refId": "B"
             }
@@ -103,12 +125,12 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum(rate(frolf_bot_eventbus_messages_published_total[5m]))",
+              "expr": "sum(rate(frolf_bot_eventbus_messages_published_total{job=~\"$service\"}[5m]))",
               "legendFormat": "backend",
               "refId": "A"
             },
             {
-              "expr": "sum(rate(discord_frolf_bot_eventbus_messages_published_total[5m]))",
+              "expr": "sum(rate(discord_frolf_bot_eventbus_messages_published_total{job=~\"$service\"}[5m]))",
               "legendFormat": "discord",
               "refId": "B"
             }

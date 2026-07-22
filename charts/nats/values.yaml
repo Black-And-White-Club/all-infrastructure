@@ -61,6 +61,49 @@ config:
 natsBox:
   enabled: false
 
+# Bundled sidecar exporter; keep collection deliberately narrow. The chart's
+# defaults include connz/subz/routez, so replace the entire args list rather
+# than inheriting those high-cardinality endpoints.
+promExporter:
+  enabled: true
+  image:
+    tag: 0.19.2
+  merge:
+    args:
+      - -port=7777
+      - -healthz
+      - -varz
+      - -jsz=all
+      - -prefix=nats
+      - -use_internal_server_id
+      - http://localhost:8222/
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+    readinessProbe:
+      httpGet:
+        path: /metrics
+        port: prom-metrics
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    livenessProbe:
+      httpGet:
+        path: /metrics
+        port: prom-metrics
+      initialDelaySeconds: 10
+      periodSeconds: 30
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      capabilities:
+        drop:
+          - ALL
+
 # NOTE (render-verified 2026-06-11): nats chart 2.14.0 SILENTLY IGNORES top-level
 # `podSecurityContext:`, `container.securityContext:`, and `nodeSelector:` keys —
 # helm template output is byte-identical with or without them. The NATS pod

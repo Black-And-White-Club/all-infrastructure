@@ -5,6 +5,11 @@ metadata:
   namespace: observability
   labels:
     grafana_dashboard: "1"
+# NOTE: the $service variable is sourced from the Tempo span-metrics "service"
+# label and reapplied to the Prometheus "job" label on app metrics. This works
+# only while job == service.name (no service.namespace set anywhere) — the
+# otelcol Prometheus exporter would prefix job with service.namespace if one is
+# ever introduced, silently emptying these panels.
 data:
   frolf-bot-db.json: |
     {
@@ -21,11 +26,11 @@ data:
       "templating": {
         "list": [
           {
-            "name": "db_operation",
-            "label": "Operation",
+            "name": "service",
+            "label": "Service",
             "type": "query",
             "datasource": { "type": "prometheus", "uid": "mimir" },
-            "query": "label_values(traces_spanmetrics_calls_total{service=\"frolf-bot\", db_system=\"postgresql\"}, db_operation)",
+            "query": "label_values(traces_spanmetrics_calls_total{db_system=\"postgresql\"}, service)",
             "includeAll": true,
             "allValue": ".*",
             "multi": true,
@@ -33,11 +38,23 @@ data:
             "sort": 1
           },
           {
-            "name": "db_table",
+            "name": "operation",
+            "label": "Operation",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "mimir" },
+            "query": "label_values(traces_spanmetrics_calls_total{service=~\"$service\", db_system=\"postgresql\"}, db_operation)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "table",
             "label": "Table",
             "type": "query",
             "datasource": { "type": "prometheus", "uid": "mimir" },
-            "query": "label_values(traces_spanmetrics_calls_total{service=\"frolf-bot\", db_system=\"postgresql\"}, db_sql_table)",
+            "query": "label_values(traces_spanmetrics_calls_total{service=~\"$service\", db_system=\"postgresql\", db_operation=~\"$operation\"}, db_sql_table)",
             "includeAll": true,
             "allValue": ".*",
             "multi": true,
@@ -55,7 +72,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "frolf_bot_db_connection_pool_ratio{job=\"frolf-bot\"}",
+              "expr": "frolf_bot_db_connection_pool_ratio{job=~\"$service\"}",
               "legendFormat": "{{state}}",
               "refId": "A"
             }
@@ -75,7 +92,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum by (db_operation) (rate(traces_spanmetrics_calls_total{service=\"frolf-bot\", db_system=\"postgresql\", db_operation=~\"$db_operation\"}[5m]))",
+              "expr": "sum by (service, db_operation) (rate(traces_spanmetrics_calls_total{service=~\"$service\", db_system=\"postgresql\", db_operation=~\"$operation\", db_sql_table=~\"$table\"}[5m]))",
               "legendFormat": "{{db_operation}}",
               "refId": "A"
             }
@@ -95,7 +112,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "histogram_quantile(0.95, sum by (db_sql_table, le) (rate(traces_spanmetrics_latency_bucket{service=\"frolf-bot\", db_system=\"postgresql\", db_sql_table=~\"$db_table\"}[5m])))",
+              "expr": "histogram_quantile(0.95, sum by (service, db_sql_table, le) (rate(traces_spanmetrics_latency_bucket{service=~\"$service\", db_system=\"postgresql\", db_operation=~\"$operation\", db_sql_table=~\"$table\"}[5m])))",
               "legendFormat": "p95 {{db_sql_table}}",
               "refId": "A"
             }
@@ -115,7 +132,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "histogram_quantile(0.99, sum by (db_sql_table, le) (rate(traces_spanmetrics_latency_bucket{service=\"frolf-bot\", db_system=\"postgresql\"}[5m])))",
+              "expr": "histogram_quantile(0.99, sum by (service, db_sql_table, le) (rate(traces_spanmetrics_latency_bucket{service=~\"$service\", db_system=\"postgresql\", db_operation=~\"$operation\", db_sql_table=~\"$table\"}[5m])))",
               "legendFormat": "p99 {{db_sql_table}}",
               "refId": "A"
             }
@@ -135,7 +152,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "mimir" },
           "targets": [
             {
-              "expr": "sum by (caller) (rate(frolf_bot_db_postgres_statement_timeout_total{job=\"frolf-bot\"}[5m]))",
+              "expr": "sum by (job, caller) (rate(frolf_bot_db_postgres_statement_timeout_total{job=~\"$service\"}[5m]))",
               "legendFormat": "Timeout {{caller}}",
               "refId": "A"
             }
