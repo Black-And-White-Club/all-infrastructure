@@ -507,13 +507,10 @@ alloy:
       port: 4319
       targetPort: 4319
       protocol: TCP
-    # Alloy's internal HTTP/UI server listens on 12345 by default. Align
-    # service port and targetPort — no consumer in this repo references
-    # 12347 (verified via repo-wide grep).
-    - name: internal-http
-      port: 12345
-      targetPort: 12345
-      protocol: TCP
+    # NOTE: do NOT add a 12345 entry here — the chart's Service already
+    # exposes 12345 as its built-in http-metrics port, and a second entry
+    # with the same port breaks ArgoCD's strategic-merge diff (duplicate
+    # patch merge key), wedging the app in a diff-calculation error.
 
 serviceAccount:
   create: true
