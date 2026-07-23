@@ -82,17 +82,25 @@ promExporter:
         cpu: 10m
         memory: 32Mi
       limits:
-        cpu: 100m
+        # Rendering /metrics (~2.3MB with -jsz=all) costs ~150ms CPU per scrape;
+        # at 100m the CFS quota stretched that past the probes' 1s timeout
+        # (65% of periods throttled), so liveness kill-looped the container and
+        # the NotReady pod dropped NATS out of its Service endpoints (PWA 503).
+        cpu: 500m
         memory: 128Mi
+    # tcpSocket, NOT httpGet /metrics: every /metrics request triggers a full
+    # varz+jsz scrape and a ~2.3MB render, so probing it couples pod (and thus
+    # NATS Service) health to render latency — under CPU throttle that took
+    # down NATS for the whole PWA. The exporter serves no other HTTP path
+    # (/healthz is a scrape-selector flag, not an endpoint; verified 404), so
+    # a listener-alive TCP check is the only render-independent probe.
     readinessProbe:
-      httpGet:
-        path: /metrics
+      tcpSocket:
         port: prom-metrics
       initialDelaySeconds: 5
       periodSeconds: 10
     livenessProbe:
-      httpGet:
-        path: /metrics
+      tcpSocket:
         port: prom-metrics
       initialDelaySeconds: 10
       periodSeconds: 30
