@@ -119,10 +119,30 @@ test_nats_exporter_collects_only_health_varz_and_jsz() {
 	assert_file_not_contains "$nats_values" '- -connz'
 	assert_file_not_contains "$nats_values" '- -subz'
 	assert_file_not_contains "$nats_values" '- -routez'
-	assert_file_contains "$nats_values" 'path: /metrics'
 	assert_file_not_contains "$nats_values" 'path: /healthz'
 	assert_file_contains "$nats_values" 'runAsNonRoot: true'
 	assert_file_contains "$nats_values" 'readOnlyRootFilesystem: true'
+}
+
+# Regression guard for the 2026-07-22 prod outage (9d1a4aaf). The exporter's
+# probes used to be httpGet /metrics; every hit triggers a full varz+jsz scrape
+# and a ~2.3MB render, and under CFS throttling that blew the 1s probe timeout.
+# Liveness kill-looped the sidecar, the NotReady pod fell out of the NATS
+# Service endpoints, and the PWA got 503/NatsError — a metrics sidecar taking
+# down the transport it observes. The exporter serves no other HTTP path, so a
+# listener-alive tcpSocket check is the only render-independent probe.
+test_nats_exporter_probes_never_hit_the_metrics_render_path() {
+	local probe
+	for probe in readinessProbe livenessProbe; do
+		if ! yq -e ".promExporter.merge.${probe}.tcpSocket.port == \"prom-metrics\"" "$nats_values" >/dev/null 2>&1; then
+			echo "expected promExporter.merge.${probe} to be a tcpSocket check on prom-metrics in $nats_values" >&2
+			return 1
+		fi
+		if yq -e ".promExporter.merge.${probe}.httpGet" "$nats_values" >/dev/null 2>&1; then
+			echo "promExporter.merge.${probe} must not use httpGet: probing the exporter's HTTP surface couples NATS Service health to /metrics render latency ($nats_values)" >&2
+			return 1
+		fi
+	done
 }
 
 test_ops_workload_sends_all_signals_to_internal_otlp() {
@@ -216,6 +236,7 @@ tests=(
 	test_tempo_enables_local_blocks_for_all_spans_and_storage
 	test_grafana_uses_trace_to_logs_v2_with_curated_tags
 	test_nats_exporter_collects_only_health_varz_and_jsz
+	test_nats_exporter_probes_never_hit_the_metrics_render_path
 	test_ops_workload_sends_all_signals_to_internal_otlp
 	test_adopted_dashboards_keep_live_uids_and_filters
 	test_gitops_dashboards_expose_canonical_filters
