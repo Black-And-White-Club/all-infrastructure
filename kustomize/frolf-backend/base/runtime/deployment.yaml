@@ -252,6 +252,25 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: OPS_HMAC_KEY_JSON
+            # Signs the clubhouse guest-reservation manage/cancel capability
+            # tokens (app/modules/clubhouse/infrastructure/http/reservation_token.go).
+            # Deliberately a DISTINCT key from OPS_HMAC_KEY_JSON and from the
+            # spectate claim key — a guest reservation token must not be
+            # interchangeable with an ops or Live Card one.
+            #
+            # optional: true so this manifest is safe to apply before the key is
+            # sealed into backend-secrets. The backend already fails closed when
+            # it is unset: the routes stay registered and every request to
+            # POST /api/clubhouse/reservations returns 503 rather than 404, so
+            # the gap is visible instead of silent (module.go's claimSigner nil
+            # branch). Guest CHECK-IN does not depend on this key and is
+            # unaffected either way.
+            - name: CLUBHOUSE_GUEST_CLAIM_KEY_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: CLUBHOUSE_GUEST_CLAIM_KEY_JSON
+                  optional: true
             # Stripe collection rail — disabled by default. Flip to "true" only
             # at the coordinated cutover after the owner has sealed the five
             # STRIPE_* keys below into backend-secrets (see
