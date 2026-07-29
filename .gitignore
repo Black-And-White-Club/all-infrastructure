@@ -50,8 +50,8 @@ cluster-resources/sealed-secrets/*-sealed.yaml
 !cluster-resources/sealed-secrets/sealed-repo-all-infrastructure.example.yaml
 docs/oauth-launch-plan.md
 *.pem
-CLAUDE.md
-AGENTS.md
+# CLAUDE.md
+# AGENTS.md
 scripts/node-ssh.sh
 scripts/bastion-connect.sh
 docs/plans/2026-04-04-private-repos-self-hosted-runner-plan.md
