@@ -23,7 +23,13 @@ set -euo pipefail
 #   DISCORD_OAUTH_REDIRECT_URL, GOOGLE_OAUTH_REDIRECT_URL, PWA_BASE_URL,
 #   TRUSTED_PROXY_CIDRS,
 #   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_APPLICATION_FEE_CENTS,
-#   STRIPE_BILLING_WEBHOOK_SECRET, STRIPE_PLATFORM_SEASON_FEE_CENTS
+#   STRIPE_BILLING_WEBHOOK_SECRET, STRIPE_PLATFORM_SEASON_FEE_CENTS,
+#   CLUBHOUSE_GUEST_CLAIM_KEY_JSON, SPECTATE_CLAIM_KEY_JSON
+#
+# Capability-token signing keys (see the block near the bottom of this file):
+#   CLUBHOUSE_GUEST_CLAIM_KEY_JSON="{\"v1\":\"$(openssl rand -base64 32)\"}" \
+#   SPECTATE_CLAIM_KEY_JSON="{\"v1\":\"$(openssl rand -base64 32)\"}" \
+#   ./patch-frolf-backend-secrets.sh /path/to/all-infrastructure-secrets/sealed-backend-secrets.sops.yaml
 #
 # Stripe cutover workflow (seal all three in one pass, then flip STRIPE_ENABLED):
 #   STRIPE_SECRET_KEY=sk_live_... \
@@ -58,6 +64,8 @@ STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET:-}"
 STRIPE_APPLICATION_FEE_CENTS="${STRIPE_APPLICATION_FEE_CENTS:-}"
 STRIPE_BILLING_WEBHOOK_SECRET="${STRIPE_BILLING_WEBHOOK_SECRET:-}"
 STRIPE_PLATFORM_SEASON_FEE_CENTS="${STRIPE_PLATFORM_SEASON_FEE_CENTS:-}"
+CLUBHOUSE_GUEST_CLAIM_KEY_JSON="${CLUBHOUSE_GUEST_CLAIM_KEY_JSON:-}"
+SPECTATE_CLAIM_KEY_JSON="${SPECTATE_CLAIM_KEY_JSON:-}"
 
 require_command() {
   local cmd="$1"
@@ -213,6 +221,63 @@ if [[ -n "${STRIPE_PLATFORM_SEASON_FEE_CENTS}" ]]; then
   echo "Sealing STRIPE_PLATFORM_SEASON_FEE_CENTS..."
   SEALED_STRIPE_PLATFORM_SEASON_FEE_CENTS=$(seal_value "${STRIPE_PLATFORM_SEASON_FEE_CENTS}")
   yq -i ".spec.encryptedData.STRIPE_PLATFORM_SEASON_FEE_CENTS = \"${SEALED_STRIPE_PLATFORM_SEASON_FEE_CENTS}\"" "${SEALED_SECRET_FILE}"
+  PATCHED=$((PATCHED + 1))
+fi
+
+# --- Capability-token signing keys -------------------------------------------
+#
+# CLUBHOUSE_GUEST_CLAIM_KEY_JSON signs the clubhouse guest-reservation
+# manage/cancel tokens; SPECTATE_CLAIM_KEY_JSON signs Live Card's no-account
+# guest scoring tokens. Both parse through opsevents.ParseKeyMap and both
+# REQUIRE a key id of exactly "v1" (reservationClaimTokenKeyID /
+# claimTokenKeyID), so the value shape is:
+#
+#   {"v1":"<base64 of exactly 32 random bytes>"}
+#
+# Generate one with:
+#   CLUBHOUSE_GUEST_CLAIM_KEY_JSON="{\"v1\":\"$(openssl rand -base64 32)\"}"
+#
+# Keep all three key maps DISTINCT from each other and from OPS_HMAC_KEY_JSON:
+# a guest reservation token must never be interchangeable with a Live Card or
+# an ops one.
+#
+# Validated before sealing rather than after, because every failure mode here
+# is silent at runtime: the backend's signer constructors return a nil signer
+# for an unparseable or wrong-id key map and the affected handlers then fail
+# closed with a bare 503, giving no indication that the KEY is what is wrong.
+validate_claim_key_json() {
+  local var_name="$1" value="$2"
+  if ! printf %s "${value}" | yq -p=json -o=json '.' >/dev/null 2>&1; then
+    echo "ERROR: ${var_name} is not valid JSON. Expected {\"v1\":\"<base64 32 bytes>\"}" >&2
+    exit 1
+  fi
+  local b64
+  b64="$(printf %s "${value}" | yq -p=json -o=yaml '.v1 // ""' | tr -d '[:space:]')"
+  if [[ -z "${b64}" ]]; then
+    echo "ERROR: ${var_name} has no \"v1\" key; the backend requires that exact key id." >&2
+    exit 1
+  fi
+  local decoded_bytes
+  decoded_bytes="$(printf %s "${b64}" | base64 -d 2>/dev/null | wc -c | tr -d '[:space:]')" || true
+  if [[ "${decoded_bytes}" != "32" ]]; then
+    echo "ERROR: ${var_name} key \"v1\" must decode to exactly 32 bytes (got ${decoded_bytes:-0})." >&2
+    exit 1
+  fi
+}
+
+if [[ -n "${CLUBHOUSE_GUEST_CLAIM_KEY_JSON}" ]]; then
+  validate_claim_key_json CLUBHOUSE_GUEST_CLAIM_KEY_JSON "${CLUBHOUSE_GUEST_CLAIM_KEY_JSON}"
+  echo "Sealing CLUBHOUSE_GUEST_CLAIM_KEY_JSON..."
+  SEALED_CLUBHOUSE_GUEST_CLAIM_KEY_JSON=$(seal_value "${CLUBHOUSE_GUEST_CLAIM_KEY_JSON}")
+  yq -i ".spec.encryptedData.CLUBHOUSE_GUEST_CLAIM_KEY_JSON = \"${SEALED_CLUBHOUSE_GUEST_CLAIM_KEY_JSON}\"" "${SEALED_SECRET_FILE}"
+  PATCHED=$((PATCHED + 1))
+fi
+
+if [[ -n "${SPECTATE_CLAIM_KEY_JSON}" ]]; then
+  validate_claim_key_json SPECTATE_CLAIM_KEY_JSON "${SPECTATE_CLAIM_KEY_JSON}"
+  echo "Sealing SPECTATE_CLAIM_KEY_JSON..."
+  SEALED_SPECTATE_CLAIM_KEY_JSON=$(seal_value "${SPECTATE_CLAIM_KEY_JSON}")
+  yq -i ".spec.encryptedData.SPECTATE_CLAIM_KEY_JSON = \"${SEALED_SPECTATE_CLAIM_KEY_JSON}\"" "${SEALED_SECRET_FILE}"
   PATCHED=$((PATCHED + 1))
 fi
 
