@@ -271,6 +271,22 @@ spec:
                   name: backend-secrets
                   key: CLUBHOUSE_GUEST_CLAIM_KEY_JSON
                   optional: true
+            # Signs Live Card's no-account guest scoring tokens
+            # (app/modules/round/infrastructure/http/spectate_claim_token.go).
+            # Same fail-closed shape as the clubhouse key above: without it,
+            # POST /api/rounds/{id}/spectate/claim and /score return 503, which
+            # is the state that surface has been in since it shipped — the key
+            # was never sealed into backend-secrets and this var was never
+            # enumerated here.
+            #
+            # optional: true, so this is inert until the key is sealed; it
+            # cannot break the rollout on its own.
+            - name: SPECTATE_CLAIM_KEY_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: SPECTATE_CLAIM_KEY_JSON
+                  optional: true
             # Stripe collection rail — disabled by default. Flip to "true" only
             # at the coordinated cutover after the owner has sealed the five
             # STRIPE_* keys below into backend-secrets (see
