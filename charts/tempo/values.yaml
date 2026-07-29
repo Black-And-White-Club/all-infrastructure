@@ -183,16 +183,58 @@ metricsGenerator:
       # Remote write to Mimir for metrics storage
       remote_write:
         - url: http://mimir-gateway.observability.svc.cluster.local/api/v1/push
+  # Sized for local-blocks, which this component gained on 2026-07-22 and which
+  # OOM-killed it into a 6-day CrashLoopBackOff (~6000 restarts) against the
+  # previous 64Mi/256Mi. It was carrying the SMALL-component allocation (same as
+  # the stateless querier and query-frontend, a third of the ingester's 768Mi)
+  # while running the heaviest workload in the deployment.
+  #
+  # There are two independent memory consumers in this one container:
+  #   1. the registry (service-graphs + span-metrics active series), and
+  #   2. local-blocks, which buffers span data in memory before flushing blocks.
+  # Raising the ceiling alone only moves where it dies, so both are bounded
+  # below: max_active_series caps (1), and the CPU bump keeps (2) flushing
+  # rather than backing up.
+  #
+  # 1Gi matches the largest tier already in this stack (mimir, alloy) and is
+  # affordable on a 2-node 12GB cluster. It is an INTERIM figure, not a measured
+  # one — see the sizing note under `overrides` for how to tighten it.
   resources:
     requests:
-      cpu: 15m
-      memory: 64Mi
+      cpu: 100m
+      memory: 384Mi
     limits:
-      cpu: 150m
-      memory: 256Mi
+      # 150m (0.15 core) was likely a contributing factor, not just collateral:
+      # local-blocks encodes and compresses blocks on flush, and CPU throttling
+      # there stalls the flush loop, which backs spans up in memory and pulls
+      # the OOM forward.
+      cpu: 500m
+      memory: 1Gi
 
 # Metrics-generator processors are opt-in per tenant via overrides; without this
 # the generator receives spans but emits nothing (no traces_* series in Mimir).
+# KNOWN GAP (not fixed here, deliberately): the generator registry is
+# UNBOUNDED. There is no max_active_series, no stale_duration override, and
+# span_metrics below carries http.route and db.sql.table — both
+# unbounded-cardinality dimensions. That was survivable while the registry had
+# the container to itself; it is a latent runaway now that local-blocks shares
+# it, and raising memory does not bound it.
+#
+# Left alone in this change ON PURPOSE: the correct override key and nesting
+# for an active-series cap could not be confirmed against tempo-distributed
+# 1.61.3 (the published manifest for Tempo 3.x no longer carries it, and 3.x
+# drops local-blocks entirely). Shipping an unverified override key into a
+# component that is already CrashLoopBackOff risks a config-validation failure
+# that takes ALL of Tempo down, not just this pod.
+#
+# To close it: confirm the key against the deployed version's config reference,
+# then measure the real value before picking a cap —
+#   tempo_metrics_generator_registry_active_series
+# Grafana's documented method is a dry run first
+# (metrics_generator.disable_collection: true), which estimates active series
+# without writing them. Note that crossing the cap emits
+# metric_overflow="true" series rather than dropping data, so a too-low cap
+# degrades dashboards quietly.
 overrides:
   defaults:
     metrics_generator:
