@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color/palette"
 	"image/draw"
@@ -59,13 +60,15 @@ func TestGIFRoundTrip(t *testing.T) {
 	}
 
 	if os.Getenv("GUNTER_DUMP_DIR") != "" {
-		pf, err := os.Create(filepath.Join(dir, "frame0.png"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer pf.Close()
-		if err := png.Encode(pf, loaded.Frames[0]); err != nil {
-			t.Fatal(err)
+		for _, i := range []int{0, 3, 6, 9} {
+			pf, err := os.Create(filepath.Join(dir, fmt.Sprintf("frame%d.png", i)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := png.Encode(pf, loaded.Frames[i]); err != nil {
+				t.Fatal(err)
+			}
+			pf.Close()
 		}
 	}
 }
