@@ -117,28 +117,6 @@ resource "oci_core_security_list" "default" {
     }
   }
 
-  # TEMPORARY (2026-09-26) — REVERT THIS COMMIT once grafana-tls and resume-app-tls
-  # are Ready (`kubectl get certificate -A`).
-  #
-  # grafana.jaromero.cloud and jaromero.cloud are not proxied through Cloudflare, so
-  # the Cloudflare/admin-only rules above also block Let's Encrypt's HTTP-01
-  # validators and cert-manager's in-cluster self-check (pod → LB public IP). Both
-  # certs expired 2026-08-30 after 57 days of stuck renewals. This opens port 80 only
-  # (nginx serves nothing but https redirects and ACME tokens there); 443 stays locked.
-  #
-  # Without a permanent fix the next renewal (~60 days after issuance) fails the same
-  # way. Permanent options: keep this rule, or move jaromero.cloud DNS (Porkbun) to
-  # Cloudflare and switch those certs to DNS-01.
-  ingress_security_rules {
-    protocol    = "6" # TCP
-    source      = "0.0.0.0/0"
-    description = "TEMPORARY: HTTP for ACME HTTP-01 renewal of non-Cloudflare hostnames"
-    tcp_options {
-      min = var.backend_http_port
-      max = var.backend_http_port
-    }
-  }
-
   # Kubernetes API server - internal
   ingress_security_rules {
     protocol = "6"
