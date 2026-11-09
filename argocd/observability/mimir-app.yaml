@@ -5,6 +5,10 @@ metadata:
   namespace: argocd
   # No resources-finalizer: mimir stores metrics data on persistent volumes;
   # omitted so app deletion never cascades to stateful data.
+  # MIGRATION REQUIRED: grafana/mimir is deprecating this chart and moving it to
+  # grafana-community/helm-charts. See https://github.com/grafana/mimir/issues/17112.
+  # After migrating, change repoURL to https://grafana-community.github.io/helm-charts
+  # and update the targetRevision to the community chart version.
   annotations:
     argocd.argoproj.io/sync-wave: "20"
 spec:
@@ -13,7 +17,7 @@ spec:
   sources:
     - repoURL: https://grafana.github.io/helm-charts
       chart: mimir-distributed
-      targetRevision: 6.0.6
+      targetRevision: 6.2.2
       helm:
         releaseName: mimir
         valueFiles:
